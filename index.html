@@ -3,16 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DAYINBALL: 8-BIT JBRLA</title>
+    <title>DAYINBALL: JBRLA LEGEND</title>
     <style>
-        /* Using Google Fonts, but pixelation will make them look retro */
-        @import url('https://fonts.googleapis.com/css2?family=Rubik+Glitch&family=Press+Start+2P&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Rubik+Glitch&family=Montserrat:wght@400;700;900&display=swap');
 
         body {
             margin: 0; padding: 0; overflow: hidden;
-            background-color: #000;
-            /* 'Press Start 2P' is a great fallback pixel font if available, otherwise sans-serif behaves well pixelated */
-            font-family: 'Press Start 2P', cursive, sans-serif; 
+            background-color: #050505;
+            font-family: 'Montserrat', sans-serif;
             touch-action: none; user-select: none; -webkit-user-select: none;
         }
 
@@ -20,101 +18,111 @@
             position: relative; width: 100vw; height: 100vh; background: #000;
         }
 
-        canvas { 
-            display: block; width: 100%; height: 100%; 
-            /* CRITICAL: Forces crunchy pixel rendering */
-            image-rendering: pixelated; 
-            image-rendering: crisp-edges;
-        }
+        canvas { display: block; width: 100%; height: 100%; }
 
-        /* --- UI (HUD) --- */
+        /* --- HUD --- */
         #hud {
             position: absolute; top: 22%; left: 15px; right: 15px;
             display: flex; justify-content: space-between;
             pointer-events: none; z-index: 10;
-            color: #fff; text-shadow: 2px 2px 0px #000;
-            font-size: 0.8rem;
+            color: #fff; text-shadow: 2px 2px 4px #000;
+            font-family: 'Permanent Marker', cursive;
         }
 
+        .bar-label { font-size: 0.8rem; color: #aaa; margin-bottom: 2px; }
         .bar-wrap {
             width: 140px; height: 16px;
-            background: #222; border: 2px solid #fff;
-            /* Removed skew for 8-bit look */
+            background: rgba(0,0,0,0.5); border: 2px solid #fff;
+            transform: skewX(-15deg); overflow: hidden;
+            box-shadow: 0 0 10px rgba(0,0,0,0.8);
         }
         .bar-fill {
             width: 100%; height: 100%;
-            background: #00FF00;
+            background: linear-gradient(90deg, #00FF00, #adff2f);
+            transition: width 0.2s;
         }
 
         /* Spike Timer */
-        #spikeTimerContainer { margin-top: 8px; opacity: 0; }
+        #spikeTimerContainer {
+            margin-top: 8px; opacity: 0; transition: opacity 0.3s;
+        }
         #spikeTimerWrap {
             width: 140px; height: 8px;
-            background: #222; border: 2px solid #fff;
+            background: #333; border: 1px solid #888;
+            transform: skewX(-15deg);
         }
-        #spikeTimerFill { width: 100%; height: 100%; background: #9400D3; }
+        #spikeTimerFill {
+            width: 100%; height: 100%; background: #9400D3;
+            box-shadow: 0 0 10px #9400D3;
+        }
 
         /* --- OVERLAYS --- */
         .overlay {
             position: absolute; top: 0; left: 0;
             width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95); /* Solid pixel dark */
+            background: rgba(0,0,0,0.92);
+            backdrop-filter: blur(5px);
             display: flex; flex-direction: column;
             justify-content: center; align-items: center;
             z-index: 50; color: #fff; text-align: center;
         }
 
         .title-main {
-            font-family: 'Rubik Glitch', cursive; font-size: 3.5rem;
-            color: #FFF; text-shadow: 4px 4px #FF0000;
-            margin-bottom: 10px;
+            font-family: 'Rubik Glitch', cursive; font-size: 4rem;
+            color: #FFF; text-shadow: 5px 5px #FF0000;
+            line-height: 0.9; margin-bottom: 5px;
         }
         .title-sub {
-            font-size: 1.5rem; color: #FFD700; margin-bottom: 20px;
-            text-shadow: 2px 2px #C23B22;
+            font-family: 'Permanent Marker', cursive; font-size: 2.5rem;
+            color: #FFD700; margin-bottom: 20px; transform: rotate(-3deg);
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
         }
         
         input[type="text"] {
-            padding: 10px; font-size: 1rem; font-family: inherit;
-            border: 3px solid #FFF; background: #000; color: #fff;
-            text-align: center; text-transform: uppercase; width: 220px; margin-bottom: 25px;
-            border-radius: 0; /* Square corners */
+            padding: 15px; font-size: 1.2rem;
+            border: 2px solid #444; background: #111; color: #fff;
+            text-align: center; font-family: 'Montserrat', sans-serif;
+            text-transform: uppercase; width: 220px; margin-bottom: 25px;
+            border-radius: 5px; letter-spacing: 2px;
         }
-        input:focus { outline: none; border-color: #FF0000; }
+        input:focus { outline: none; border-color: #FF0000; box-shadow: 0 0 15px #FF0000; }
 
         .btn-start {
-            padding: 15px 30px; font-size: 1rem; font-family: inherit;
-            background: #FF0000; color: #FFF; border: 3px solid #FFF; 
-            cursor: pointer; text-transform: uppercase;
-            box-shadow: 4px 4px 0px #8B0000; /* Retro block shadow */
+            padding: 20px 50px; font-size: 1.4rem; font-weight: 900;
+            background: linear-gradient(45deg, #FF0000, #8B0000); 
+            color: #FFF; border: 2px solid #FFF; cursor: pointer;
+            box-shadow: 0 0 25px rgba(255,0,0,0.6); text-transform: uppercase;
+            transform: skewX(-10deg); transition: all 0.1s;
         }
-        .btn-start:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0px #8B0000; }
+        .btn-start:active { transform: skewX(-10deg) scale(0.95); }
 
         /* Hall of Fame */
         .hof-container {
-            margin-top: 25px; background: #111;
-            padding: 15px; width: 85%; max-width: 350px;
-            border: 3px solid #FFF;
+            margin-top: 25px; background: rgba(255,255,255,0.08);
+            padding: 20px; border-radius: 10px; width: 85%; max-width: 350px;
+            border: 1px solid rgba(255,255,255,0.2);
         }
-        .hof-list { list-style: none; padding: 0; margin: 0; font-size: 0.8rem; text-align: left; }
-        .hof-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 2px dashed #333; }
-        .hof-item:first-child { color: #FFD700; }
+        .hof-list { list-style: none; padding: 0; margin: 0; font-size: 1rem; text-align: left; }
+        .hof-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .hof-item:first-child { color: #FFD700; font-weight: bold; }
 
-        /* --- JBRLA POPUP --- */
+        /* --- JBRLA POPUP ANIMATION --- */
         #jbrla-popup {
             position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%) scale(0);
-            font-family: 'Rubik Glitch', sans-serif;
-            font-size: 5rem; color: #fff;
-            text-shadow: 4px 4px 0px #FF0000; /* Solid pixel shadow */
-            pointer-events: none; z-index: 40; opacity: 0;
+            font-family: 'Rubik Glitch', cursive;
+            font-size: 6rem; color: #fff;
+            text-shadow: 0 0 20px #9400D3, 5px 5px 0px #000;
+            pointer-events: none; z-index: 40;
+            opacity: 0;
         }
-        .jbrla-anim { animation: jbrlaPop 1.5s forwards steps(5); } /* Steps for retro feel */
+        .jbrla-anim { animation: jbrlaPop 1.5s forwards; }
 
         @keyframes jbrlaPop {
             0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
-            20% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
-            80% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+            20% { transform: translate(-50%, -50%) scale(1.2) rotate(-5deg); opacity: 1; }
+            40% { transform: translate(-50%, -50%) scale(1.0) rotate(5deg); opacity: 1; text-shadow: 10px 0 0 red, -10px 0 0 blue; }
+            80% { transform: translate(-50%, -50%) scale(1.1) rotate(0deg); opacity: 1; }
             100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
         }
 
@@ -125,44 +133,48 @@
         }
         .ctrl-btn {
             position: absolute;
-            background: rgba(255, 255, 255, 0.1);
-            border: 3px solid rgba(255, 255, 255, 0.4);
-            /* Square buttons for 8-bit */
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
             display: flex; justify-content: center; align-items: center;
             color: rgba(255, 255, 255, 0.6); font-size: 2rem;
             pointer-events: auto; touch-action: manipulation;
+            transition: all 0.1s; backdrop-filter: blur(2px);
         }
-        .ctrl-btn:active { background: #FF0000; border-color: #FFF; color: white; }
+        .ctrl-btn:active { background: rgba(255, 0, 0, 0.5); border-color: #ff0000; color: white; transform: scale(0.95); }
 
-        #btn-left { bottom: 10px; left: 10px; width: 100px; height: 100px; font-size: 3rem; }
-        #btn-up { bottom: 120px; left: 30px; width: 60px; height: 60px; font-size: 1.5rem; }
-        #btn-right { bottom: 10px; right: 10px; width: 100px; height: 100px; font-size: 3rem; }
-        #btn-down { bottom: 120px; right: 30px; width: 60px; height: 60px; font-size: 1.5rem; }
+        #btn-left { bottom: 10px; left: 10px; width: 110px; height: 110px; font-size: 3rem; }
+        #btn-up { bottom: 130px; left: 35px; width: 60px; height: 60px; font-size: 1.5rem; }
+        #btn-right { bottom: 10px; right: 10px; width: 110px; height: 110px; font-size: 3rem; }
+        #btn-down { bottom: 130px; right: 35px; width: 60px; height: 60px; font-size: 1.5rem; }
 
         .credits {
-            position: absolute; bottom: 5px; width: 100%; text-align: center;
-            font-size: 0.6rem; color: #666; z-index: 60; pointer-events: none;
+            position: absolute; bottom: 10px; width: 100%; text-align: center;
+            font-size: 0.7rem; color: #666; font-family: sans-serif; z-index: 60; pointer-events: none;
         }
+
     </style>
 </head>
 <body>
 
-    <audio id="bgMusic" loop><source src="soundtrack.mp3" type="audio/mpeg"></audio>
+    <audio id="bgMusic" loop>
+        <source src="soundtrack.mp3" type="audio/mpeg">
+    </audio>
 
     <div id="gameContainer">
         <canvas id="gameCanvas"></canvas>
 
         <div id="hud">
             <div>
-                <div>ARMOR</div>
+                <div class="bar-label">ARMOR</div>
                 <div class="bar-wrap"><div id="hpBar" class="bar-fill"></div></div>
                 <div id="spikeTimerContainer">
                     <div id="spikeTimerWrap"><div id="spikeTimerFill"></div></div>
                 </div>
             </div>
             <div style="text-align: right;">
-                <span id="scoreVal" style="font-size: 1.2rem; color: #FFD700;">0</span><br>
-                <span>SCORE</span>
+                <span id="scoreVal" style="font-size: 2rem; color: #FFD700; text-shadow: 0 0 10px gold;">0</span><br>
+                <span class="bar-label">SCORE</span>
             </div>
         </div>
 
@@ -170,16 +182,16 @@
 
         <div id="screen-start" class="overlay">
             <div class="title-main">DAIYNBALL</div>
-            <div class="title-sub">8-BIT JBRLA</div>
+            <div class="title-sub">JBRLA LEGEND</div>
             <input type="text" id="nickname" placeholder="NICKNAME" maxlength="8">
             <button class="btn-start" onclick="initGame()">КЕТТІК / LET'S GO</button>
         </div>
 
         <div id="screen-gameover" class="overlay" style="display:none;">
-            <div class="title-main" style="font-size: 2.5rem; color: #FF0000; text-shadow: 3px 3px #FFF;">GAME OVER<br>ОЙЫН АЯҚТАЛДЫ</div>
-            <p style="font-size: 1rem;">SCORE: <span id="end-score" style="color: #FFD700;">0</span></p>
+            <div class="title-main" style="font-size: 3rem; color: #FF0000; text-shadow:none;">WRECKED</div>
+            <p style="font-size: 1.2rem;">FINAL SCORE: <span id="end-score" style="color: #FFD700; font-weight:bold;">0</span></p>
             <div class="hof-container">
-                <div style="color:#FFD700; margin-bottom:10px;">HALL OF FAME</div>
+                <div style="color:#FFD700; font-family:'Permanent Marker'; margin-bottom:10px;">HALL OF FAME</div>
                 <ul id="hof-list" class="hof-list"></ul>
             </div>
             <button class="btn-start" style="margin-top: 25px;" onclick="resetGame()">RIDE AGAIN</button>
@@ -196,12 +208,15 @@
     </div>
 
     <script>
-        /** AUDIO **/
+        /** 🎵 AUDIO SYSTEM **/
         const AudioSys = {
-            ctx: null, bgMusic: document.getElementById('bgMusic'),
+            ctx: null,
+            bgMusic: document.getElementById('bgMusic'),
             init: function() { 
                 if(!this.ctx) this.ctx = new (window.AudioContext||window.webkitAudioContext)();
-                this.bgMusic.volume = 0.5; this.bgMusic.play().catch(e=>{});
+                // Try to play MP3
+                this.bgMusic.volume = 0.6;
+                this.bgMusic.play().catch(e => console.log("Audio waiting for interaction"));
             },
             playTone: function(f,t,d,v=0.1) {
                 if(!this.ctx) return;
@@ -211,64 +226,87 @@
                 g.gain.exponentialRampToValueAtTime(0.01,this.ctx.currentTime+d);
                 o.connect(g); g.connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime+d);
             },
-            playSmash: function() { this.playTone(60,'square',0.2,0.4); this.playTone(120,'sawtooth',0.1,0.3); }
-        };
-
-        /** STORAGE **/
-        const StorageSys = {
-            save: function(name, score) {
-                let list = JSON.parse(localStorage.getItem('dayinball_8bit_scores')) || [];
-                list.push({name: name || 'ANON', score: score});
-                list.sort((a,b) => b.score - a.score);
-                return list.slice(0, 5);
+            playSmash: function() {
+                // Crunchy impact
+                this.playTone(60, 'sawtooth', 0.2, 0.4);
+                this.playTone(100, 'square', 0.1, 0.3);
             }
         };
 
-        /** GAME ENGINE **/
+        /** 💾 STORAGE **/
+        const StorageSys = {
+            save: function(name, score) {
+                let list = JSON.parse(localStorage.getItem('dayinball_scores')) || [];
+                list.push({name: name || 'ANON', score: score});
+                list.sort((a,b) => b.score - a.score);
+                list = list.slice(0, 5);
+                localStorage.setItem('dayinball_scores', JSON.stringify(list));
+                return list;
+            }
+        };
+
+        /** 🎮 GAME ENGINE **/
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         
-        // CRITICAL FOR 8-BIT LOOK: Disable smoothing
-        ctx.imageSmoothingEnabled = false;
-
+        // Config
         let roadY, roadH; 
         let bgCache = { mountains: [], buildings: [], stars: [] };
-        let gameState = 'START'; let nickname = ""; let score = 0;
-        let baseSpeed = 7; let difficulty = 1; let roadOffset = 0;
-        let entities = []; let streetLights = []; let particles = []; let spikeEndTime = 0;
+
+        // State
+        let gameState = 'START';
+        let nickname = "";
+        let score = 0;
+        let baseSpeed = 7;
+        let difficulty = 1;
+        let roadOffset = 0;
+        let entities = [];
+        let particles = [];
+        let spikeEndTime = 0;
         
         const car = { x:0, y:0, w:42, h:75, health:100 };
         const keys = {u:false, d:false, l:false, r:false};
 
         function resize() {
-            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-            // Re-disable smoothing after resize
-            ctx.imageSmoothingEnabled = false;
-            roadY = canvas.height * 0.21; roadH = canvas.height - roadY;
-            car.x = canvas.width/2 - 21; car.y = roadY + roadH * 0.7;
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            roadY = canvas.height * 0.21; // Compact Horizon
+            roadH = canvas.height - roadY;
+            
+            car.x = canvas.width/2 - 21;
+            car.y = roadY + roadH * 0.7;
+            
             generateBackground();
         }
         window.addEventListener('resize', resize);
 
         function generateBackground() {
             bgCache.mountains = [];
-            for(let i=0; i<=canvas.width; i+=10) {
+            for(let i=0; i<=canvas.width; i+=5) {
                 bgCache.mountains.push({ x: i, y: (Math.sin(i*0.01)*25) + (Math.cos(i*0.02)*15) + 30 });
             }
             bgCache.buildings = [];
             let bx = 0;
             while(bx < canvas.width) {
-                let bw = 25 + Math.random() * 40; let bh = 20 + Math.random() * 60;
+                let bw = 25 + Math.random() * 40;
+                let bh = 20 + Math.random() * 60;
                 let wins = [];
-                for(let wy=4; wy<bh-5; wy+=10) for(let wx=4; wx<bw-4; wx+=8) if(Math.random()>0.3) wins.push({x:wx, y:wy});
+                for(let wy=4; wy<bh-5; wy+=10) {
+                    for(let wx=4; wx<bw-4; wx+=8) {
+                        if(Math.random()>0.3) wins.push({x:wx, y:wy});
+                    }
+                }
                 bgCache.buildings.push({x:bx, w:bw, h:bh, wins: wins});
                 bx += bw;
             }
             bgCache.stars = [];
-            // Stars are now just single pixels
-            for(let i=0; i<50; i++) bgCache.stars.push({x: Math.random()*canvas.width, y: Math.random()*roadY*0.9});
+            for(let i=0; i<40; i++) bgCache.stars.push({
+                x: Math.random()*canvas.width, y: Math.random()*roadY*0.9, 
+                s: Math.random()*2, alpha: Math.random()
+            });
         }
 
+        // --- CONTROLS ---
         const bindKey = (id, key) => {
             const el = document.getElementById(id);
             el.addEventListener('touchstart', (e)=>{e.preventDefault(); keys[key]=true;});
@@ -278,108 +316,167 @@
         };
         bindKey('btn-up','u'); bindKey('btn-down','d'); bindKey('btn-left','l'); bindKey('btn-right','r');
 
+        // --- UPDATE LOOP ---
         function update() {
             difficulty = 1 + (score / 40);
             let currentSpeed = baseSpeed * difficulty;
             roadOffset += currentSpeed;
 
+            // Car Physics
             const moveSpd = 5 + (difficulty * 0.6);
             if(keys.u && car.y > roadY) car.y -= moveSpd;
             if(keys.d && car.y < canvas.height - car.h) car.y += moveSpd;
             if(keys.l && car.x > 0) car.x -= moveSpd;
             if(keys.r && car.x < canvas.width - car.w) car.x += moveSpd;
 
-            if(Math.random() < 0.02 + (difficulty * 0.003)) spawnEntity();
-            if(Math.random() < 0.03) streetLights.push({ y: roadY, side: Math.random()>0.5 ? 'L' : 'R' });
+            // Spawns
+            let spawnChance = 0.02 + (difficulty * 0.003);
+            if(Math.random() < spawnChance) spawnEntity();
 
+            // Move Entities
             entities.forEach(e => e.y += currentSpeed);
-            streetLights.forEach(s => s.y += currentSpeed);
+            
+            // Cleanup
             entities = entities.filter(e => e.y < canvas.height && e.active);
-            streetLights = streetLights.filter(s => s.y < canvas.height);
 
             const isSpiked = Date.now() < spikeEndTime;
 
+            // Collisions
             entities.forEach(e => {
-                let hitX = e.type==='obs' ? e.x+5 : e.x; let hitW = e.type==='obs' ? e.w-10 : e.w;
-                if (car.x < hitX + hitW && car.x + car.w > hitX && car.y < e.y + e.h && car.y + car.h > e.y) {
+                let hitX = e.type==='obs' ? e.x+5 : e.x;
+                let hitW = e.type==='obs' ? e.w-10 : e.w;
+
+                if (car.x < hitX + hitW && car.x + car.w > hitX &&
+                    car.y < e.y + e.h && car.y + car.h > e.y) {
+                    
                     if(e.active) {
                         e.active = false;
                         if(e.type === 'obs') {
-                            if(isSpiked) { AudioSys.playSmash(); spawnParticles(e.x+e.w/2, e.y+e.h/2, '#777', 15); score += 2; } 
-                            else { car.health -= 25; AudioSys.playTone(100, 'sawtooth', 0.2); spawnParticles(e.x+e.w/2, e.y+e.h/2, e.color, 10); }
-                        } else if(e.type === 'letter') { score++; AudioSys.playTone(800, 'square', 0.1);
-                        } else if(e.type === 'flask') { car.health = Math.min(100, car.health+20); AudioSys.playTone(600, 'square', 0.15);
+                            if(isSpiked) {
+                                AudioSys.playSmash();
+                                spawnParticles(e.x+e.w/2, e.y+e.h/2, '#777', 15);
+                                score += 2; 
+                            } else {
+                                car.health -= 25;
+                                AudioSys.playTone(100, 'sawtooth', 0.2);
+                                spawnParticles(e.x+e.w/2, e.y+e.h/2, e.color, 10);
+                            }
+                        } else if(e.type === 'letter') {
+                            score++; AudioSys.playTone(1000, 'sine', 0.1);
+                        } else if(e.type === 'flask') {
+                            car.health = Math.min(100, car.health+20); 
+                            AudioSys.playTone(600, 'square', 0.15);
                         } else if(e.type === 'ultra') {
-                            spikeEndTime = Date.now() + 10000; AudioSys.playTone(300,'square',0.2);
+                            // ACTIVATE JBRLA MODE
+                            spikeEndTime = Date.now() + 10000;
+                            AudioSys.playTone(300, 'sawtooth', 0.1);
+                            AudioSys.playTone(600, 'sawtooth', 0.3);
+                            // Trigger Animation
                             const el = document.getElementById('jbrla-popup');
-                            el.classList.remove('jbrla-anim'); void el.offsetWidth; el.classList.add('jbrla-anim');
+                            el.classList.remove('jbrla-anim');
+                            void el.offsetWidth; // trigger reflow
+                            el.classList.add('jbrla-anim');
                         }
                     }
                 }
             });
 
-            particles.forEach((p,i) => { p.x += p.vx; p.y += p.vy; p.vy += 0.5; p.l -= 0.1; if(p.l<=0) particles.splice(i,1); });
+            // Particles
+            particles.forEach((p,i) => {
+                p.x += p.vx; p.y += p.vy; p.vy += 0.5; // Gravity
+                p.l -= 0.05;
+                if(p.l<=0) particles.splice(i,1);
+            });
 
+            // UI
             document.getElementById('hpBar').style.width = Math.max(0,car.health) + '%';
-            document.getElementById('hpBar').style.background = car.health > 50 ? '#00FF00' : (car.health > 25 ? '#FFFF00' : '#FF0000');
+            const hpColor = car.health > 50 ? '#00FF00' : (car.health > 25 ? '#FFFF00' : '#FF0000');
+            document.getElementById('hpBar').style.background = hpColor;
             document.getElementById('scoreVal').innerText = score;
+            
             const timerEl = document.getElementById('spikeTimerContainer');
             if(isSpiked) {
                 timerEl.style.opacity = '1';
-                document.getElementById('spikeTimerFill').style.width = ((Math.max(0, spikeEndTime - Date.now()) / 10000) * 100) + '%';
-            } else { timerEl.style.opacity = '0'; }
+                const pct = (Math.max(0, spikeEndTime - Date.now()) / 10000) * 100;
+                document.getElementById('spikeTimerFill').style.width = pct + '%';
+            } else {
+                timerEl.style.opacity = '0';
+            }
 
             if(car.health <= 0) gameOver();
         }
 
         function spawnEntity() {
-            let r = Math.random(); let x = Math.random() * (canvas.width - 50);
+            let r = Math.random();
+            let x = Math.random() * (canvas.width - 50);
+            
             if(r < 0.7) {
-                let s = Math.random(); let w = 40 + (s * 35); let h = 30 + (s * 25);
+                // Rock (Natural)
+                let s = Math.random();
+                let w = 40 + (s * 35);
+                let h = 30 + (s * 25);
                 let c = Math.random() > 0.5 ? '#606060' : '#4a3b32';
                 entities.push({ x:x, y:roadY-60, w:w, h:h, type:'obs', color:c, active:true });
             } else if (r < 0.85) {
+                // Letter
                 let char = "АӘБВГҒДЕЖЗИКҚЛМНҢОӨПРСТУҰҮФХҺЦЧШЩЪЫІЬЭЮЯ"[Math.floor(Math.random()*42)];
                 entities.push({x:x, y:roadY-60, w:40, h:40, type:'letter', char:char, active:true});
-            } else if (r < 0.95) { entities.push({x:x, y:roadY-60, w:30, h:40, type:'flask', active:true});
-            } else { entities.push({x:x, y:roadY-60, w:35, h:45, type:'ultra', active:true}); }
+            } else if (r < 0.95) {
+                // Flask
+                entities.push({x:x, y:roadY-60, w:30, h:40, type:'flask', active:true});
+            } else {
+                // ULTRA (2% of spawns)
+                entities.push({x:x, y:roadY-60, w:35, h:45, type:'ultra', active:true});
+            }
         }
 
         function spawnParticles(x,y,c,count) {
             for(let i=0;i<count;i++) particles.push({x:x, y:y, vx:(Math.random()-0.5)*15, vy:(Math.random()-1)*15, l:1, color:c});
         }
 
-        // --- DRAW (8-BIT STYLE) ---
+        // --- DRAW ---
         function draw() {
             if(gameState !== 'PLAYING') return;
             ctx.clearRect(0,0,canvas.width,canvas.height);
 
-            // 1. BACKGROUND (Dithered/Solid colors instead of smooth gradients)
-            ctx.fillStyle = '#020210'; ctx.fillRect(0,0,canvas.width, roadY/2);
-            ctx.fillStyle = '#15202B'; ctx.fillRect(0,roadY/2,canvas.width, roadY/2);
+            // 1. BACKGROUND
+            let grad = ctx.createLinearGradient(0,0,0,roadY);
+            grad.addColorStop(0, '#020210'); grad.addColorStop(1, '#15202B');
+            ctx.fillStyle = grad; ctx.fillRect(0,0,canvas.width, roadY);
             
-            // Stars (Single pixels)
-            ctx.fillStyle = '#FFF'; bgCache.stars.forEach(s => ctx.fillRect(s.x, s.y, 2, 2));
+            // Stars (twinkle)
+            ctx.fillStyle = '#FFF';
+            bgCache.stars.forEach(s => { 
+                ctx.globalAlpha = Math.random() * s.alpha;
+                ctx.fillRect(s.x, s.y, s.s, s.s);
+            });
+            ctx.globalAlpha = 1.0;
 
-            // Mountains (Solid color)
+            // Mountains
             ctx.fillStyle = '#0f172a'; ctx.beginPath(); ctx.moveTo(0, roadY);
             bgCache.mountains.forEach(p => ctx.lineTo(p.x, roadY - p.y)); ctx.lineTo(canvas.width, roadY); ctx.fill();
             
-            // Buildings (Solid colors, no gradients)
+            // Buildings
             bgCache.buildings.forEach(b => {
                 ctx.fillStyle = '#1e293b'; ctx.fillRect(b.x, roadY - b.h, b.w, b.h);
-                ctx.fillStyle = '#FCD34D'; b.wins.forEach(w => { if(Math.random()>0.1) ctx.fillRect(b.x + w.x, roadY - b.h + w.y, 4, 4); });
+                ctx.fillStyle = '#FCD34D'; 
+                // Light flicker
+                b.wins.forEach(w => { if(Math.random()>0.05) ctx.fillRect(b.x + w.x, roadY - b.h + w.y, 4, 5); });
             });
             drawLandmarks();
 
-            // 2. ROAD (Solid colors)
+            // 2. ROAD
             ctx.fillStyle = '#1a1a1a'; ctx.fillRect(0, roadY, canvas.width, roadH);
-            if(score % 4 < 2) { // Retro flickering noise
-                 ctx.fillStyle = '#222'; for(let i=0; i<50; i++) ctx.fillRect(Math.random()*canvas.width, roadY+Math.random()*roadH, 4, 4);
+            // Noise/Grain texture simulation (dots)
+            if(score % 2 === 0) {
+                 ctx.fillStyle = 'rgba(255,255,255,0.03)';
+                 for(let i=0; i<30; i++) ctx.fillRect(Math.random()*canvas.width, roadY+Math.random()*roadH, 2, 2);
             }
+
+            // Shoulders
             ctx.fillStyle = '#111'; ctx.fillRect(0, roadY, 15, roadH); ctx.fillRect(canvas.width-15, roadY, 15, roadH);
 
-            // Lines (Solid Yellow)
+            // Lines
             ctx.fillStyle = '#FFD700'; 
             const laneCount = 4; const laneW = canvas.width / laneCount;
             const dashH = 60; const dashGap = 150; const pattern = dashH + dashGap;
@@ -387,86 +484,129 @@
                 let lx = l * laneW;
                 for(let y = roadY - pattern; y < canvas.height; y += pattern) {
                     let dy = y + (roadOffset % pattern);
-                    if(dy > roadY - dashH && dy < canvas.height) ctx.fillRect(lx - 4, dy, 8, dashH);
+                    if(dy > roadY - dashH && dy < canvas.height) ctx.fillRect(lx - 2, dy, 4, dashH);
                 }
             }
 
-            // 3. STREET LIGHTS (NO GLOW - Just solid shapes)
-            streetLights.forEach(s => {
-                let lx = (s.side === 'L') ? 5 : canvas.width - 25;
-                // Pole
-                ctx.fillStyle = '#555'; ctx.fillRect(lx, s.y, 6, 60);
-                // Light on ground (Solid yellow square, no gradient)
-                let gx = (s.side === 'L') ? lx + 10 : lx - 50;
-                ctx.fillStyle = '#FFD700'; ctx.fillRect(gx, s.y+50, 50, 20);
-            });
-
-            // 4. ENTITIES (Blocky, no soft shadows)
+            // 4. ENTITIES
             entities.forEach(e => {
                 if(e.type === 'obs') {
-                    ctx.fillStyle = e.color; ctx.fillRect(e.x, e.y, e.w, e.h); // Simple block rocks
-                    ctx.fillStyle = '#000'; ctx.fillRect(e.x+4, e.y+4, 4, 4); // Pixel detail
-                } else if(e.type === 'letter') {
-                    ctx.fillStyle = '#FFD700'; ctx.fillRect(e.x, e.y, e.w, e.h); // Square coin
-                    ctx.fillStyle = '#000'; ctx.font='bold 20px monospace'; ctx.textAlign='center'; ctx.textBaseline='middle';
+                    // Rock
+                    ctx.fillStyle = e.color;
+                    ctx.beginPath();
+                    ctx.moveTo(e.x + e.w*0.2, e.y); ctx.lineTo(e.x + e.w*0.8, e.y + e.h*0.1);
+                    ctx.lineTo(e.x + e.w, e.y + e.h*0.6); ctx.lineTo(e.x + e.w*0.7, e.y + e.h);
+                    ctx.lineTo(e.x + e.w*0.1, e.y + e.h*0.9); ctx.lineTo(e.x, e.y + e.h*0.4);
+                    ctx.fill();
+                    // Shadow
+                    ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath();
+                    ctx.moveTo(e.x+e.w, e.y+e.h*0.6); ctx.lineTo(e.x+e.w+10, e.y+e.h); ctx.lineTo(e.x+e.w*0.5, e.y+e.h); ctx.fill();
+                } 
+                else if(e.type === 'letter') {
+                    ctx.fillStyle = '#FFD700'; ctx.beginPath(); ctx.arc(e.x+e.w/2, e.y+e.h/2, e.w/2, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = '#000'; ctx.font='bold 20px Arial'; ctx.textAlign='center'; ctx.textBaseline='middle';
                     ctx.fillText(e.char, e.x+e.w/2, e.y+e.h/2);
-                } else if(e.type === 'flask') {
-                    ctx.fillStyle = '#00f'; ctx.fillRect(e.x, e.y, e.w, e.h);
-                    ctx.fillStyle = '#fff'; ctx.fillRect(e.x, e.y+15, e.w, 5);
-                    ctx.fillStyle = '#f00'; ctx.font='bold 16px monospace'; ctx.fillText('G', e.x+e.w/2, e.y+35);
-                } else if(e.type === 'ultra') {
-                    ctx.fillStyle = '#9400D3'; ctx.fillRect(e.x, e.y, e.w, e.h);
-                    ctx.fillStyle = '#FFF'; ctx.font='bold 24px monospace'; ctx.fillText('⚡', e.x+e.w/2, e.y+e.h/2+5);
-                    ctx.strokeStyle = '#FFF'; ctx.lineWidth = 3; ctx.strokeRect(e.x, e.y, e.w, e.h);
+                    // Shine
+                    ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(e.x+e.w/2, e.y+e.h/2, e.w/2-2, 0, Math.PI*2); ctx.stroke();
+                } 
+                else if(e.type === 'flask') {
+                    ctx.fillStyle = '#00f'; ctx.fillRect(e.x+5, e.y+10, e.w-10, e.h-10);
+                    ctx.fillStyle = '#fff'; ctx.fillRect(e.x+5, e.y+20, e.w-10, 5);
+                    ctx.fillStyle = '#f00'; ctx.font='bold 12px Arial'; ctx.fillText('G', e.x+e.w/2, e.y+35);
+                    // Glow
+                    ctx.shadowBlur = 10; ctx.shadowColor = '#00f';
+                    ctx.fillRect(e.x+8, e.y+12, e.w-16, e.h-14);
+                    ctx.shadowBlur = 0;
+                }
+                else if(e.type === 'ultra') {
+                    ctx.shadowBlur = 15; ctx.shadowColor = '#9400D3';
+                    ctx.fillStyle = '#9400D3'; ctx.fillRect(e.x, e.y+5, e.w, e.h-5);
+                    ctx.shadowBlur = 0;
+                    ctx.fillStyle = '#333'; ctx.fillRect(e.x+e.w*0.3, e.y, e.w*0.4, 5);
+                    ctx.fillStyle = '#FFF'; ctx.font='bold 22px Arial'; ctx.fillText('⚡', e.x+e.w/2, e.y+e.h/2+5);
                 }
             });
 
+            // 5. CAR
             drawCar();
-            // 5. PARTICLES (Big pixels)
-            particles.forEach(p => { ctx.fillStyle=p.color; ctx.fillRect(p.x, p.y, 8, 8); });
+
+            // 6. PARTICLES
+            particles.forEach(p => { 
+                ctx.fillStyle=p.color; ctx.fillRect(p.x, p.y, 4, 4); 
+            });
+
             requestAnimationFrame(draw);
             update();
         }
 
         function drawLandmarks() {
+             // Hotel
              let hx = canvas.width * 0.15; let hy = roadY;
-             ctx.fillStyle = '#555'; ctx.fillRect(hx, hy-100, 60, 100);
-             ctx.fillStyle = '#FFD700'; ctx.fillRect(hx+25, hy-110, 10, 10); // Crown pixel
+             ctx.fillStyle = '#555'; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx, hy-80); 
+             ctx.quadraticCurveTo(hx+30, hy-100, hx+60, hy-80); ctx.lineTo(hx+60, hy); ctx.fill();
+             ctx.fillStyle = '#FFD700'; ctx.beginPath(); ctx.arc(hx+30, hy-85, 4, 0, Math.PI*2); ctx.fill();
 
+             // TV Tower
              let tx = canvas.width * 0.85;
-             ctx.fillStyle = '#666'; ctx.fillRect(tx, roadY-120, 5, 120);
-             ctx.fillStyle = '#D00'; ctx.fillRect(tx-5, roadY-100, 15, 15); // Apple pixel
+             ctx.strokeStyle = '#666'; ctx.lineWidth = 3;
+             ctx.beginPath(); ctx.moveTo(tx, roadY-20); ctx.lineTo(tx, roadY-120); ctx.stroke();
+             ctx.fillStyle = '#D00'; ctx.beginPath(); ctx.arc(tx, roadY-100, 5, 0, Math.PI*2); ctx.fill();
         }
 
         function drawCar() {
             const {x, y, w, h} = car;
             const isSpiked = Date.now() < spikeEndTime;
 
-            // Spikes (Blocky)
+            // Spikes
             if(isSpiked) {
                 ctx.fillStyle = '#AAA'; 
-                ctx.fillRect(x, y-20, 10, 20); ctx.fillRect(x+15, y-25, 10, 25); ctx.fillRect(x+30, y-20, 10, 20);
+                ctx.beginPath();
+                ctx.moveTo(x, y); ctx.lineTo(x+10, y-25); ctx.lineTo(x+15, y);
+                ctx.moveTo(x+12, y); ctx.lineTo(x+21, y-30); ctx.lineTo(x+30, y);
+                ctx.moveTo(x+27, y); ctx.lineTo(x+32, y-25); ctx.lineTo(x+w, y);
+                ctx.fill();
             }
-            // Body (No rounded corners, solid colors)
-            ctx.fillStyle = '#080808'; ctx.fillRect(x, y, w, h);
-            ctx.fillStyle = '#222'; ctx.fillRect(x+4, y+18, w-8, h-30); // Roof
+
+            // Shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(x+6, y+6, w, h);
+
+            // Body
+            ctx.fillStyle = '#080808'; 
+            // Rounded rect for smoother car
+            ctx.beginPath(); ctx.roundRect(x, y, w, h, 4); ctx.fill();
             
-            // Lights (Solid, no glow)
-            ctx.fillStyle = '#FF0'; ctx.fillRect(x+2, y, 8, 6); ctx.fillRect(x+w-10, y, 8, 6);
-            ctx.fillStyle = '#F00'; ctx.fillRect(x+2, y+h-6, 8, 6); ctx.fillRect(x+w-10, y+h-6, 8, 6);
+            // Roof / Glass
+            ctx.fillStyle = '#222'; ctx.fillRect(x+2, y+18, w-4, h-30);
+            
+            // Text
+            ctx.save(); ctx.translate(x+w/2, y+h/2); ctx.rotate(-Math.PI/2);
+            ctx.fillStyle = '#D00'; ctx.font='bold 11px Arial'; ctx.textAlign='center'; ctx.fillText("DAYINBALL", 0, 4);
+            ctx.restore();
+
+            // Lights (with real glow)
+            ctx.shadowBlur = 15; ctx.shadowColor = '#FF0';
+            ctx.fillStyle = '#FFEB3B'; ctx.fillRect(x+2, y, 8, 6); ctx.fillRect(x+w-10, y, 8, 6);
+            
+            ctx.shadowBlur = 10; ctx.shadowColor = '#F00';
+            ctx.fillStyle = '#D32F2F'; ctx.fillRect(x+2, y+h-6, 8, 6); ctx.fillRect(x+w-10, y+h-6, 8, 6);
+            
+            ctx.shadowBlur = 0; // reset
         }
 
+        // --- GAME FLOW ---
         function initGame() {
             let nick = document.getElementById('nickname').value.trim();
-            if(!nick) { alert("ENTER NICKNAME"); return; }
+            if(!nick) { alert("ENTER NICKNAME / АТЫҢЫЗДЫ ЖАЗЫҢЫЗ"); return; }
             nickname = nick.toUpperCase();
+            
             AudioSys.init();
+
             document.getElementById('screen-start').style.display = 'none';
             document.getElementById('screen-gameover').style.display = 'none';
+            
             gameState = 'PLAYING'; score = 0; car.health = 100; difficulty = 1; spikeEndTime = 0;
-            entities = []; particles = []; streetLights = [];
-            // Ensure smoothing is off
-            ctx.imageSmoothingEnabled = false;
+            entities = []; particles = []; 
+            
             resize(); draw();
         }
 
