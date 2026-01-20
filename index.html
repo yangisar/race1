@@ -90,29 +90,40 @@
         }
         .pixel-btn:active { transform: translate(4px, 4px); box-shadow: 2px 2px 0px #8B0000; }
 
-        /* --- GAME OVER / END SCREEN --- */
+        /* --- GAME OVER --- */
         .overlay-gameover {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.95); backdrop-filter: blur(5px);
             display: flex; flex-direction: column; align-items: center;
             z-index: 50; color: #fff; text-align: center; 
             font-family: 'Montserrat', sans-serif;
-            padding-top: 50px; box-sizing: border-box;
+            padding-top: 40px; box-sizing: border-box;
         }
 
         .results-box {
-            background: #111; border: 2px solid #333;
-            width: 85%; max-width: 500px; height: 40%;
-            margin: 20px 0; padding: 15px;
+            background: #000; border: 2px solid #00FF00;
+            width: 85%; max-width: 500px; height: 30%; /* Fixed height for scroll */
+            margin: 10px 0; padding: 15px;
             overflow-y: auto; text-align: left;
             font-family: 'Courier New', monospace; font-size: 0.9rem;
             line-height: 1.4; white-space: pre-wrap;
-            box-shadow: inset 0 0 20px #000;
+            box-shadow: 0 0 10px #00FF00;
+            color: #00FF00;
+            text-shadow: 0 0 2px #00FF00;
         }
 
-        /* Lyrics Styling */
-        .lyric-done { color: #00FF00; text-shadow: 0 0 5px #00FF00; }
-        .lyric-missed { color: #555; }
+        /* Hall of Fame */
+        .hof-container {
+            margin-top: 10px; background: rgba(255,255,255,0.08);
+            padding: 15px; border-radius: 10px; width: 85%; max-width: 350px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .hof-list { list-style: none; padding: 0; margin: 0; font-size: 0.9rem; text-align: left; }
+        .hof-item { 
+            display: flex; justify-content: space-between; 
+            padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.1); 
+        }
+        .hof-item:first-child { color: #FFD700; font-weight: bold; }
 
         /* --- POPUPS --- */
         .popup-text {
@@ -195,13 +206,17 @@
         </div>
 
         <div id="screen-gameover" class="overlay-gameover" style="display:none;">
-            <div style="font-size: 2.5rem; color: #FF0000; font-family:'Rubik Glitch'; margin-top:20px;">GAME OVER</div>
+            <div style="font-size: 2.5rem; color: #FF0000; font-family:'Rubik Glitch';">GAME OVER</div>
             <div style="font-size: 1.2rem; color: #FFF; margin-bottom: 5px;">ОЙЫН АЯҚТАЛДЫ</div>
             
             <div style="font-size: 0.9rem; color: #aaa;">STATS: <span id="end-score" style="color: #FFD700; font-weight:bold;">0</span> LETTERS</div>
 
-            <div class="results-box" id="lyrics-result">
-                </div>
+            <div class="results-box" id="lyrics-result"></div>
+
+            <div class="hof-container">
+                <div style="color:#FFD700; font-family:'Permanent Marker'; margin-bottom:10px;">HALL OF FAME</div>
+                <ul id="hof-list" class="hof-list"></ul>
+            </div>
             
             <button class="pixel-btn" style="margin-top: 10px; border-radius:10px; font-size: 0.8rem;" onclick="resetGame()">RIDE AGAIN</button>
         </div>
@@ -233,6 +248,18 @@
                 o.connect(g); g.connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime+d);
             },
             playSmash: function() { this.playTone(60,'sawtooth',0.2,0.4); this.playTone(100,'square',0.1,0.3); }
+        };
+
+        /** 💾 STORAGE **/
+        const StorageSys = {
+            save: function(name, score) {
+                let list = JSON.parse(localStorage.getItem('dayinball_scores')) || [];
+                list.push({name: name || 'ANON', score: score});
+                list.sort((a,b) => b.score - a.score);
+                list = list.slice(0, 5);
+                localStorage.setItem('dayinball_scores', JSON.stringify(list));
+                return list;
+            }
         };
 
         /** 📝 TEXT DATA **/
@@ -351,8 +378,7 @@ Next point: “And new, and still” - let’s go!
         let gameState = 'START';
         let nickname = "";
         
-        // Game State
-        let lyricIndex = 0; // Current letter pointer
+        let lyricIndex = 0; 
         let score = 0;
         let baseSpeed = 7;
         let difficulty = 1;
@@ -360,7 +386,7 @@ Next point: “And new, and still” - let’s go!
         let entities = [];
         let particles = [];
         let spikeEndTime = 0;
-        let letterOnScreen = false; // Flag to ensure linear spawning
+        let letterOnScreen = false;
         
         const car = { x:0, y:0, w:42, h:75, health:100 };
         const keys = {u:false, d:false, l:false, r:false};
@@ -411,7 +437,7 @@ Next point: “And new, and still” - let’s go!
         }
 
         function update() {
-            difficulty = 1 + (score / 50); // Scale difficulty slower
+            difficulty = 1 + (score / 50);
             let currentSpeed = baseSpeed * difficulty;
             roadOffset += currentSpeed;
 
@@ -421,10 +447,7 @@ Next point: “And new, and still” - let’s go!
             if(keys.l && car.x > 0) car.x -= moveSpd;
             if(keys.r && car.x < canvas.width - car.w) car.x += moveSpd;
 
-            // Spawn Logic
-            // 1. Ensure current letter is spawned
             if(!letterOnScreen && lyricIndex < fullLyrics.length) {
-                // Auto-skip whitespace
                 while(lyricIndex < fullLyrics.length && (fullLyrics[lyricIndex] === ' ' || fullLyrics[lyricIndex] === '\n')) {
                     lyricIndex++;
                 }
@@ -434,24 +457,19 @@ Next point: “And new, and still” - let’s go!
                 }
             }
 
-            // 2. Spawn Obstacles/Powerups
             let spawnChance = 0.02 + (difficulty * 0.003);
             if(Math.random() < spawnChance) spawnOther();
 
-            // Update Entities
             entities.forEach(e => e.y += currentSpeed);
             
-            // Check if letter missed
             entities.forEach(e => {
                 if(e.y > canvas.height && e.active) {
                     if(e.type === 'letter') {
-                        // Missed the letter, allow respawn of SAME letter
                         letterOnScreen = false;
                     }
                 }
             });
 
-            // Cleanup
             entities = entities.filter(e => e.y < canvas.height && e.active);
 
             const isSpiked = Date.now() < spikeEndTime;
@@ -473,16 +491,14 @@ Next point: “And new, and still” - let’s go!
                             }
                         } else if(e.type === 'letter') {
                             score++; 
-                            lyricIndex++; // Move to next letter
-                            letterOnScreen = false; // Allow next spawn
+                            lyricIndex++;
+                            letterOnScreen = false;
                             AudioSys.playTone(1000, 'sine', 0.1);
                         } else if(e.type === 'flask') {
-                            // NORMAL FLASK -> GORILLA!
                             car.health = Math.min(100, car.health+20); 
                             AudioSys.playTone(600, 'square', 0.15);
                             triggerPopup('gorilla-popup');
                         } else if(e.type === 'ultra') {
-                            // ULTRA FLASK -> JBRLA!
                             spikeEndTime = Date.now() + 10000;
                             AudioSys.playTone(300, 'sawtooth', 0.1); AudioSys.playTone(600, 'sawtooth', 0.3);
                             triggerPopup('jbrla-popup');
@@ -514,7 +530,6 @@ Next point: “And new, and still” - let’s go!
         function spawnOther() {
             let r = Math.random(); let x = Math.random() * (canvas.width - 50);
             if(r < 0.8) {
-                // Rock
                 let s = Math.random(); let w = 40 + (s * 35); let h = 30 + (s * 25);
                 let c = Math.random() > 0.5 ? '#606060' : '#4a3b32';
                 entities.push({ x:x, y:roadY-60, w:w, h:h, type:'obs', color:c, active:true });
@@ -648,17 +663,19 @@ Next point: “And new, and still” - let’s go!
             document.getElementById('screen-gameover').style.display = 'flex';
             document.getElementById('end-score').innerText = score;
             
-            // Build Lyrics Display
-            const resultBox = document.getElementById('lyrics-result');
-            let html = "";
-            let collected = fullLyrics.substring(0, lyricIndex);
-            let remaining = fullLyrics.substring(lyricIndex);
-            html += `<span class="lyric-done">${collected}</span>`;
-            html += `<span class="lyric-missed">${remaining}</span>`;
-            resultBox.innerHTML = html;
+            // Show only collected lyrics
+            const collected = fullLyrics.substring(0, lyricIndex);
+            document.getElementById('lyrics-result').innerText = collected;
 
-            // Stats / Hall of Fame
-            // (Note: To save to server requires backend, here saving to LocalStorage)
+            // Hall of Fame
+            const topList = StorageSys.save(nickname, score);
+            const listEl = document.getElementById('hof-list');
+            listEl.innerHTML = "";
+            topList.forEach((entry, idx) => {
+                let li = document.createElement('li'); li.className = 'hof-item';
+                li.innerHTML = `<span>#${idx+1} ${entry.name}</span><span>${entry.score}</span>`;
+                listEl.appendChild(li);
+            });
         }
         function resetGame() {
             document.getElementById('screen-gameover').style.display = 'none';
