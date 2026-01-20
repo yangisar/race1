@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DAYINBALL: ALMATY CLASSIC</title>
+    <title>DAYINBALL: JBRLA</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Rubik+Glitch&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Rubik+Glitch&family=Montserrat:wght@400;700&display=swap');
 
         body {
             margin: 0;
             padding: 0;
             overflow: hidden;
             background-color: #000;
-            font-family: 'Permanent Marker', cursive, sans-serif;
-            touch-action: none; /* Prevent scroll */
+            font-family: 'Montserrat', sans-serif;
+            touch-action: none;
             user-select: none;
             -webkit-user-select: none;
         }
@@ -31,30 +31,30 @@
             height: 100%;
         }
 
-        /* --- UI --- */
+        /* --- UI ELEMENTS --- */
+        
+        /* HUD */
         #hud {
             position: absolute;
-            top: 32%; /* Positioned just below the skyline graphic */
-            left: 10px;
-            right: 10px;
+            top: 32%; /* Below skyline */
+            left: 10px; right: 10px;
             display: flex;
             justify-content: space-between;
             pointer-events: none;
             z-index: 10;
             color: #fff;
             text-shadow: 2px 2px 0 #000;
+            font-family: 'Permanent Marker', cursive;
         }
 
         .bar-wrap {
-            width: 100px; height: 12px;
-            background: #333;
-            border: 2px solid #fff;
+            width: 120px; height: 14px;
+            background: #222; border: 2px solid #fff;
             transform: skewX(-15deg);
         }
         .bar-fill {
             width: 100%; height: 100%;
-            background: #00FF00;
-            transition: width 0.2s;
+            background: #00FF00; transition: width 0.2s;
         }
 
         /* OVERLAYS */
@@ -62,85 +62,137 @@
             position: absolute;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9);
+            background: rgba(0,0,0,0.92);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             z-index: 50;
-            color: #FFD700;
+            color: #fff;
             text-align: center;
         }
 
-        h1 {
+        /* Titles */
+        .title-main {
             font-family: 'Rubik Glitch', cursive;
-            font-size: 3.5rem; margin: 0;
-            color: #FFF; text-shadow: 4px 4px #FF0000;
-            line-height: 1;
+            font-size: 3.5rem;
+            color: #FFF;
+            text-shadow: 4px 4px #FF0000;
+            line-height: 0.9;
+            margin-bottom: 5px;
         }
+        .title-sub {
+            font-family: 'Permanent Marker', cursive;
+            font-size: 2rem;
+            color: #FFD700;
+            margin-bottom: 20px;
+            transform: rotate(-3deg);
+        }
+        .lang-sub {
+            font-size: 0.9rem;
+            color: #aaa;
+            letter-spacing: 2px;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+        }
+
+        /* Input & Button */
+        input[type="text"] {
+            padding: 15px;
+            font-size: 1.2rem;
+            border: 2px solid #444;
+            background: #111;
+            color: #fff;
+            text-align: center;
+            font-family: 'Montserrat', sans-serif;
+            text-transform: uppercase;
+            width: 200px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        input:focus { outline: none; border-color: #FF0000; }
 
         .btn-start {
-            margin-top: 30px;
-            padding: 20px 50px;
-            font-size: 1.5rem;
-            font-family: 'Permanent Marker', cursive;
+            padding: 18px 40px;
+            font-size: 1.2rem;
+            font-weight: 700;
             background: #FF0000; color: #FFF;
-            border: 3px solid #FFF;
-            border-radius: 8px;
-            box-shadow: 0 0 15px #FF0000;
-            animation: pulse 1.5s infinite;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(255,0,0,0.5);
+            text-transform: uppercase;
+            clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%);
+            transition: transform 0.1s;
         }
-        @keyframes pulse { 0% {transform: scale(1);} 50% {transform: scale(1.05);} 100% {transform: scale(1);} }
+        .btn-start:active { transform: scale(0.95); }
 
-        /* CONTROLS */
+        /* Hall of Fame Table */
+        .hof-container {
+            margin-top: 20px;
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 300px;
+        }
+        .hof-title { color: #FFD700; font-family: 'Permanent Marker'; margin-bottom: 10px; }
+        .hof-list { list-style: none; padding: 0; margin: 0; font-size: 0.9rem; text-align: left; }
+        .hof-item { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+
+        /* Credits */
+        .credits {
+            position: absolute;
+            bottom: 10px;
+            width: 100%;
+            text-align: center;
+            font-size: 0.7rem;
+            color: #555;
+            font-family: sans-serif;
+            z-index: 60;
+            pointer-events: none;
+        }
+
+        /* CONTROLS (Invisible Touch Zones) */
         #controls {
             position: absolute;
-            bottom: 20px;
-            left: 20px;
-            right: 20px;
+            bottom: 20px; left: 20px; right: 20px;
             height: 200px;
             z-index: 20;
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
-            pointer-events: none; /* Let touches hit the zones */
+            pointer-events: none; 
         }
-
-        .dpad-zone {
-            position: relative;
+        .control-pad {
             width: 160px; height: 160px;
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255,255,255,0.03); /* Faint visual guide */
             border-radius: 50%;
-            border: 2px solid rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.05);
+            position: relative;
             pointer-events: auto;
         }
-
-        .act-btn {
+        .brake-btn {
             width: 80px; height: 80px;
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255,255,255,0.03);
             border-radius: 50%;
-            border: 2px solid rgba(255,255,255,0.1);
-            pointer-events: auto;
+            border: 2px solid rgba(255,255,255,0.05);
             display: flex; justify-content: center; align-items: center;
-            color: rgba(255,255,255,0.3);
+            color: rgba(255,255,255,0.2);
+            font-size: 0.8rem;
+            pointer-events: auto;
             margin-bottom: 40px;
         }
-
-        /* Touch Targets inside Dpad */
-        .t-btn { position: absolute; }
-        #t-up { top: 0; left: 30%; width: 40%; height: 40%; }
-        #t-down { bottom: 0; left: 30%; width: 40%; height: 40%; }
-        #t-left { top: 30%; left: 0; width: 40%; height: 40%; }
-        #t-right { top: 30%; right: 0; width: 40%; height: 40%; }
+        .t-btn { position: absolute; z-index: 2; }
+        #t-u { top:0; left:30%; width:40%; height:40%; }
+        #t-d { bottom:0; left:30%; width:40%; height:40%; }
+        #t-l { top:30%; left:0; width:40%; height:40%; }
+        #t-r { top:30%; right:0; width:40%; height:40%; }
         
-        /* Visual Arrows */
-        .arr { position: absolute; color: rgba(255,255,255,0.3); font-size: 24px; pointer-events: none;}
+        .arr { position: absolute; color: rgba(255,255,255,0.15); font-size: 20px; pointer-events: none; }
         .arr-u { top: 10px; left: 50%; transform: translateX(-50%); }
         .arr-d { bottom: 10px; left: 50%; transform: translateX(-50%); }
         .arr-l { top: 50%; left: 10px; transform: translateY(-50%); }
         .arr-r { top: 50%; right: 10px; transform: translateY(-50%); }
-
-        .active-touch { background: rgba(255, 255, 255, 0.2); }
 
     </style>
 </head>
@@ -155,55 +207,65 @@
                 <div class="bar-wrap"><div id="hpBar" class="bar-fill"></div></div>
             </div>
             <div style="text-align: right;">
-                <span id="scoreVal" style="font-size: 1.4rem; color: #FFD700;">0</span><br>
-                <span style="font-size: 0.8rem; color: #aaa;">LETTERS</span>
+                <span id="scoreVal" style="font-size: 1.5rem; color: #FFD700;">0</span><br>
+                <span style="font-size: 0.8rem; color: #aaa;">SCORE</span>
             </div>
         </div>
 
         <div id="screen-start" class="overlay">
-            <h1>DAYINBALL</h1>
-            <p style="color: #ccc; margin-bottom: 20px;">ALMATY BIRD'S EYE VIEW</p>
-            <p style="font-size: 0.9rem; color: #888;">Grab Blue Flasks & Letters<br>Avoid Traffic</p>
-            <button class="btn-start" onclick="initGame()">START ENGINE</button>
+            <div class="title-main">DAIYNBALL</div>
+            <div class="title-sub">JBRLA</div>
+            <div class="lang-sub">RACING GAME | ЖАРЫС ОЙЫНЫ</div>
+            
+            <input type="text" id="nickname" placeholder="NICKNAME / АТЫҢЫЗ" maxlength="8">
+            <button class="btn-start" onclick="initGame()">КЕТТІК / LET'S GO</button>
         </div>
 
         <div id="screen-gameover" class="overlay" style="display:none;">
-            <h1 style="color: #FF0000;">GAME OVER</h1>
-            <p style="font-size: 1.2rem;">Collected: <span id="end-collection" style="color: #FFD700;"></span></p>
-            <button class="btn-start" onclick="initGame()">RESTART</button>
+            <div class="title-main" style="font-size: 3rem; color: #FF0000; text-shadow:none;">GAME OVER</div>
+            <p>SCORE: <span id="end-score" style="color: #FFD700; font-size: 1.5rem;">0</span></p>
+            
+            <div class="hof-container">
+                <div class="hof-title">HALL OF FAME</div>
+                <ul id="hof-list" class="hof-list">
+                    </ul>
+            </div>
+            
+            <button class="btn-start" style="margin-top: 20px;" onclick="resetGame()">TRY AGAIN</button>
         </div>
 
         <div id="controls">
-            <div class="dpad-zone">
+            <div class="control-pad">
                 <div class="arr arr-u">▲</div>
                 <div class="arr arr-d">▼</div>
                 <div class="arr arr-l">◀</div>
                 <div class="arr arr-r">▶</div>
-
-                <div id="t-up" class="t-btn"></div>
-                <div id="t-down" class="t-btn"></div>
-                <div id="t-left" class="t-btn"></div>
-                <div id="t-right" class="t-btn"></div>
+                <div id="t-u" class="t-btn"></div>
+                <div id="t-d" class="t-btn"></div>
+                <div id="t-l" class="t-btn"></div>
+                <div id="t-r" class="t-btn"></div>
             </div>
-            <div id="t-brake" class="act-btn">BRAKE</div>
+            <div id="t-brake" class="brake-btn">BRAKE</div>
         </div>
+
+        <div class="credits">Created using AI tools by Yadykar Ibraimov</div>
     </div>
 
     <script>
-        /** AUDIO **/
+        /** AUDIO ENGINE **/
         const AudioSys = {
             ctx: null,
             init: function() { if(!this.ctx) this.ctx=new(window.AudioContext||window.webkitAudioContext)(); },
-            play: function(type, f, d, v=0.1) {
+            playTone: function(f,t,d,v=0.1) {
                 if(!this.ctx) return;
                 const o=this.ctx.createOscillator(), g=this.ctx.createGain();
-                o.type=type; o.frequency.setValueAtTime(f, this.ctx.currentTime);
-                g.gain.setValueAtTime(v, this.ctx.currentTime);
-                g.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime+d);
+                o.type=t; o.frequency.setValueAtTime(f,this.ctx.currentTime);
+                g.gain.setValueAtTime(v,this.ctx.currentTime);
+                g.gain.exponentialRampToValueAtTime(0.01,this.ctx.currentTime+d);
                 o.connect(g); g.connect(this.ctx.destination);
                 o.start(); o.stop(this.ctx.currentTime+d);
             },
-            noise: function(d) {
+            playNoise: function(d) {
                 if(!this.ctx) return;
                 const b=this.ctx.createBuffer(1,44100*d,44100), dt=b.getChannelData(0);
                 for(let i=0;i<dt.length;i++) dt[i]=Math.random()*2-1;
@@ -213,344 +275,378 @@
             }
         };
 
+        /** DATA STORAGE **/
+        const StorageSys = {
+            save: function(name, score) {
+                let list = JSON.parse(localStorage.getItem('dayinball_scores')) || [];
+                list.push({name: name || 'ANON', score: score});
+                list.sort((a,b) => b.score - a.score);
+                list = list.slice(0, 5); // Keep top 5
+                localStorage.setItem('dayinball_scores', JSON.stringify(list));
+                return list;
+            },
+            get: function() {
+                return JSON.parse(localStorage.getItem('dayinball_scores')) || [];
+            }
+        };
+
         /** GAME ENGINE **/
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         
         let gameState = 'START';
-        let roadY = 0; // The Y start of the road (below skyline)
-        let roadOffset = 0; // For scrolling texture
+        let nickname = "";
         
+        // Dimensions
+        let roadY, roadH;
+        
+        // Static Background Data (Cached to prevent jitter)
+        let bgCache = { mountains: [], buildings: [], stars: [] };
+
         // Game State
         let score = 0;
-        let collected = "";
-        let baseSpeed = 5;
+        let baseSpeed = 6;
+        let difficulty = 1;
+        let roadOffset = 0;
         let entities = [];
         let particles = [];
-        
-        // Car
-        const car = {
-            x: 0, y: 0, w: 40, h: 70, 
-            health: 100
-        };
+        const car = { x:0, y:0, w:40, h:70, health:100 };
 
-        // Layout
+        // Input
+        const keys = {u:false, d:false, l:false, r:false, b:false};
+
+        // --- SETUP ---
         function resize() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            roadY = canvas.height * 0.3; // Top 30% is skyline
+            roadY = canvas.height * 0.35; // Road starts at 35% height
+            roadH = canvas.height - roadY;
             
-            // Initial Car Pos (Center of Road)
-            car.x = canvas.width / 2 - 20;
-            car.y = roadY + (canvas.height - roadY) * 0.6;
+            // Reset Car
+            car.x = canvas.width/2 - 20;
+            car.y = roadY + roadH * 0.7;
+
+            generateBackground();
         }
         window.addEventListener('resize', resize);
-        resize();
 
-        // Controls
-        const keys = { u:false, d:false, l:false, r:false, b:false };
-        
-        const bindT = (id, k) => {
-            const el=document.getElementById(id);
-            el.addEventListener('touchstart', e=>{e.preventDefault(); keys[k]=true;});
-            el.addEventListener('touchend', e=>{e.preventDefault(); keys[k]=false;});
-            el.addEventListener('mousedown', ()=>{keys[k]=true;});
-            el.addEventListener('mouseup', ()=>{keys[k]=false;});
+        function generateBackground() {
+            // Generate Mountains Points
+            bgCache.mountains = [];
+            for(let i=0; i<=canvas.width; i+=10) {
+                bgCache.mountains.push({
+                    x: i,
+                    y: (Math.sin(i * 0.01) * 30) + (Math.cos(i * 0.03) * 20) + 50
+                });
+            }
+            // Generate Buildings
+            bgCache.buildings = [];
+            let bx = 0;
+            while(bx < canvas.width) {
+                let bw = 30 + Math.random() * 40;
+                let bh = 40 + Math.random() * 80;
+                // Windows for this building
+                let wins = [];
+                for(let wy=0; wy<bh-10; wy+=12) {
+                    for(let wx=2; wx<bw-5; wx+=8) {
+                        if(Math.random()>0.4) wins.push({x:wx, y:wy});
+                    }
+                }
+                bgCache.buildings.push({x:bx, w:bw, h:bh, wins: wins});
+                bx += bw;
+            }
+            // Generate Stars
+            bgCache.stars = [];
+            for(let i=0; i<30; i++) {
+                bgCache.stars.push({
+                    x: Math.random()*canvas.width,
+                    y: Math.random()*roadY*0.6,
+                    s: Math.random()*2
+                });
+            }
+        }
+
+        // --- CONTROLS ---
+        const bindKey = (id, key) => {
+            const el = document.getElementById(id);
+            el.addEventListener('touchstart', (e)=>{e.preventDefault(); keys[key]=true;});
+            el.addEventListener('touchend', (e)=>{e.preventDefault(); keys[key]=false;});
+            el.addEventListener('mousedown', ()=>{keys[key]=true;});
+            el.addEventListener('mouseup', ()=>{keys[key]=false;});
         };
-        bindT('t-up','u'); bindT('t-down','d'); bindT('t-left','l'); bindT('t-right','r'); bindT('t-brake','b');
+        bindKey('t-u','u'); bindKey('t-d','d'); bindKey('t-l','l'); bindKey('t-r','r'); bindKey('t-brake','b');
 
-        // Logic
+        // --- GAME LOGIC ---
         function update() {
-            // Speed Control
-            let speed = baseSpeed;
-            if(keys.b) speed *= 0.5;
+            // 1. Difficulty Scaling
+            difficulty = 1 + (score / 30); // Harder every 30 points
+            let currentSpeed = baseSpeed * difficulty;
+            if(keys.b) currentSpeed *= 0.5; // Brake
 
-            // Scroll Road
-            roadOffset += speed;
+            roadOffset += currentSpeed;
 
-            // Car Move
-            const moveSpd = 5;
+            // 2. Car Physics
+            const moveSpd = 5 + (difficulty * 0.5);
             if(keys.u && car.y > roadY) car.y -= moveSpd;
             if(keys.d && car.y < canvas.height - car.h) car.y += moveSpd;
             if(keys.l && car.x > 0) car.x -= moveSpd;
             if(keys.r && car.x < canvas.width - car.w) car.x += moveSpd;
 
-            // Spawn
-            if(Math.random() < 0.02 + (score*0.001)) {
-                let typeRand = Math.random();
-                let type = 'obs';
-                if(typeRand > 0.7) type = 'letter';
-                if(typeRand > 0.95) type = 'flask';
-
-                let spawnW = 40; 
-                let spawnX = Math.random() * (canvas.width - spawnW);
-                
-                entities.push({
-                    x: spawnX, y: roadY - 50, w: spawnW, h: 40,
-                    type: type,
-                    char: type==='letter' ? "АӘБВГҒДЕЖЗИКҚЛМНҢОӨПРСТУҰҮФХҺЦЧШЩЪЫІЬЭЮЯ"[Math.floor(Math.random()*42)] : null,
-                    active: true
-                });
+            // 3. Spawning
+            // Rate decreases as difficulty increases
+            let spawnChance = 0.02 + (difficulty * 0.005);
+            if(Math.random() < spawnChance) {
+                spawnEntity();
             }
 
-            // Move Entities (Straight Down)
-            entities.forEach(e => e.y += speed);
+            // 4. Entities
+            entities.forEach(e => e.y += currentSpeed);
             entities = entities.filter(e => e.y < canvas.height && e.active);
 
-            // Collisions
+            // 5. Collisions
             entities.forEach(e => {
-                // AABB
                 if (car.x < e.x + e.w && car.x + car.w > e.x &&
                     car.y < e.y + e.h && car.y + car.h > e.y) {
                     
                     if(e.active) {
                         e.active = false;
                         if(e.type === 'obs') {
-                            car.health -= 20;
-                            AudioSys.noise(0.2);
-                            spawnParticles(e.x+e.w/2, e.y+e.h/2, '#FF4500');
-                        }
-                        else if(e.type === 'letter') {
-                            score++; collected += e.char;
-                            AudioSys.play('sine', 1200, 0.1);
-                        }
-                        else if(e.type === 'flask') {
+                            car.health -= 25;
+                            AudioSys.playNoise(0.3);
+                            spawnParticles(e.x+e.w/2, e.y+e.h/2, e.color);
+                        } else if(e.type === 'letter') {
+                            score++;
+                            AudioSys.playTone(1000, 'sine', 0.1);
+                        } else if(e.type === 'flask') {
                             car.health = Math.min(100, car.health+20);
-                            AudioSys.play('square', 600, 0.2);
+                            AudioSys.playTone(600, 'square', 0.2);
                         }
                     }
                 }
             });
 
-            // Particles
+            // 6. Particles
             particles.forEach((p,i) => {
                 p.x += p.vx; p.y += p.vy; p.l -= 0.1;
                 if(p.l<=0) particles.splice(i,1);
             });
 
-            // HUD
-            document.getElementById('hpBar').style.width = Math.max(0,car.health)+'%';
-            document.getElementById('hpBar').style.background = car.health<30 ? 'red':'#00FF00';
+            // UI
+            document.getElementById('hpBar').style.width = Math.max(0,car.health) + '%';
+            document.getElementById('hpBar').style.background = car.health < 30 ? 'red' : '#00FF00';
             document.getElementById('scoreVal').innerText = score;
 
-            if(car.health<=0) gameOver();
+            if(car.health <= 0) gameOver();
+        }
+
+        function spawnEntity() {
+            let r = Math.random();
+            let x = Math.random() * (canvas.width - 50);
+            
+            if(r < 0.7) {
+                // OBSTACLE VARIATION
+                let obsType = Math.floor(Math.random() * 3);
+                let obs = { x: x, y: roadY - 60, w:40, h:40, type: 'obs', active: true };
+                
+                if(obsType === 0) { 
+                    obs.shape = 'rect'; obs.color = '#FF4500'; // Standard Barrier
+                    obs.w = 50; obs.h = 30;
+                } else if(obsType === 1) { 
+                    obs.shape = 'pylon'; obs.color = '#FFFF00'; // Yellow Pylon
+                    obs.w = 30; obs.h = 30;
+                } else {
+                    obs.shape = 'block'; obs.color = '#607D8B'; // Concrete Grey
+                    obs.w = 40; obs.h = 40;
+                }
+                entities.push(obs);
+            } else if (r < 0.9) {
+                // LETTER
+                let char = "АӘБВГҒДЕЖЗИКҚЛМНҢОӨПРСТУҰҮФХҺЦЧШЩЪЫІЬЭЮЯ"[Math.floor(Math.random()*42)];
+                entities.push({x: x, y: roadY-60, w:40, h:40, type:'letter', char: char, active:true});
+            } else {
+                // FLASK
+                entities.push({x: x, y: roadY-60, w:30, h:40, type:'flask', active:true});
+            }
         }
 
         function spawnParticles(x,y,c) {
-            for(let i=0;i<8;i++) particles.push({
-                x:x, y:y, vx:(Math.random()-0.5)*10, vy:(Math.random()-0.5)*10, l:1, c:c
-            });
+            for(let i=0;i<8;i++) {
+                particles.push({x:x, y:y, vx:(Math.random()-0.5)*12, vy:(Math.random()-0.5)*12, l:1, color:c});
+            }
         }
 
         // --- DRAWING ---
-
-        function drawStaticBackground() {
-            // Draw Sky
-            let grad = ctx.createLinearGradient(0,0,0,roadY);
-            grad.addColorStop(0, '#0a0a2a');
-            grad.addColorStop(1, '#2c3e50');
-            ctx.fillStyle = grad;
-            ctx.fillRect(0,0,canvas.width, roadY);
-
-            // 1. Mountains (Back)
-            ctx.fillStyle = '#666';
-            ctx.beginPath(); ctx.moveTo(0, roadY);
-            for(let i=0; i<=canvas.width; i+=20) {
-                ctx.lineTo(i, roadY - (Math.random()*40 + 20));
-            }
-            ctx.lineTo(canvas.width, roadY); ctx.fill();
-
-            // 2. Kok Tobe Hill (Right)
-            ctx.fillStyle = '#1b4d1b'; // Dark Green
-            ctx.beginPath();
-            ctx.arc(canvas.width * 0.8, roadY + 50, 100, 0, Math.PI * 2);
-            ctx.fill();
-
-            // 3. Kok Tobe Tower
-            let tx = canvas.width * 0.8;
-            ctx.strokeStyle = '#888'; ctx.lineWidth = 4;
-            ctx.beginPath(); ctx.moveTo(tx, roadY-20); ctx.lineTo(tx, roadY-120); ctx.stroke();
-            // The Apple
-            ctx.fillStyle = '#cc0000'; 
-            ctx.beginPath(); ctx.arc(tx, roadY-100, 8, 0, Math.PI*2); ctx.fill();
-            // Antenna
-            ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(tx, roadY-120); ctx.lineTo(tx, roadY-150); ctx.stroke();
-
-            // 4. Hotel Kazakhstan (Left Center)
-            let hx = canvas.width * 0.2;
-            let hy = roadY;
-            let hw = 60; let hh = 120;
-            // Main Building
-            ctx.fillStyle = '#999'; // Concrete
-            // Slight curve for the iconic shape
-            ctx.beginPath();
-            ctx.moveTo(hx, hy);
-            ctx.lineTo(hx, hy - hh);
-            ctx.quadraticCurveTo(hx + hw/2, hy - hh - 20, hx + hw, hy - hh); // Crown curve
-            ctx.lineTo(hx + hw, hy);
-            ctx.fill();
-            
-            // Windows
-            ctx.fillStyle = '#222';
-            for(let wy = hy - hh + 20; wy < hy; wy+=10) {
-                for(let wx = hx + 5; wx < hx + hw; wx += 8) {
-                    if(Math.random()>0.5) ctx.fillRect(wx, wy, 4, 6);
-                }
-            }
-            
-            // Crown Gold
-            ctx.fillStyle = '#FFD700';
-            ctx.beginPath();
-            ctx.arc(hx + hw/2, hy - hh - 5, 5, 0, Math.PI*2);
-            ctx.fill();
-        }
-
-        function drawRoad() {
-            // Road Rect
-            ctx.fillStyle = '#222';
-            ctx.fillRect(0, roadY, canvas.width, canvas.height - roadY);
-
-            // Sidewalks
-            ctx.fillStyle = '#444';
-            ctx.fillRect(0, roadY, 15, canvas.height - roadY);
-            ctx.fillRect(canvas.width-15, roadY, 15, canvas.height - roadY);
-
-            // Yellow Dashed Lines
-            ctx.fillStyle = '#FFD700'; // Proper Yellow
-            let laneCount = 4;
-            let laneW = canvas.width / laneCount;
-            let dashHeight = 40;
-            let gap = 60; // BIGGER INTERVAL
-            let totalPattern = dashHeight + gap;
-
-            for(let l=1; l<laneCount; l++) {
-                let lx = l * laneW;
-                // Calculate scrolling Y
-                for(let y = roadY - totalPattern; y < canvas.height; y += totalPattern) {
-                    let drawY = y + (roadOffset % totalPattern);
-                    if(drawY > roadY - dashHeight && drawY < canvas.height) {
-                        ctx.fillRect(lx - 2, drawY, 4, dashHeight);
-                    }
-                }
-            }
-        }
-
-        function drawCar() {
-            const {x,y,w,h} = car;
-            // Shadow
-            ctx.fillStyle = 'rgba(0,0,0,0.5)';
-            ctx.fillRect(x+5, y+5, w, h);
-
-            // Black Body
-            ctx.fillStyle = '#000';
-            ctx.fillRect(x, y, w, h);
-
-            // Roof
-            ctx.fillStyle = '#111';
-            ctx.fillRect(x+2, y+15, w-4, h-30);
-
-            // Windows
-            ctx.fillStyle = '#333';
-            ctx.fillRect(x+2, y+15, w-4, 8); // Front
-            ctx.fillRect(x+2, y+h-23, w-4, 8); // Rear
-
-            // "DAYINBALL" - Vertical Red Text
-            ctx.save();
-            ctx.translate(x + w/2, y + h/2);
-            ctx.rotate(Math.PI/2); // 90 deg
-            ctx.fillStyle = 'red';
-            ctx.font = 'bold 10px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText("DAYINBALL", 0, 0);
-            ctx.restore();
-
-            // Lights
-            ctx.fillStyle = 'yellow'; // Headlights (Top, assuming moving UP logic but objects move down. Wait. Objects move DOWN. Car faces UP.)
-            // So Front is Y (Top).
-            ctx.fillRect(x+2, y, 8, 4);
-            ctx.fillRect(x+w-10, y, 8, 4);
-
-            ctx.fillStyle = 'red'; // Tail
-            ctx.fillRect(x+2, y+h-4, 8, 4);
-            ctx.fillRect(x+w-10, y+h-4, 8, 4);
-        }
-
-        function drawEntities() {
-            entities.forEach(e => {
-                if(e.type === 'obs') {
-                    // Orange Barrier
-                    ctx.fillStyle = '#FF4500';
-                    ctx.fillRect(e.x, e.y, e.w, e.h);
-                    // Stripes
-                    ctx.fillStyle = '#000';
-                    ctx.beginPath(); ctx.moveTo(e.x,e.y); ctx.lineTo(e.x+10,e.y); ctx.lineTo(e.x,e.y+10); ctx.fill();
-                    ctx.beginPath(); ctx.moveTo(e.x+20,e.y); ctx.lineTo(e.x+30,e.y); ctx.lineTo(e.x,e.y+30); ctx.lineTo(e.x,e.y+20); ctx.fill();
-                }
-                else if(e.type === 'letter') {
-                    // Gold Coin style
-                    ctx.fillStyle = '#FFD700';
-                    ctx.beginPath(); ctx.arc(e.x+e.w/2, e.y+e.h/2, e.w/2, 0, Math.PI*2); ctx.fill();
-                    ctx.fillStyle = '#000';
-                    ctx.font = 'bold 24px Arial'; ctx.textAlign='center'; ctx.textBaseline='middle';
-                    ctx.fillText(e.char, e.x+e.w/2, e.y+e.h/2);
-                }
-                else if(e.type === 'flask') {
-                    // Blue Flask
-                    ctx.fillStyle = '#0000FF';
-                    ctx.fillRect(e.x+5, e.y+10, e.w-10, e.h-10); // Body
-                    ctx.fillRect(e.x+12, e.y, e.w-24, 10); // Neck
-                    
-                    // White Stripe
-                    ctx.fillStyle = '#FFF';
-                    ctx.fillRect(e.x+5, e.y+20, e.w-10, 8);
-                    
-                    // Red G
-                    ctx.fillStyle = 'red';
-                    ctx.font = 'bold 14px Arial'; ctx.textAlign='center'; 
-                    ctx.fillText('G', e.x+e.w/2, e.y+35);
-                }
-            });
-        }
-
-        function loop() {
+        function draw() {
             if(gameState !== 'PLAYING') return;
             ctx.clearRect(0,0,canvas.width,canvas.height);
 
-            drawStaticBackground(); // Top
-            drawRoad();             // Bottom
-            drawEntities();
+            // 1. STATIC BACKGROUND (From Cache)
+            // Sky
+            let grad = ctx.createLinearGradient(0,0,0,roadY);
+            grad.addColorStop(0, '#020210'); grad.addColorStop(1, '#203A43');
+            ctx.fillStyle = grad; ctx.fillRect(0,0,canvas.width, roadY);
             
-            // Particles
-            particles.forEach(p => {
-                ctx.fillStyle = p.c;
-                ctx.fillRect(p.x, p.y, 4, 4);
+            // Stars
+            ctx.fillStyle = '#FFF';
+            bgCache.stars.forEach(s => { ctx.fillRect(s.x, s.y, s.s, s.s); });
+
+            // Mountains
+            ctx.fillStyle = '#0f172a'; // Dark silhouette
+            ctx.beginPath();
+            ctx.moveTo(0, roadY);
+            bgCache.mountains.forEach(p => ctx.lineTo(p.x, roadY - p.y));
+            ctx.lineTo(canvas.width, roadY);
+            ctx.fill();
+
+            // Buildings (Static)
+            bgCache.buildings.forEach(b => {
+                ctx.fillStyle = '#1e293b'; // Building body
+                ctx.fillRect(b.x, roadY - b.h, b.w, b.h);
+                // Windows
+                ctx.fillStyle = '#facc15'; // Lit window
+                b.wins.forEach(w => ctx.fillRect(b.x + w.x, roadY - b.h + w.y, 4, 6));
             });
 
+            // Hotel Kazakhstan & Tower (Overlay manual drawing)
+            drawLandmarks();
+
+            // 2. ROAD (California Style)
+            ctx.fillStyle = '#111'; // Asphalt
+            ctx.fillRect(0, roadY, canvas.width, roadH);
+            
+            // Shoulders
+            ctx.fillStyle = '#333';
+            ctx.fillRect(0, roadY, 10, roadH);
+            ctx.fillRect(canvas.width-10, roadY, 10, roadH);
+
+            // Lines
+            ctx.fillStyle = '#FFD700'; // Yellow Dashed
+            const laneCount = 4; 
+            const laneW = canvas.width / laneCount;
+            const dashH = 50;
+            const dashGap = 150; // BIG INTERVAL
+            const pattern = dashH + dashGap;
+
+            for(let l=1; l<laneCount; l++) {
+                let lx = l * laneW;
+                for(let y = roadY - pattern; y < canvas.height; y += pattern) {
+                    let dy = y + (roadOffset % pattern);
+                    if(dy > roadY - dashH && dy < canvas.height) {
+                        ctx.fillRect(lx - 2, dy, 4, dashH);
+                    }
+                }
+            }
+
+            // 3. ENTITIES
+            entities.forEach(e => {
+                if(e.type === 'obs') {
+                    ctx.fillStyle = e.color;
+                    if(e.shape === 'pylon') {
+                        ctx.beginPath(); ctx.moveTo(e.x+e.w/2, e.y); ctx.lineTo(e.x+e.w, e.y+e.h); ctx.lineTo(e.x, e.y+e.h); ctx.fill();
+                    } else if (e.shape === 'block') {
+                        ctx.fillRect(e.x, e.y, e.w, e.h);
+                        ctx.strokeStyle='#fff'; ctx.lineWidth=1; ctx.strokeRect(e.x,e.y,e.w,e.h);
+                    } else {
+                        // Barrier
+                        ctx.fillRect(e.x, e.y, e.w, e.h);
+                        ctx.fillStyle='rgba(0,0,0,0.3)'; 
+                        ctx.beginPath(); ctx.moveTo(e.x, e.y); ctx.lineTo(e.x+10, e.y); ctx.lineTo(e.x, e.y+10); ctx.fill();
+                    }
+                } else if(e.type === 'letter') {
+                    ctx.fillStyle = '#FFD700';
+                    ctx.beginPath(); ctx.arc(e.x+e.w/2, e.y+e.h/2, e.w/2, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = '#000'; ctx.font='bold 20px Arial'; ctx.textAlign='center'; ctx.textBaseline='middle';
+                    ctx.fillText(e.char, e.x+e.w/2, e.y+e.h/2);
+                } else if(e.type === 'flask') {
+                    ctx.fillStyle = '#00f'; ctx.fillRect(e.x+5, e.y+10, e.w-10, e.h-10);
+                    ctx.fillStyle = '#fff'; ctx.fillRect(e.x+5, e.y+20, e.w-10, 5);
+                    ctx.fillStyle = '#f00'; ctx.font='bold 12px Arial'; ctx.fillText('G', e.x+e.w/2, e.y+35);
+                }
+            });
+
+            // 4. CAR
             drawCar();
 
+            // 5. PARTICLES
+            particles.forEach(p => { ctx.fillStyle=p.color; ctx.fillRect(p.x, p.y, 4, 4); });
+
+            requestAnimationFrame(draw);
             update();
-            requestAnimationFrame(loop);
         }
 
-        // Flow
+        function drawLandmarks() {
+             // Hotel (Left)
+             let hx = canvas.width * 0.15;
+             let hy = roadY;
+             ctx.fillStyle = '#777';
+             ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx, hy-100); 
+             ctx.quadraticCurveTo(hx+30, hy-120, hx+60, hy-100); ctx.lineTo(hx+60, hy); ctx.fill();
+             ctx.fillStyle = '#FFD700'; ctx.beginPath(); ctx.arc(hx+30, hy-105, 5, 0, Math.PI*2); ctx.fill();
+
+             // TV Tower (Right)
+             let tx = canvas.width * 0.85;
+             ctx.strokeStyle = '#555'; ctx.lineWidth = 3;
+             ctx.beginPath(); ctx.moveTo(tx, roadY-20); ctx.lineTo(tx, roadY-140); ctx.stroke();
+             ctx.fillStyle = '#D00'; ctx.beginPath(); ctx.arc(tx, roadY-120, 6, 0, Math.PI*2); ctx.fill();
+        }
+
+        function drawCar() {
+            const {x, y, w, h} = car;
+            // Shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(x+4, y+4, w, h);
+            // Body
+            ctx.fillStyle = '#000'; ctx.fillRect(x, y, w, h);
+            ctx.fillStyle = '#222'; ctx.fillRect(x+2, y+15, w-4, h-25);
+            // Dayinball Tag
+            ctx.save(); ctx.translate(x+w/2, y+h/2); ctx.rotate(-Math.PI/2);
+            ctx.fillStyle = '#F00'; ctx.font='bold 10px Arial'; ctx.textAlign='center'; ctx.fillText("DAYINBALL", 0, 4);
+            ctx.restore();
+            // Lights
+            ctx.fillStyle = '#FF0'; ctx.fillRect(x+2, y, 8, 5); ctx.fillRect(x+w-10, y, 8, 5);
+            ctx.fillStyle = '#D00'; ctx.fillRect(x+2, y+h-5, 8, 5); ctx.fillRect(x+w-10, y+h-5, 8, 5);
+        }
+
+        // --- GAME FLOW ---
         function initGame() {
+            let nick = document.getElementById('nickname').value.trim();
+            if(!nick) { alert("ENTER NICKNAME / АТЫҢЫЗДЫ ЖАЗЫҢЫЗ"); return; }
+            nickname = nick.toUpperCase();
+
             AudioSys.init();
-            document.getElementById('screen-start').style.display='none';
-            document.getElementById('screen-gameover').style.display='none';
+            document.getElementById('screen-start').style.display = 'none';
+            document.getElementById('screen-gameover').style.display = 'none';
+            
             gameState = 'PLAYING';
-            score = 0; collected = "";
+            score = 0; car.health = 100; difficulty = 1;
             entities = []; particles = [];
             resize();
-            loop();
+            draw();
         }
 
         function gameOver() {
             gameState = 'OVER';
-            document.getElementById('screen-gameover').style.display='flex';
-            document.getElementById('end-collection').innerText = collected;
+            document.getElementById('screen-gameover').style.display = 'flex';
+            document.getElementById('end-score').innerText = score;
+            
+            // Handle Hall of Fame
+            const topList = StorageSys.save(nickname, score);
+            const listEl = document.getElementById('hof-list');
+            listEl.innerHTML = "";
+            topList.forEach((entry, idx) => {
+                let li = document.createElement('li');
+                li.className = 'hof-item';
+                li.innerHTML = `<span>#${idx+1} ${entry.name}</span><span>${entry.score}</span>`;
+                listEl.appendChild(li);
+            });
         }
 
+        function resetGame() {
+            document.getElementById('screen-gameover').style.display = 'none';
+            document.getElementById('screen-start').style.display = 'flex';
+        }
+
+        // Init
+        resize();
     </script>
 </body>
 </html>
