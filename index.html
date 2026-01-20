@@ -31,12 +31,10 @@
             height: 100%;
         }
 
-        /* --- UI ELEMENTS --- */
-        
-        /* HUD */
+        /* --- HUD --- */
         #hud {
             position: absolute;
-            top: 32%; /* Below skyline */
+            top: 32%;
             left: 10px; right: 10px;
             display: flex;
             justify-content: space-between;
@@ -57,7 +55,7 @@
             background: #00FF00; transition: width 0.2s;
         }
 
-        /* OVERLAYS */
+        /* --- OVERLAYS --- */
         .overlay {
             position: absolute;
             top: 0; left: 0;
@@ -72,7 +70,6 @@
             text-align: center;
         }
 
-        /* Titles */
         .title-main {
             font-family: 'Rubik Glitch', cursive;
             font-size: 3.5rem;
@@ -89,110 +86,90 @@
             transform: rotate(-3deg);
         }
         .lang-sub {
-            font-size: 0.9rem;
-            color: #aaa;
-            letter-spacing: 2px;
-            margin-bottom: 30px;
-            text-transform: uppercase;
+            font-size: 0.9rem; color: #aaa; letter-spacing: 2px;
+            margin-bottom: 30px; text-transform: uppercase;
         }
 
-        /* Input & Button */
         input[type="text"] {
-            padding: 15px;
-            font-size: 1.2rem;
-            border: 2px solid #444;
-            background: #111;
-            color: #fff;
-            text-align: center;
-            font-family: 'Montserrat', sans-serif;
-            text-transform: uppercase;
-            width: 200px;
-            margin-bottom: 20px;
+            padding: 15px; font-size: 1.2rem;
+            border: 2px solid #444; background: #111; color: #fff;
+            text-align: center; font-family: 'Montserrat', sans-serif;
+            text-transform: uppercase; width: 200px; margin-bottom: 20px;
             border-radius: 5px;
         }
         input:focus { outline: none; border-color: #FF0000; }
 
         .btn-start {
-            padding: 18px 40px;
-            font-size: 1.2rem;
-            font-weight: 700;
-            background: #FF0000; color: #FFF;
-            border: none;
-            cursor: pointer;
-            box-shadow: 0 0 20px rgba(255,0,0,0.5);
-            text-transform: uppercase;
+            padding: 18px 40px; font-size: 1.2rem; font-weight: 700;
+            background: #FF0000; color: #FFF; border: none; cursor: pointer;
+            box-shadow: 0 0 20px rgba(255,0,0,0.5); text-transform: uppercase;
             clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%);
             transition: transform 0.1s;
         }
         .btn-start:active { transform: scale(0.95); }
 
-        /* Hall of Fame Table */
+        /* Hall of Fame */
         .hof-container {
-            margin-top: 20px;
-            background: rgba(255,255,255,0.05);
-            padding: 15px;
-            border-radius: 10px;
-            width: 80%;
-            max-width: 300px;
+            margin-top: 20px; background: rgba(255,255,255,0.05);
+            padding: 15px; border-radius: 10px; width: 80%; max-width: 300px;
         }
         .hof-title { color: #FFD700; font-family: 'Permanent Marker'; margin-bottom: 10px; }
         .hof-list { list-style: none; padding: 0; margin: 0; font-size: 0.9rem; text-align: left; }
         .hof-item { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
 
-        /* Credits */
         .credits {
+            position: absolute; bottom: 10px; width: 100%;
+            text-align: center; font-size: 0.7rem; color: #555;
+            font-family: sans-serif; z-index: 60; pointer-events: none;
+        }
+
+        /* --- SPLIT CONTROLS --- */
+        #controls {
             position: absolute;
-            bottom: 10px;
-            width: 100%;
-            text-align: center;
-            font-size: 0.7rem;
-            color: #555;
-            font-family: sans-serif;
-            z-index: 60;
+            bottom: 20px; left: 10px; right: 10px;
+            height: 180px;
+            z-index: 20;
             pointer-events: none;
         }
 
-        /* CONTROLS (Invisible Touch Zones) */
-        #controls {
+        /* Common Button Style */
+        .ctrl-btn {
             position: absolute;
-            bottom: 20px; left: 20px; right: 20px;
-            height: 200px;
-            z-index: 20;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            pointer-events: none; 
-        }
-        .control-pad {
-            width: 160px; height: 160px;
-            background: rgba(255,255,255,0.03); /* Faint visual guide */
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
-            border: 2px solid rgba(255,255,255,0.05);
-            position: relative;
-            pointer-events: auto;
-        }
-        .brake-btn {
-            width: 80px; height: 80px;
-            background: rgba(255,255,255,0.03);
-            border-radius: 50%;
-            border: 2px solid rgba(255,255,255,0.05);
             display: flex; justify-content: center; align-items: center;
-            color: rgba(255,255,255,0.2);
-            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 2rem;
             pointer-events: auto;
-            margin-bottom: 40px;
+            touch-action: manipulation;
+            transition: background 0.1s;
         }
-        .t-btn { position: absolute; z-index: 2; }
-        #t-u { top:0; left:30%; width:40%; height:40%; }
-        #t-d { bottom:0; left:30%; width:40%; height:40%; }
-        #t-l { top:30%; left:0; width:40%; height:40%; }
-        #t-r { top:30%; right:0; width:40%; height:40%; }
-        
-        .arr { position: absolute; color: rgba(255,255,255,0.15); font-size: 20px; pointer-events: none; }
-        .arr-u { top: 10px; left: 50%; transform: translateX(-50%); }
-        .arr-d { bottom: 10px; left: 50%; transform: translateX(-50%); }
-        .arr-l { top: 50%; left: 10px; transform: translateY(-50%); }
-        .arr-r { top: 50%; right: 10px; transform: translateY(-50%); }
+        .ctrl-btn:active { background: rgba(255, 0, 0, 0.4); border-color: red; color: white; }
+
+        /* Left Side */
+        #btn-left {
+            bottom: 0; left: 0;
+            width: 100px; height: 100px;
+            font-size: 3rem; /* Big Arrow */
+        }
+        #btn-up {
+            bottom: 110px; left: 20px;
+            width: 60px; height: 60px;
+            font-size: 1.5rem;
+        }
+
+        /* Right Side */
+        #btn-right {
+            bottom: 0; right: 0;
+            width: 100px; height: 100px;
+            font-size: 3rem; /* Big Arrow */
+        }
+        #btn-down {
+            bottom: 110px; right: 20px;
+            width: 60px; height: 60px;
+            font-size: 1.5rem;
+        }
 
     </style>
 </head>
@@ -216,7 +193,6 @@
             <div class="title-main">DAIYNBALL</div>
             <div class="title-sub">JBRLA</div>
             <div class="lang-sub">RACING GAME | ЖАРЫС ОЙЫНЫ</div>
-            
             <input type="text" id="nickname" placeholder="NICKNAME / АТЫҢЫЗ" maxlength="8">
             <button class="btn-start" onclick="initGame()">КЕТТІК / LET'S GO</button>
         </div>
@@ -224,35 +200,26 @@
         <div id="screen-gameover" class="overlay" style="display:none;">
             <div class="title-main" style="font-size: 3rem; color: #FF0000; text-shadow:none;">GAME OVER</div>
             <p>SCORE: <span id="end-score" style="color: #FFD700; font-size: 1.5rem;">0</span></p>
-            
             <div class="hof-container">
                 <div class="hof-title">HALL OF FAME</div>
-                <ul id="hof-list" class="hof-list">
-                    </ul>
+                <ul id="hof-list" class="hof-list"></ul>
             </div>
-            
             <button class="btn-start" style="margin-top: 20px;" onclick="resetGame()">TRY AGAIN</button>
         </div>
 
         <div id="controls">
-            <div class="control-pad">
-                <div class="arr arr-u">▲</div>
-                <div class="arr arr-d">▼</div>
-                <div class="arr arr-l">◀</div>
-                <div class="arr arr-r">▶</div>
-                <div id="t-u" class="t-btn"></div>
-                <div id="t-d" class="t-btn"></div>
-                <div id="t-l" class="t-btn"></div>
-                <div id="t-r" class="t-btn"></div>
-            </div>
-            <div id="t-brake" class="brake-btn">BRAKE</div>
+            <div id="btn-up" class="ctrl-btn">▲</div>
+            <div id="btn-left" class="ctrl-btn">◀</div>
+
+            <div id="btn-down" class="ctrl-btn">▼</div>
+            <div id="btn-right" class="ctrl-btn">▶</div>
         </div>
 
         <div class="credits">Created using AI tools by Yadykar Ibraimov</div>
     </div>
 
     <script>
-        /** AUDIO ENGINE **/
+        /** AUDIO **/
         const AudioSys = {
             ctx: null,
             init: function() { if(!this.ctx) this.ctx=new(window.AudioContext||window.webkitAudioContext)(); },
@@ -262,8 +229,7 @@
                 o.type=t; o.frequency.setValueAtTime(f,this.ctx.currentTime);
                 g.gain.setValueAtTime(v,this.ctx.currentTime);
                 g.gain.exponentialRampToValueAtTime(0.01,this.ctx.currentTime+d);
-                o.connect(g); g.connect(this.ctx.destination);
-                o.start(); o.stop(this.ctx.currentTime+d);
+                o.connect(g); g.connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime+d);
             },
             playNoise: function(d) {
                 if(!this.ctx) return;
@@ -275,35 +241,27 @@
             }
         };
 
-        /** DATA STORAGE **/
+        /** STORAGE **/
         const StorageSys = {
             save: function(name, score) {
                 let list = JSON.parse(localStorage.getItem('dayinball_scores')) || [];
                 list.push({name: name || 'ANON', score: score});
                 list.sort((a,b) => b.score - a.score);
-                list = list.slice(0, 5); // Keep top 5
+                list = list.slice(0, 5);
                 localStorage.setItem('dayinball_scores', JSON.stringify(list));
                 return list;
-            },
-            get: function() {
-                return JSON.parse(localStorage.getItem('dayinball_scores')) || [];
             }
         };
 
-        /** GAME ENGINE **/
+        /** GAME **/
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         
         let gameState = 'START';
         let nickname = "";
-        
-        // Dimensions
         let roadY, roadH;
-        
-        // Static Background Data (Cached to prevent jitter)
         let bgCache = { mountains: [], buildings: [], stars: [] };
 
-        // Game State
         let score = 0;
         let baseSpeed = 6;
         let difficulty = 1;
@@ -311,41 +269,29 @@
         let entities = [];
         let particles = [];
         const car = { x:0, y:0, w:40, h:70, health:100 };
+        const keys = {u:false, d:false, l:false, r:false};
 
-        // Input
-        const keys = {u:false, d:false, l:false, r:false, b:false};
-
-        // --- SETUP ---
         function resize() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            roadY = canvas.height * 0.35; // Road starts at 35% height
+            roadY = canvas.height * 0.35;
             roadH = canvas.height - roadY;
-            
-            // Reset Car
             car.x = canvas.width/2 - 20;
             car.y = roadY + roadH * 0.7;
-
             generateBackground();
         }
         window.addEventListener('resize', resize);
 
         function generateBackground() {
-            // Generate Mountains Points
             bgCache.mountains = [];
             for(let i=0; i<=canvas.width; i+=10) {
-                bgCache.mountains.push({
-                    x: i,
-                    y: (Math.sin(i * 0.01) * 30) + (Math.cos(i * 0.03) * 20) + 50
-                });
+                bgCache.mountains.push({ x: i, y: (Math.sin(i * 0.01)*30) + (Math.cos(i*0.03)*20) + 50 });
             }
-            // Generate Buildings
             bgCache.buildings = [];
             let bx = 0;
             while(bx < canvas.width) {
                 let bw = 30 + Math.random() * 40;
                 let bh = 40 + Math.random() * 80;
-                // Windows for this building
                 let wins = [];
                 for(let wy=0; wy<bh-10; wy+=12) {
                     for(let wx=2; wx<bw-5; wx+=8) {
@@ -355,18 +301,11 @@
                 bgCache.buildings.push({x:bx, w:bw, h:bh, wins: wins});
                 bx += bw;
             }
-            // Generate Stars
             bgCache.stars = [];
-            for(let i=0; i<30; i++) {
-                bgCache.stars.push({
-                    x: Math.random()*canvas.width,
-                    y: Math.random()*roadY*0.6,
-                    s: Math.random()*2
-                });
-            }
+            for(let i=0; i<30; i++) bgCache.stars.push({x: Math.random()*canvas.width, y: Math.random()*roadY*0.6, s: Math.random()*2});
         }
 
-        // --- CONTROLS ---
+        // --- BINDINGS ---
         const bindKey = (id, key) => {
             const el = document.getElementById(id);
             el.addEventListener('touchstart', (e)=>{e.preventDefault(); keys[key]=true;});
@@ -374,38 +313,33 @@
             el.addEventListener('mousedown', ()=>{keys[key]=true;});
             el.addEventListener('mouseup', ()=>{keys[key]=false;});
         };
-        bindKey('t-u','u'); bindKey('t-d','d'); bindKey('t-l','l'); bindKey('t-r','r'); bindKey('t-brake','b');
+        bindKey('btn-up','u'); bindKey('btn-down','d'); bindKey('btn-left','l'); bindKey('btn-right','r');
 
-        // --- GAME LOGIC ---
+        // --- LOGIC ---
         function update() {
-            // 1. Difficulty Scaling
-            difficulty = 1 + (score / 30); // Harder every 30 points
-            let currentSpeed = baseSpeed * difficulty;
-            if(keys.b) currentSpeed *= 0.5; // Brake
-
+            difficulty = 1 + (score / 30);
+            let currentSpeed = baseSpeed * difficulty; // No Brakes!
             roadOffset += currentSpeed;
 
-            // 2. Car Physics
             const moveSpd = 5 + (difficulty * 0.5);
             if(keys.u && car.y > roadY) car.y -= moveSpd;
             if(keys.d && car.y < canvas.height - car.h) car.y += moveSpd;
             if(keys.l && car.x > 0) car.x -= moveSpd;
             if(keys.r && car.x < canvas.width - car.w) car.x += moveSpd;
 
-            // 3. Spawning
-            // Rate decreases as difficulty increases
             let spawnChance = 0.02 + (difficulty * 0.005);
-            if(Math.random() < spawnChance) {
-                spawnEntity();
-            }
+            if(Math.random() < spawnChance) spawnEntity();
 
-            // 4. Entities
             entities.forEach(e => e.y += currentSpeed);
             entities = entities.filter(e => e.y < canvas.height && e.active);
 
-            // 5. Collisions
+            // Collisions
             entities.forEach(e => {
-                if (car.x < e.x + e.w && car.x + car.w > e.x &&
+                // AABB with a slightly smaller hitbox for rocks to be fair
+                let hitX = e.type==='obs' ? e.x+5 : e.x;
+                let hitW = e.type==='obs' ? e.w-10 : e.w;
+
+                if (car.x < hitX + hitW && car.x + car.w > hitX &&
                     car.y < e.y + e.h && car.y + car.h > e.y) {
                     
                     if(e.active) {
@@ -415,23 +349,19 @@
                             AudioSys.playNoise(0.3);
                             spawnParticles(e.x+e.w/2, e.y+e.h/2, e.color);
                         } else if(e.type === 'letter') {
-                            score++;
-                            AudioSys.playTone(1000, 'sine', 0.1);
+                            score++; AudioSys.playTone(1000, 'sine', 0.1);
                         } else if(e.type === 'flask') {
-                            car.health = Math.min(100, car.health+20);
-                            AudioSys.playTone(600, 'square', 0.2);
+                            car.health = Math.min(100, car.health+20); AudioSys.playTone(600, 'square', 0.2);
                         }
                     }
                 }
             });
 
-            // 6. Particles
             particles.forEach((p,i) => {
                 p.x += p.vx; p.y += p.vy; p.l -= 0.1;
                 if(p.l<=0) particles.splice(i,1);
             });
 
-            // UI
             document.getElementById('hpBar').style.width = Math.max(0,car.health) + '%';
             document.getElementById('hpBar').style.background = car.health < 30 ? 'red' : '#00FF00';
             document.getElementById('scoreVal').innerText = score;
@@ -444,117 +374,61 @@
             let x = Math.random() * (canvas.width - 50);
             
             if(r < 0.7) {
-                // OBSTACLE VARIATION
-                let obsType = Math.floor(Math.random() * 3);
-                let obs = { x: x, y: roadY - 60, w:40, h:40, type: 'obs', active: true };
-                
-                if(obsType === 0) { 
-                    obs.shape = 'rect'; obs.color = '#FF4500'; // Standard Barrier
-                    obs.w = 50; obs.h = 30;
-                } else if(obsType === 1) { 
-                    obs.shape = 'pylon'; obs.color = '#FFFF00'; // Yellow Pylon
-                    obs.w = 30; obs.h = 30;
-                } else {
-                    obs.shape = 'block'; obs.color = '#607D8B'; // Concrete Grey
-                    obs.w = 40; obs.h = 40;
-                }
-                entities.push(obs);
+                // ROCKS & BOULDERS
+                let sizeVar = Math.random();
+                let w = 40 + (sizeVar * 30); // 40 to 70
+                let h = 30 + (sizeVar * 20); // 30 to 50
+                let color = Math.random() > 0.5 ? '#7f8c8d' : '#5d4037'; // Grey or Brown
+                entities.push({ x: x, y: roadY - 60, w: w, h: h, type: 'obs', color: color, active: true });
             } else if (r < 0.9) {
-                // LETTER
                 let char = "АӘБВГҒДЕЖЗИКҚЛМНҢОӨПРСТУҰҮФХҺЦЧШЩЪЫІЬЭЮЯ"[Math.floor(Math.random()*42)];
                 entities.push({x: x, y: roadY-60, w:40, h:40, type:'letter', char: char, active:true});
             } else {
-                // FLASK
                 entities.push({x: x, y: roadY-60, w:30, h:40, type:'flask', active:true});
             }
         }
 
         function spawnParticles(x,y,c) {
-            for(let i=0;i<8;i++) {
-                particles.push({x:x, y:y, vx:(Math.random()-0.5)*12, vy:(Math.random()-0.5)*12, l:1, color:c});
-            }
+            for(let i=0;i<8;i++) particles.push({x:x, y:y, vx:(Math.random()-0.5)*12, vy:(Math.random()-0.5)*12, l:1, color:c});
         }
 
-        // --- DRAWING ---
+        // --- DRAW ---
         function draw() {
             if(gameState !== 'PLAYING') return;
             ctx.clearRect(0,0,canvas.width,canvas.height);
 
-            // 1. STATIC BACKGROUND (From Cache)
-            // Sky
+            // Background
             let grad = ctx.createLinearGradient(0,0,0,roadY);
             grad.addColorStop(0, '#020210'); grad.addColorStop(1, '#203A43');
             ctx.fillStyle = grad; ctx.fillRect(0,0,canvas.width, roadY);
-            
-            // Stars
-            ctx.fillStyle = '#FFF';
-            bgCache.stars.forEach(s => { ctx.fillRect(s.x, s.y, s.s, s.s); });
-
-            // Mountains
-            ctx.fillStyle = '#0f172a'; // Dark silhouette
-            ctx.beginPath();
-            ctx.moveTo(0, roadY);
-            bgCache.mountains.forEach(p => ctx.lineTo(p.x, roadY - p.y));
-            ctx.lineTo(canvas.width, roadY);
-            ctx.fill();
-
-            // Buildings (Static)
+            ctx.fillStyle = '#FFF'; bgCache.stars.forEach(s => ctx.fillRect(s.x, s.y, s.s, s.s));
+            ctx.fillStyle = '#0f172a'; ctx.beginPath(); ctx.moveTo(0, roadY);
+            bgCache.mountains.forEach(p => ctx.lineTo(p.x, roadY - p.y)); ctx.lineTo(canvas.width, roadY); ctx.fill();
             bgCache.buildings.forEach(b => {
-                ctx.fillStyle = '#1e293b'; // Building body
-                ctx.fillRect(b.x, roadY - b.h, b.w, b.h);
-                // Windows
-                ctx.fillStyle = '#facc15'; // Lit window
-                b.wins.forEach(w => ctx.fillRect(b.x + w.x, roadY - b.h + w.y, 4, 6));
+                ctx.fillStyle = '#1e293b'; ctx.fillRect(b.x, roadY - b.h, b.w, b.h);
+                ctx.fillStyle = '#facc15'; b.wins.forEach(w => ctx.fillRect(b.x + w.x, roadY - b.h + w.y, 4, 6));
             });
-
-            // Hotel Kazakhstan & Tower (Overlay manual drawing)
             drawLandmarks();
 
-            // 2. ROAD (California Style)
-            ctx.fillStyle = '#111'; // Asphalt
-            ctx.fillRect(0, roadY, canvas.width, roadH);
-            
-            // Shoulders
-            ctx.fillStyle = '#333';
-            ctx.fillRect(0, roadY, 10, roadH);
-            ctx.fillRect(canvas.width-10, roadY, 10, roadH);
-
-            // Lines
-            ctx.fillStyle = '#FFD700'; // Yellow Dashed
-            const laneCount = 4; 
-            const laneW = canvas.width / laneCount;
-            const dashH = 50;
-            const dashGap = 150; // BIG INTERVAL
-            const pattern = dashH + dashGap;
-
+            // Road
+            ctx.fillStyle = '#111'; ctx.fillRect(0, roadY, canvas.width, roadH);
+            ctx.fillStyle = '#333'; ctx.fillRect(0, roadY, 10, roadH); ctx.fillRect(canvas.width-10, roadY, 10, roadH);
+            ctx.fillStyle = '#FFD700'; 
+            const laneCount = 4; const laneW = canvas.width / laneCount;
+            const dashH = 50; const dashGap = 150; const pattern = dashH + dashGap;
             for(let l=1; l<laneCount; l++) {
                 let lx = l * laneW;
                 for(let y = roadY - pattern; y < canvas.height; y += pattern) {
                     let dy = y + (roadOffset % pattern);
-                    if(dy > roadY - dashH && dy < canvas.height) {
-                        ctx.fillRect(lx - 2, dy, 4, dashH);
-                    }
+                    if(dy > roadY - dashH && dy < canvas.height) ctx.fillRect(lx - 2, dy, 4, dashH);
                 }
             }
 
-            // 3. ENTITIES
+            // Entities
             entities.forEach(e => {
-                if(e.type === 'obs') {
-                    ctx.fillStyle = e.color;
-                    if(e.shape === 'pylon') {
-                        ctx.beginPath(); ctx.moveTo(e.x+e.w/2, e.y); ctx.lineTo(e.x+e.w, e.y+e.h); ctx.lineTo(e.x, e.y+e.h); ctx.fill();
-                    } else if (e.shape === 'block') {
-                        ctx.fillRect(e.x, e.y, e.w, e.h);
-                        ctx.strokeStyle='#fff'; ctx.lineWidth=1; ctx.strokeRect(e.x,e.y,e.w,e.h);
-                    } else {
-                        // Barrier
-                        ctx.fillRect(e.x, e.y, e.w, e.h);
-                        ctx.fillStyle='rgba(0,0,0,0.3)'; 
-                        ctx.beginPath(); ctx.moveTo(e.x, e.y); ctx.lineTo(e.x+10, e.y); ctx.lineTo(e.x, e.y+10); ctx.fill();
-                    }
-                } else if(e.type === 'letter') {
-                    ctx.fillStyle = '#FFD700';
-                    ctx.beginPath(); ctx.arc(e.x+e.w/2, e.y+e.h/2, e.w/2, 0, Math.PI*2); ctx.fill();
+                if(e.type === 'obs') drawRock(e);
+                else if(e.type === 'letter') {
+                    ctx.fillStyle = '#FFD700'; ctx.beginPath(); ctx.arc(e.x+e.w/2, e.y+e.h/2, e.w/2, 0, Math.PI*2); ctx.fill();
                     ctx.fillStyle = '#000'; ctx.font='bold 20px Arial'; ctx.textAlign='center'; ctx.textBaseline='middle';
                     ctx.fillText(e.char, e.x+e.w/2, e.y+e.h/2);
                 } else if(e.type === 'flask') {
@@ -564,26 +438,38 @@
                 }
             });
 
-            // 4. CAR
             drawCar();
-
-            // 5. PARTICLES
             particles.forEach(p => { ctx.fillStyle=p.color; ctx.fillRect(p.x, p.y, 4, 4); });
-
             requestAnimationFrame(draw);
             update();
         }
 
+        function drawRock(e) {
+            ctx.fillStyle = e.color;
+            ctx.beginPath();
+            // Draw an irregular rock shape
+            ctx.moveTo(e.x + e.w*0.2, e.y);
+            ctx.lineTo(e.x + e.w*0.8, e.y + e.h*0.1);
+            ctx.lineTo(e.x + e.w, e.y + e.h*0.6);
+            ctx.lineTo(e.x + e.w*0.7, e.y + e.h);
+            ctx.lineTo(e.x + e.w*0.1, e.y + e.h*0.9);
+            ctx.lineTo(e.x, e.y + e.h*0.4);
+            ctx.fill();
+            
+            // Detail lines (cracks)
+            ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(e.x+e.w*0.3, e.y+e.h*0.3); ctx.lineTo(e.x+e.w*0.6, e.y+e.h*0.6); ctx.stroke();
+            // Highlight
+            ctx.fillStyle = 'rgba(255,255,255,0.1)';
+            ctx.beginPath(); ctx.arc(e.x+e.w*0.3, e.y+e.h*0.3, e.w*0.15, 0, Math.PI*2); ctx.fill();
+        }
+
         function drawLandmarks() {
-             // Hotel (Left)
-             let hx = canvas.width * 0.15;
-             let hy = roadY;
-             ctx.fillStyle = '#777';
-             ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx, hy-100); 
+             let hx = canvas.width * 0.15; let hy = roadY;
+             ctx.fillStyle = '#777'; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx, hy-100); 
              ctx.quadraticCurveTo(hx+30, hy-120, hx+60, hy-100); ctx.lineTo(hx+60, hy); ctx.fill();
              ctx.fillStyle = '#FFD700'; ctx.beginPath(); ctx.arc(hx+30, hy-105, 5, 0, Math.PI*2); ctx.fill();
 
-             // TV Tower (Right)
              let tx = canvas.width * 0.85;
              ctx.strokeStyle = '#555'; ctx.lineWidth = 3;
              ctx.beginPath(); ctx.moveTo(tx, roadY-20); ctx.lineTo(tx, roadY-140); ctx.stroke();
@@ -592,60 +478,45 @@
 
         function drawCar() {
             const {x, y, w, h} = car;
-            // Shadow
             ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(x+4, y+4, w, h);
-            // Body
             ctx.fillStyle = '#000'; ctx.fillRect(x, y, w, h);
             ctx.fillStyle = '#222'; ctx.fillRect(x+2, y+15, w-4, h-25);
-            // Dayinball Tag
             ctx.save(); ctx.translate(x+w/2, y+h/2); ctx.rotate(-Math.PI/2);
             ctx.fillStyle = '#F00'; ctx.font='bold 10px Arial'; ctx.textAlign='center'; ctx.fillText("DAYINBALL", 0, 4);
             ctx.restore();
-            // Lights
             ctx.fillStyle = '#FF0'; ctx.fillRect(x+2, y, 8, 5); ctx.fillRect(x+w-10, y, 8, 5);
             ctx.fillStyle = '#D00'; ctx.fillRect(x+2, y+h-5, 8, 5); ctx.fillRect(x+w-10, y+h-5, 8, 5);
         }
 
-        // --- GAME FLOW ---
         function initGame() {
             let nick = document.getElementById('nickname').value.trim();
             if(!nick) { alert("ENTER NICKNAME / АТЫҢЫЗДЫ ЖАЗЫҢЫЗ"); return; }
             nickname = nick.toUpperCase();
-
             AudioSys.init();
             document.getElementById('screen-start').style.display = 'none';
             document.getElementById('screen-gameover').style.display = 'none';
-            
-            gameState = 'PLAYING';
-            score = 0; car.health = 100; difficulty = 1;
+            gameState = 'PLAYING'; score = 0; car.health = 100; difficulty = 1;
             entities = []; particles = [];
-            resize();
-            draw();
+            resize(); draw();
         }
 
         function gameOver() {
             gameState = 'OVER';
             document.getElementById('screen-gameover').style.display = 'flex';
             document.getElementById('end-score').innerText = score;
-            
-            // Handle Hall of Fame
             const topList = StorageSys.save(nickname, score);
             const listEl = document.getElementById('hof-list');
             listEl.innerHTML = "";
             topList.forEach((entry, idx) => {
-                let li = document.createElement('li');
-                li.className = 'hof-item';
+                let li = document.createElement('li'); li.className = 'hof-item';
                 li.innerHTML = `<span>#${idx+1} ${entry.name}</span><span>${entry.score}</span>`;
                 listEl.appendChild(li);
             });
         }
-
         function resetGame() {
             document.getElementById('screen-gameover').style.display = 'none';
             document.getElementById('screen-start').style.display = 'flex';
         }
-
-        // Init
         resize();
     </script>
 </body>
