@@ -3,45 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DAYINBALL: JBRLA</title>
+    <title>DAYINBALL: SPIKE EDITION</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Rubik+Glitch&family=Montserrat:wght@400;700&display=swap');
 
         body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
+            margin: 0; padding: 0; overflow: hidden;
             background-color: #000;
             font-family: 'Montserrat', sans-serif;
-            touch-action: none;
-            user-select: none;
-            -webkit-user-select: none;
+            touch-action: none; user-select: none; -webkit-user-select: none;
         }
 
         #gameContainer {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-            background: #111;
+            position: relative; width: 100vw; height: 100vh; background: #111;
         }
 
-        canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
+        canvas { display: block; width: 100%; height: 100%; }
 
         /* --- HUD --- */
         #hud {
             position: absolute;
-            top: 32%;
+            top: 22%; /* Adjusted for smaller background */
             left: 10px; right: 10px;
-            display: flex;
-            justify-content: space-between;
-            pointer-events: none;
-            z-index: 10;
-            color: #fff;
-            text-shadow: 2px 2px 0 #000;
+            display: flex; justify-content: space-between;
+            pointer-events: none; z-index: 10;
+            color: #fff; text-shadow: 2px 2px 0 #000;
             font-family: 'Permanent Marker', cursive;
         }
 
@@ -54,36 +40,37 @@
             width: 100%; height: 100%;
             background: #00FF00; transition: width 0.2s;
         }
+        
+        /* Spike Timer Bar (New) */
+        #spikeTimerWrap {
+            display: none; /* Hidden by default */
+            margin-top: 5px;
+            width: 120px; height: 8px;
+            background: #222; border: 1px solid #aaa;
+            transform: skewX(-15deg);
+        }
+        #spikeTimerFill {
+            width: 100%; height: 100%; background: #ccc;
+        }
 
         /* --- OVERLAYS --- */
         .overlay {
-            position: absolute;
-            top: 0; left: 0;
+            position: absolute; top: 0; left: 0;
             width: 100%; height: 100%;
             background: rgba(0,0,0,0.92);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 50;
-            color: #fff;
-            text-align: center;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            z-index: 50; color: #fff; text-align: center;
         }
 
         .title-main {
-            font-family: 'Rubik Glitch', cursive;
-            font-size: 3.5rem;
-            color: #FFF;
-            text-shadow: 4px 4px #FF0000;
-            line-height: 0.9;
-            margin-bottom: 5px;
+            font-family: 'Rubik Glitch', cursive; font-size: 3.5rem;
+            color: #FFF; text-shadow: 4px 4px #FF0000;
+            line-height: 0.9; margin-bottom: 5px;
         }
         .title-sub {
-            font-family: 'Permanent Marker', cursive;
-            font-size: 2rem;
-            color: #FFD700;
-            margin-bottom: 20px;
-            transform: rotate(-3deg);
+            font-family: 'Permanent Marker', cursive; font-size: 2rem;
+            color: #FFD700; margin-bottom: 20px; transform: rotate(-3deg);
         }
         .lang-sub {
             font-size: 0.9rem; color: #aaa; letter-spacing: 2px;
@@ -108,12 +95,10 @@
         }
         .btn-start:active { transform: scale(0.95); }
 
-        /* Hall of Fame */
         .hof-container {
             margin-top: 20px; background: rgba(255,255,255,0.05);
             padding: 15px; border-radius: 10px; width: 80%; max-width: 300px;
         }
-        .hof-title { color: #FFD700; font-family: 'Permanent Marker'; margin-bottom: 10px; }
         .hof-list { list-style: none; padding: 0; margin: 0; font-size: 0.9rem; text-align: left; }
         .hof-item { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
 
@@ -123,53 +108,28 @@
             font-family: sans-serif; z-index: 60; pointer-events: none;
         }
 
-        /* --- SPLIT CONTROLS --- */
+        /* --- CONTROLS --- */
         #controls {
-            position: absolute;
-            bottom: 20px; left: 10px; right: 10px;
-            height: 180px;
-            z-index: 20;
-            pointer-events: none;
+            position: absolute; bottom: 20px; left: 10px; right: 10px;
+            height: 180px; z-index: 20; pointer-events: none;
         }
-
-        /* Common Button Style */
         .ctrl-btn {
             position: absolute;
             background: rgba(255, 255, 255, 0.1);
             border: 2px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
             display: flex; justify-content: center; align-items: center;
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 2rem;
-            pointer-events: auto;
-            touch-action: manipulation;
+            color: rgba(255, 255, 255, 0.5); font-size: 2rem;
+            pointer-events: auto; touch-action: manipulation;
             transition: background 0.1s;
         }
         .ctrl-btn:active { background: rgba(255, 0, 0, 0.4); border-color: red; color: white; }
 
-        /* Left Side */
-        #btn-left {
-            bottom: 0; left: 0;
-            width: 100px; height: 100px;
-            font-size: 3rem; /* Big Arrow */
-        }
-        #btn-up {
-            bottom: 110px; left: 20px;
-            width: 60px; height: 60px;
-            font-size: 1.5rem;
-        }
-
-        /* Right Side */
-        #btn-right {
-            bottom: 0; right: 0;
-            width: 100px; height: 100px;
-            font-size: 3rem; /* Big Arrow */
-        }
-        #btn-down {
-            bottom: 110px; right: 20px;
-            width: 60px; height: 60px;
-            font-size: 1.5rem;
-        }
+        /* Handle Positions */
+        #btn-left { bottom: 0; left: 0; width: 100px; height: 100px; font-size: 3rem; }
+        #btn-up { bottom: 110px; left: 20px; width: 60px; height: 60px; font-size: 1.5rem; }
+        #btn-right { bottom: 0; right: 0; width: 100px; height: 100px; font-size: 3rem; }
+        #btn-down { bottom: 110px; right: 20px; width: 60px; height: 60px; font-size: 1.5rem; }
 
     </style>
 </head>
@@ -182,6 +142,7 @@
             <div>
                 HP
                 <div class="bar-wrap"><div id="hpBar" class="bar-fill"></div></div>
+                <div id="spikeTimerWrap"><div id="spikeTimerFill"></div></div>
             </div>
             <div style="text-align: right;">
                 <span id="scoreVal" style="font-size: 1.5rem; color: #FFD700;">0</span><br>
@@ -210,7 +171,6 @@
         <div id="controls">
             <div id="btn-up" class="ctrl-btn">▲</div>
             <div id="btn-left" class="ctrl-btn">◀</div>
-
             <div id="btn-down" class="ctrl-btn">▼</div>
             <div id="btn-right" class="ctrl-btn">▶</div>
         </div>
@@ -238,6 +198,11 @@
                 const s=this.ctx.createBufferSource(), g=this.ctx.createGain();
                 s.buffer=b; g.gain.value=0.2; g.gain.exponentialRampToValueAtTime(0.01,this.ctx.currentTime+d);
                 s.connect(g); g.connect(this.ctx.destination); s.start();
+            },
+            playSmash: function() {
+                // Low crunchy sound
+                this.playTone(80, 'sawtooth', 0.2, 0.3);
+                this.playNoise(0.1);
             }
         };
 
@@ -259,25 +224,37 @@
         
         let gameState = 'START';
         let nickname = "";
-        let roadY, roadH;
+        
+        // Size Vars
+        let roadY, roadH; 
+        
+        // Cache
         let bgCache = { mountains: [], buildings: [], stars: [] };
 
+        // State
         let score = 0;
         let baseSpeed = 6;
         let difficulty = 1;
         let roadOffset = 0;
         let entities = [];
         let particles = [];
+        let spikeEndTime = 0; // Timestamp for powerup
+        
         const car = { x:0, y:0, w:40, h:70, health:100 };
         const keys = {u:false, d:false, l:false, r:false};
 
         function resize() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            roadY = canvas.height * 0.35;
+            
+            // BACKGROUND 40% SMALLER
+            // Original was 0.35. New is 0.21.
+            roadY = canvas.height * 0.21; 
             roadH = canvas.height - roadY;
+            
             car.x = canvas.width/2 - 20;
             car.y = roadY + roadH * 0.7;
+            
             generateBackground();
         }
         window.addEventListener('resize', resize);
@@ -285,13 +262,14 @@
         function generateBackground() {
             bgCache.mountains = [];
             for(let i=0; i<=canvas.width; i+=10) {
-                bgCache.mountains.push({ x: i, y: (Math.sin(i * 0.01)*30) + (Math.cos(i*0.03)*20) + 50 });
+                // Scaled down height of mountains slightly to fit new horizon
+                bgCache.mountains.push({ x: i, y: (Math.sin(i * 0.01)*20) + (Math.cos(i*0.03)*15) + 30 });
             }
             bgCache.buildings = [];
             let bx = 0;
             while(bx < canvas.width) {
                 let bw = 30 + Math.random() * 40;
-                let bh = 40 + Math.random() * 80;
+                let bh = 20 + Math.random() * 60; // Shorter buildings to fit
                 let wins = [];
                 for(let wy=0; wy<bh-10; wy+=12) {
                     for(let wx=2; wx<bw-5; wx+=8) {
@@ -302,10 +280,10 @@
                 bx += bw;
             }
             bgCache.stars = [];
-            for(let i=0; i<30; i++) bgCache.stars.push({x: Math.random()*canvas.width, y: Math.random()*roadY*0.6, s: Math.random()*2});
+            for(let i=0; i<30; i++) bgCache.stars.push({x: Math.random()*canvas.width, y: Math.random()*roadY*0.8, s: Math.random()*2});
         }
 
-        // --- BINDINGS ---
+        // --- CONTROLS ---
         const bindKey = (id, key) => {
             const el = document.getElementById(id);
             el.addEventListener('touchstart', (e)=>{e.preventDefault(); keys[key]=true;});
@@ -315,27 +293,32 @@
         };
         bindKey('btn-up','u'); bindKey('btn-down','d'); bindKey('btn-left','l'); bindKey('btn-right','r');
 
-        // --- LOGIC ---
+        // --- UPDATE ---
         function update() {
             difficulty = 1 + (score / 30);
-            let currentSpeed = baseSpeed * difficulty; // No Brakes!
+            let currentSpeed = baseSpeed * difficulty;
             roadOffset += currentSpeed;
 
+            // Car Physics
             const moveSpd = 5 + (difficulty * 0.5);
             if(keys.u && car.y > roadY) car.y -= moveSpd;
             if(keys.d && car.y < canvas.height - car.h) car.y += moveSpd;
             if(keys.l && car.x > 0) car.x -= moveSpd;
             if(keys.r && car.x < canvas.width - car.w) car.x += moveSpd;
 
+            // Spawning
             let spawnChance = 0.02 + (difficulty * 0.005);
             if(Math.random() < spawnChance) spawnEntity();
 
             entities.forEach(e => e.y += currentSpeed);
             entities = entities.filter(e => e.y < canvas.height && e.active);
 
+            // Check if Spikes are active
+            const isSpiked = Date.now() < spikeEndTime;
+
             // Collisions
             entities.forEach(e => {
-                // AABB with a slightly smaller hitbox for rocks to be fair
+                // Hitbox for rock
                 let hitX = e.type==='obs' ? e.x+5 : e.x;
                 let hitW = e.type==='obs' ? e.w-10 : e.w;
 
@@ -344,14 +327,30 @@
                     
                     if(e.active) {
                         e.active = false;
+                        
                         if(e.type === 'obs') {
-                            car.health -= 25;
-                            AudioSys.playNoise(0.3);
-                            spawnParticles(e.x+e.w/2, e.y+e.h/2, e.color);
+                            if(isSpiked) {
+                                // SMASH!
+                                AudioSys.playSmash();
+                                spawnParticles(e.x+e.w/2, e.y+e.h/2, '#888', 15); // Debris
+                                score += 2; // Bonus points
+                            } else {
+                                // CRASH
+                                car.health -= 25;
+                                AudioSys.playNoise(0.3);
+                                spawnParticles(e.x+e.w/2, e.y+e.h/2, e.color, 8);
+                            }
                         } else if(e.type === 'letter') {
                             score++; AudioSys.playTone(1000, 'sine', 0.1);
                         } else if(e.type === 'flask') {
-                            car.health = Math.min(100, car.health+20); AudioSys.playTone(600, 'square', 0.2);
+                            car.health = Math.min(100, car.health+20); 
+                            AudioSys.playTone(600, 'square', 0.2);
+                        } else if(e.type === 'ultra') {
+                            // ACTIVATE SPIKES
+                            spikeEndTime = Date.now() + 10000; // 10 seconds
+                            AudioSys.playTone(200, 'sawtooth', 0.1);
+                            setTimeout(()=>AudioSys.playTone(400, 'sawtooth', 0.2), 100);
+                            setTimeout(()=>AudioSys.playTone(600, 'sawtooth', 0.4), 200);
                         }
                     }
                 }
@@ -362,9 +361,21 @@
                 if(p.l<=0) particles.splice(i,1);
             });
 
+            // Update UI
             document.getElementById('hpBar').style.width = Math.max(0,car.health) + '%';
             document.getElementById('hpBar').style.background = car.health < 30 ? 'red' : '#00FF00';
             document.getElementById('scoreVal').innerText = score;
+            
+            // Spike Timer
+            const timerEl = document.getElementById('spikeTimerWrap');
+            if(isSpiked) {
+                timerEl.style.display = 'block';
+                const remaining = Math.max(0, spikeEndTime - Date.now());
+                const pct = (remaining / 10000) * 100;
+                document.getElementById('spikeTimerFill').style.width = pct + '%';
+            } else {
+                timerEl.style.display = 'none';
+            }
 
             if(car.health <= 0) gameOver();
         }
@@ -374,22 +385,27 @@
             let x = Math.random() * (canvas.width - 50);
             
             if(r < 0.7) {
-                // ROCKS & BOULDERS
+                // ROCKS
                 let sizeVar = Math.random();
-                let w = 40 + (sizeVar * 30); // 40 to 70
-                let h = 30 + (sizeVar * 20); // 30 to 50
-                let color = Math.random() > 0.5 ? '#7f8c8d' : '#5d4037'; // Grey or Brown
+                let w = 40 + (sizeVar * 30);
+                let h = 30 + (sizeVar * 20);
+                let color = Math.random() > 0.5 ? '#7f8c8d' : '#5d4037';
                 entities.push({ x: x, y: roadY - 60, w: w, h: h, type: 'obs', color: color, active: true });
-            } else if (r < 0.9) {
+            } else if (r < 0.85) {
+                // LETTER
                 let char = "АӘБВГҒДЕЖЗИКҚЛМНҢОӨПРСТУҰҮФХҺЦЧШЩЪЫІЬЭЮЯ"[Math.floor(Math.random()*42)];
                 entities.push({x: x, y: roadY-60, w:40, h:40, type:'letter', char: char, active:true});
-            } else {
+            } else if (r < 0.95) {
+                // FLASK
                 entities.push({x: x, y: roadY-60, w:30, h:40, type:'flask', active:true});
+            } else {
+                // ULTRA FLASK (Rare - 5% of non-rock spawns, roughly 1-2% total)
+                entities.push({x: x, y: roadY-60, w:35, h:45, type:'ultra', active:true});
             }
         }
 
-        function spawnParticles(x,y,c) {
-            for(let i=0;i<8;i++) particles.push({x:x, y:y, vx:(Math.random()-0.5)*12, vy:(Math.random()-0.5)*12, l:1, color:c});
+        function spawnParticles(x,y,c, count) {
+            for(let i=0;i<count;i++) particles.push({x:x, y:y, vx:(Math.random()-0.5)*12, vy:(Math.random()-0.5)*12, l:1, color:c});
         }
 
         // --- DRAW ---
@@ -399,7 +415,7 @@
 
             // Background
             let grad = ctx.createLinearGradient(0,0,0,roadY);
-            grad.addColorStop(0, '#020210'); grad.addColorStop(1, '#203A43');
+            grad.addColorStop(0, '#020210'); grad.addColorStop(1, '#101030');
             ctx.fillStyle = grad; ctx.fillRect(0,0,canvas.width, roadY);
             ctx.fillStyle = '#FFF'; bgCache.stars.forEach(s => ctx.fillRect(s.x, s.y, s.s, s.s));
             ctx.fillStyle = '#0f172a'; ctx.beginPath(); ctx.moveTo(0, roadY);
@@ -432,9 +448,17 @@
                     ctx.fillStyle = '#000'; ctx.font='bold 20px Arial'; ctx.textAlign='center'; ctx.textBaseline='middle';
                     ctx.fillText(e.char, e.x+e.w/2, e.y+e.h/2);
                 } else if(e.type === 'flask') {
+                    // Normal Blue Flask
                     ctx.fillStyle = '#00f'; ctx.fillRect(e.x+5, e.y+10, e.w-10, e.h-10);
                     ctx.fillStyle = '#fff'; ctx.fillRect(e.x+5, e.y+20, e.w-10, 5);
                     ctx.fillStyle = '#f00'; ctx.font='bold 12px Arial'; ctx.fillText('G', e.x+e.w/2, e.y+35);
+                } else if(e.type === 'ultra') {
+                    // ULTRA FLASK (Purple)
+                    ctx.fillStyle = '#9400D3'; ctx.fillRect(e.x, e.y+5, e.w, e.h-5); // Body
+                    ctx.fillStyle = '#333'; ctx.fillRect(e.x+e.w*0.3, e.y, e.w*0.4, 5); // Cap
+                    ctx.fillStyle = '#FFF'; ctx.font='bold 20px Arial'; ctx.fillText('⚡', e.x+e.w/2, e.y+e.h/2+5); // Bolt
+                    // Glow
+                    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.strokeRect(e.x, e.y+5, e.w, e.h-5);
                 }
             });
 
@@ -447,37 +471,43 @@
         function drawRock(e) {
             ctx.fillStyle = e.color;
             ctx.beginPath();
-            // Draw an irregular rock shape
-            ctx.moveTo(e.x + e.w*0.2, e.y);
-            ctx.lineTo(e.x + e.w*0.8, e.y + e.h*0.1);
-            ctx.lineTo(e.x + e.w, e.y + e.h*0.6);
-            ctx.lineTo(e.x + e.w*0.7, e.y + e.h);
-            ctx.lineTo(e.x + e.w*0.1, e.y + e.h*0.9);
-            ctx.lineTo(e.x, e.y + e.h*0.4);
+            ctx.moveTo(e.x + e.w*0.2, e.y); ctx.lineTo(e.x + e.w*0.8, e.y + e.h*0.1);
+            ctx.lineTo(e.x + e.w, e.y + e.h*0.6); ctx.lineTo(e.x + e.w*0.7, e.y + e.h);
+            ctx.lineTo(e.x + e.w*0.1, e.y + e.h*0.9); ctx.lineTo(e.x, e.y + e.h*0.4);
             ctx.fill();
-            
-            // Detail lines (cracks)
             ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 2;
             ctx.beginPath(); ctx.moveTo(e.x+e.w*0.3, e.y+e.h*0.3); ctx.lineTo(e.x+e.w*0.6, e.y+e.h*0.6); ctx.stroke();
-            // Highlight
-            ctx.fillStyle = 'rgba(255,255,255,0.1)';
-            ctx.beginPath(); ctx.arc(e.x+e.w*0.3, e.y+e.h*0.3, e.w*0.15, 0, Math.PI*2); ctx.fill();
         }
 
         function drawLandmarks() {
              let hx = canvas.width * 0.15; let hy = roadY;
-             ctx.fillStyle = '#777'; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx, hy-100); 
-             ctx.quadraticCurveTo(hx+30, hy-120, hx+60, hy-100); ctx.lineTo(hx+60, hy); ctx.fill();
-             ctx.fillStyle = '#FFD700'; ctx.beginPath(); ctx.arc(hx+30, hy-105, 5, 0, Math.PI*2); ctx.fill();
+             ctx.fillStyle = '#777'; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx, hy-80); 
+             ctx.quadraticCurveTo(hx+30, hy-100, hx+60, hy-80); ctx.lineTo(hx+60, hy); ctx.fill();
+             ctx.fillStyle = '#FFD700'; ctx.beginPath(); ctx.arc(hx+30, hy-85, 5, 0, Math.PI*2); ctx.fill();
 
              let tx = canvas.width * 0.85;
              ctx.strokeStyle = '#555'; ctx.lineWidth = 3;
-             ctx.beginPath(); ctx.moveTo(tx, roadY-20); ctx.lineTo(tx, roadY-140); ctx.stroke();
-             ctx.fillStyle = '#D00'; ctx.beginPath(); ctx.arc(tx, roadY-120, 6, 0, Math.PI*2); ctx.fill();
+             ctx.beginPath(); ctx.moveTo(tx, roadY-20); ctx.lineTo(tx, roadY-120); ctx.stroke();
+             ctx.fillStyle = '#D00'; ctx.beginPath(); ctx.arc(tx, roadY-100, 6, 0, Math.PI*2); ctx.fill();
         }
 
         function drawCar() {
             const {x, y, w, h} = car;
+            const isSpiked = Date.now() < spikeEndTime;
+
+            // Spikes (Rendered BEHIND car if we want them sticking out bottom? 
+            // Actually, car drives UP visually (headlights at top). 
+            // So spikes should be at Y (top of car).
+            if(isSpiked) {
+                ctx.fillStyle = '#888'; // Grey Steel
+                ctx.beginPath();
+                // 3 Spikes
+                ctx.moveTo(x, y); ctx.lineTo(x+10, y-20); ctx.lineTo(x+15, y);
+                ctx.moveTo(x+12, y); ctx.lineTo(x+20, y-25); ctx.lineTo(x+28, y);
+                ctx.moveTo(x+25, y); ctx.lineTo(x+35, y-20); ctx.lineTo(x+w, y);
+                ctx.fill();
+            }
+
             ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(x+4, y+4, w, h);
             ctx.fillStyle = '#000'; ctx.fillRect(x, y, w, h);
             ctx.fillStyle = '#222'; ctx.fillRect(x+2, y+15, w-4, h-25);
@@ -495,7 +525,7 @@
             AudioSys.init();
             document.getElementById('screen-start').style.display = 'none';
             document.getElementById('screen-gameover').style.display = 'none';
-            gameState = 'PLAYING'; score = 0; car.health = 100; difficulty = 1;
+            gameState = 'PLAYING'; score = 0; car.health = 100; difficulty = 1; spikeEndTime = 0;
             entities = []; particles = [];
             resize(); draw();
         }
