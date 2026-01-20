@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DAYINBALL 3D VIEW</title>
+    <title>DAYINBALL: ALMATY CLASSIC</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Rubik+Glitch&display=swap');
 
@@ -13,7 +13,7 @@
             overflow: hidden;
             background-color: #000;
             font-family: 'Permanent Marker', cursive, sans-serif;
-            touch-action: none;
+            touch-action: none; /* Prevent scroll */
             user-select: none;
             -webkit-user-select: none;
         }
@@ -22,7 +22,7 @@
             position: relative;
             width: 100vw;
             height: 100vh;
-            background: #000;
+            background: #111;
         }
 
         canvas {
@@ -31,38 +31,29 @@
             height: 100%;
         }
 
-        /* --- UI LAYER --- */
-        #ui-layer {
+        /* --- UI --- */
+        #hud {
             position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            pointer-events: none; /* Let touches pass through to controls */
-            z-index: 10;
-        }
-
-        /* HUD */
-        .hud-bar {
-            position: absolute;
-            top: 25%; /* Just under horizon */
+            top: 32%; /* Positioned just below the skyline graphic */
             left: 10px;
             right: 10px;
             display: flex;
             justify-content: space-between;
+            pointer-events: none;
+            z-index: 10;
             color: #fff;
-            text-shadow: 1px 1px 0 #000;
-            font-size: 1rem;
+            text-shadow: 2px 2px 0 #000;
         }
-        
-        .health-wrap {
-            display: flex; align-items: center; gap: 5px;
-        }
-        .hp-bar {
-            width: 80px; height: 10px;
-            background: #333; border: 1px solid #fff;
+
+        .bar-wrap {
+            width: 100px; height: 12px;
+            background: #333;
+            border: 2px solid #fff;
             transform: skewX(-15deg);
         }
-        .hp-fill {
-            width: 100%; height: 100%; background: #00FF00;
+        .bar-fill {
+            width: 100%; height: 100%;
+            background: #00FF00;
             transition: width 0.2s;
         }
 
@@ -71,93 +62,85 @@
             position: absolute;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85);
+            background: rgba(0,0,0,0.9);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             z-index: 50;
-            pointer-events: auto;
             color: #FFD700;
+            text-align: center;
         }
-        
+
         h1 {
             font-family: 'Rubik Glitch', cursive;
-            font-size: 3rem; margin: 0;
-            color: #FFF; text-shadow: 3px 3px #FF0000;
-            transform: rotate(-3deg);
+            font-size: 3.5rem; margin: 0;
+            color: #FFF; text-shadow: 4px 4px #FF0000;
+            line-height: 1;
         }
 
-        .btn-action {
-            margin-top: 20px;
-            padding: 15px 40px;
-            font-size: 1.2rem;
+        .btn-start {
+            margin-top: 30px;
+            padding: 20px 50px;
+            font-size: 1.5rem;
             font-family: 'Permanent Marker', cursive;
             background: #FF0000; color: #FFF;
-            border: 2px solid #FFF;
-            box-shadow: 0 0 10px #FF0000;
-            text-transform: uppercase;
+            border: 3px solid #FFF;
+            border-radius: 8px;
+            box-shadow: 0 0 15px #FF0000;
+            animation: pulse 1.5s infinite;
         }
+        @keyframes pulse { 0% {transform: scale(1);} 50% {transform: scale(1.05);} 100% {transform: scale(1);} }
 
-        /* --- CONTROLS --- */
-        /* Placed physically on top, but visually subtle */
-        #controls-layer {
+        /* CONTROLS */
+        #controls {
             position: absolute;
-            bottom: 20px; left: 0;
-            width: 100%; height: 180px;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            height: 200px;
             z-index: 20;
             display: flex;
             justify-content: space-between;
-            padding: 0 20px;
-            box-sizing: border-box;
+            align-items: flex-end;
+            pointer-events: none; /* Let touches hit the zones */
         }
 
-        .dpad {
+        .dpad-zone {
             position: relative;
-            width: 140px; height: 140px;
-            background: rgba(255, 255, 255, 0.05); /* Very low opacity */
+            width: 160px; height: 160px;
+            background: rgba(255, 255, 255, 0.05);
             border-radius: 50%;
-            border: 1px solid rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.1);
+            pointer-events: auto;
         }
 
-        /* Invisible touch targets */
-        .btn-zone {
-            position: absolute;
-            background: rgba(255,0,0,0.0); /* Invisible but clickable */
-        }
-        /* Visual guides (arrows) */
-        .btn-visual {
-            position: absolute;
-            color: rgba(255,255,255,0.2); /* Faint */
-            font-size: 24px;
-            pointer-events: none;
+        .act-btn {
+            width: 80px; height: 80px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.1);
+            pointer-events: auto;
+            display: flex; justify-content: center; align-items: center;
+            color: rgba(255,255,255,0.3);
+            margin-bottom: 40px;
         }
 
-        /* D-Pad Positioning */
-        #btn-u { top: 0; left: 33%; width: 33%; height: 33%; }
-        #btn-d { bottom: 0; left: 33%; width: 33%; height: 33%; }
-        #btn-l { top: 33%; left: 0; width: 33%; height: 33%; }
-        #btn-r { top: 33%; right: 0; width: 33%; height: 33%; }
+        /* Touch Targets inside Dpad */
+        .t-btn { position: absolute; }
+        #t-up { top: 0; left: 30%; width: 40%; height: 40%; }
+        #t-down { bottom: 0; left: 30%; width: 40%; height: 40%; }
+        #t-left { top: 30%; left: 0; width: 40%; height: 40%; }
+        #t-right { top: 30%; right: 0; width: 40%; height: 40%; }
         
-        /* Visual Arrow Positions */
-        .arr-u { top: 5px; left: 50%; transform: translateX(-50%); }
-        .arr-d { bottom: 5px; left: 50%; transform: translateX(-50%); }
+        /* Visual Arrows */
+        .arr { position: absolute; color: rgba(255,255,255,0.3); font-size: 24px; pointer-events: none;}
+        .arr-u { top: 10px; left: 50%; transform: translateX(-50%); }
+        .arr-d { bottom: 10px; left: 50%; transform: translateX(-50%); }
         .arr-l { top: 50%; left: 10px; transform: translateY(-50%); }
         .arr-r { top: 50%; right: 10px; transform: translateY(-50%); }
 
-        /* Action/Brake Button (Right Side) */
-        .brake-btn {
-            width: 80px; height: 80px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 50%;
-            margin-top: 30px; /* Align somewhat with dpad */
-            display: flex; justify-content: center; align-items: center;
-            color: rgba(255,255,255,0.2);
-            font-size: 1rem;
-        }
-
-        .active-touch { background: rgba(255,255,255,0.1); }
+        .active-touch { background: rgba(255, 255, 255, 0.2); }
 
     </style>
 </head>
@@ -166,67 +149,66 @@
     <div id="gameContainer">
         <canvas id="gameCanvas"></canvas>
 
-        <div id="ui-layer">
-            <div class="hud-bar">
-                <div class="health-wrap">
-                    <span>HP</span>
-                    <div class="hp-bar"><div id="hpFill" class="hp-fill"></div></div>
-                </div>
-                <div>SCORE: <span id="scoreVal" style="color:#FFD700">0</span></div>
+        <div id="hud">
+            <div>
+                HP
+                <div class="bar-wrap"><div id="hpBar" class="bar-fill"></div></div>
+            </div>
+            <div style="text-align: right;">
+                <span id="scoreVal" style="font-size: 1.4rem; color: #FFD700;">0</span><br>
+                <span style="font-size: 0.8rem; color: #aaa;">LETTERS</span>
             </div>
         </div>
 
         <div id="screen-start" class="overlay">
             <h1>DAYINBALL</h1>
-            <p style="font-size:1.2rem; color:#ccc; margin-bottom: 5px;">PERSPECTIVE RUSH</p>
-            <p style="font-size:0.9rem; color:#888;">GATHER 'G' FLASKS & LETTERS</p>
-            <button class="btn-action" onclick="initGame()">IGNITION</button>
+            <p style="color: #ccc; margin-bottom: 20px;">ALMATY BIRD'S EYE VIEW</p>
+            <p style="font-size: 0.9rem; color: #888;">Grab Blue Flasks & Letters<br>Avoid Traffic</p>
+            <button class="btn-start" onclick="initGame()">START ENGINE</button>
         </div>
 
         <div id="screen-gameover" class="overlay" style="display:none;">
-            <h1 style="color:#FF0000">WRECKED</h1>
-            <p>LETTERS: <span id="end-collection" style="color:#fff"></span></p>
-            <button class="btn-action" onclick="initGame()">RESTART</button>
+            <h1 style="color: #FF0000;">GAME OVER</h1>
+            <p style="font-size: 1.2rem;">Collected: <span id="end-collection" style="color: #FFD700;"></span></p>
+            <button class="btn-start" onclick="initGame()">RESTART</button>
         </div>
 
-        <div id="controls-layer">
-            <div class="dpad">
-                <div class="btn-visual arr-u">▲</div>
-                <div class="btn-visual arr-d">▼</div>
-                <div class="btn-visual arr-l">◀</div>
-                <div class="btn-visual arr-r">▶</div>
+        <div id="controls">
+            <div class="dpad-zone">
+                <div class="arr arr-u">▲</div>
+                <div class="arr arr-d">▼</div>
+                <div class="arr arr-l">◀</div>
+                <div class="arr arr-r">▶</div>
 
-                <div id="ctrl-up" class="btn-zone" style="top:0; left:30%; width:40%; height:35%;"></div>
-                <div id="ctrl-down" class="btn-zone" style="bottom:0; left:30%; width:40%; height:35%;"></div>
-                <div id="ctrl-left" class="btn-zone" style="top:30%; left:0; width:35%; height:40%;"></div>
-                <div id="ctrl-right" class="btn-zone" style="top:30%; right:0; width:35%; height:40%;"></div>
+                <div id="t-up" class="t-btn"></div>
+                <div id="t-down" class="t-btn"></div>
+                <div id="t-left" class="t-btn"></div>
+                <div id="t-right" class="t-btn"></div>
             </div>
-            
-            <div id="ctrl-brake" class="brake-btn">BRAKE</div>
+            <div id="t-brake" class="act-btn">BRAKE</div>
         </div>
     </div>
 
     <script>
-        /** AUDIO SYSTEM **/
+        /** AUDIO **/
         const AudioSys = {
             ctx: null,
             init: function() { if(!this.ctx) this.ctx=new(window.AudioContext||window.webkitAudioContext)(); },
-            play: function(freq, type, dur, vol=0.1) {
+            play: function(type, f, d, v=0.1) {
                 if(!this.ctx) return;
                 const o=this.ctx.createOscillator(), g=this.ctx.createGain();
-                o.type=type; o.freq=freq; 
-                o.frequency.setValueAtTime(freq, this.ctx.currentTime);
-                g.gain.setValueAtTime(vol, this.ctx.currentTime);
-                g.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime+dur);
+                o.type=type; o.frequency.setValueAtTime(f, this.ctx.currentTime);
+                g.gain.setValueAtTime(v, this.ctx.currentTime);
+                g.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime+d);
                 o.connect(g); g.connect(this.ctx.destination);
-                o.start(); o.stop(this.ctx.currentTime+dur);
+                o.start(); o.stop(this.ctx.currentTime+d);
             },
-            noise: function(dur) {
+            noise: function(d) {
                 if(!this.ctx) return;
-                const b=this.ctx.createBuffer(1,44100*dur,44100), d=b.getChannelData(0);
-                for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
+                const b=this.ctx.createBuffer(1,44100*d,44100), dt=b.getChannelData(0);
+                for(let i=0;i<dt.length;i++) dt[i]=Math.random()*2-1;
                 const s=this.ctx.createBufferSource(), g=this.ctx.createGain();
-                s.buffer=b; g.gain.value=0.2; g.gain.exponentialRampToValueAtTime(0.01,this.ctx.currentTime+dur);
+                s.buffer=b; g.gain.value=0.2; g.gain.exponentialRampToValueAtTime(0.01,this.ctx.currentTime+d);
                 s.connect(g); g.connect(this.ctx.destination); s.start();
             }
         };
@@ -236,366 +218,336 @@
         const ctx = canvas.getContext('2d');
         
         let gameState = 'START';
-        let frames = 0;
+        let roadY = 0; // The Y start of the road (below skyline)
+        let roadOffset = 0; // For scrolling texture
+        
+        // Game State
         let score = 0;
         let collected = "";
-        
-        // PERSPECTIVE SETTINGS
-        // Horizon line at 25% height
-        let horizonY, roadBottom;
-        let roadTopW, roadBottomW;
-        
-        // GAMEPLAY VARS
-        let speed = 0;
-        let baseSpeed = 4;
-        const keys = { u:false, d:false, l:false, r:false, b:false };
-
-        // Entities
-        const car = { x: 0, y: 0, w: 0, h: 0, health: 100 };
-        let objects = []; // Obstacles, Letters, Flasks
+        let baseSpeed = 5;
+        let entities = [];
         let particles = [];
-        let roadMarks = [];
+        
+        // Car
+        const car = {
+            x: 0, y: 0, w: 40, h: 70, 
+            health: 100
+        };
 
+        // Layout
         function resize() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
+            roadY = canvas.height * 0.3; // Top 30% is skyline
             
-            horizonY = canvas.height * 0.25;
-            roadBottom = canvas.height;
-            
-            // Trapezoid Geometry
-            roadTopW = canvas.width * 0.1; // Narrow at top
-            roadBottomW = canvas.width * 1.2; // Wide at bottom
-            
-            // Initial Car Position (Center bottom)
-            car.x = 0; // -1 to 1 logic
-            car.y = 0.8; // 0 to 1 logic (1 is bottom)
+            // Initial Car Pos (Center of Road)
+            car.x = canvas.width / 2 - 20;
+            car.y = roadY + (canvas.height - roadY) * 0.6;
         }
         window.addEventListener('resize', resize);
         resize();
 
-        // --- INPUT HANDLERS ---
-        const bindTouch = (id, key) => {
-            const el = document.getElementById(id);
-            el.addEventListener('touchstart', (e)=>{ e.preventDefault(); keys[key]=true; el.classList.add('active-touch'); });
-            el.addEventListener('touchend', (e)=>{ e.preventDefault(); keys[key]=false; el.classList.remove('active-touch'); });
-            // Mouse fallbacks
-            el.addEventListener('mousedown', ()=>{ keys[key]=true; });
-            el.addEventListener('mouseup', ()=>{ keys[key]=false; });
+        // Controls
+        const keys = { u:false, d:false, l:false, r:false, b:false };
+        
+        const bindT = (id, k) => {
+            const el=document.getElementById(id);
+            el.addEventListener('touchstart', e=>{e.preventDefault(); keys[k]=true;});
+            el.addEventListener('touchend', e=>{e.preventDefault(); keys[k]=false;});
+            el.addEventListener('mousedown', ()=>{keys[k]=true;});
+            el.addEventListener('mouseup', ()=>{keys[k]=false;});
         };
-        bindTouch('ctrl-up', 'u');
-        bindTouch('ctrl-down', 'd');
-        bindTouch('ctrl-left', 'l');
-        bindTouch('ctrl-right', 'r');
-        bindTouch('ctrl-brake', 'b');
+        bindT('t-up','u'); bindT('t-down','d'); bindT('t-left','l'); bindT('t-right','r'); bindT('t-brake','b');
 
-        window.addEventListener('keydown', e=>{
-            if(e.key==='w'||e.key==='ArrowUp') keys.u=true;
-            if(e.key==='s'||e.key==='ArrowDown') keys.d=true;
-            if(e.key==='a'||e.key==='ArrowLeft') keys.l=true;
-            if(e.key==='d'||e.key==='ArrowRight') keys.r=true;
-        });
-        window.addEventListener('keyup', e=>{
-            if(e.key==='w'||e.key==='ArrowUp') keys.u=false;
-            if(e.key==='s'||e.key==='ArrowDown') keys.d=false;
-            if(e.key==='a'||e.key==='ArrowLeft') keys.l=false;
-            if(e.key==='d'||e.key==='ArrowRight') keys.r=false;
-        });
-
-        // --- PERSPECTIVE MATH ---
-        function getProjected(objX, objY, baseW, baseH) {
-            // objX: -1 (left edge) to 1 (right edge)
-            // objY: 0 (horizon) to 1 (bottom)
-            
-            // Scale factor based on Y (linear for simple arcade feel)
-            // Horizon scale: 0.1, Bottom scale: 1.0
-            const scale = 0.1 + (0.9 * objY);
-            
-            // Y Screen Position
-            const screenY = horizonY + (objY * (roadBottom - horizonY));
-            
-            // Road Width at this Y
-            const currentRoadW = roadTopW + (objY * (roadBottomW - roadTopW));
-            
-            // X Screen Position
-            // Center of screen + (Offset * (CurrentRoadWidth/2))
-            const screenX = (canvas.width / 2) + (objX * (currentRoadW / 2));
-            
-            return {
-                x: screenX,
-                y: screenY,
-                w: baseW * scale,
-                h: baseH * scale,
-                s: scale
-            };
-        }
-
-        // --- SPAWNERS ---
-        function spawnObject() {
-            const lane = (Math.random() * 2) - 1; // -1 to 1
-            const typeR = Math.random();
-            let type = 'obs';
-            
-            if(typeR > 0.7) type = 'letter';
-            if(typeR > 0.95) type = 'flask';
-            
-            objects.push({
-                x: lane,
-                y: 0, // Starts at horizon
-                type: type,
-                char: type==='letter'? "АӘБВГҒДЕЖЗИКҚЛМНҢОӨПРСТУҰҮФХҺЦЧШЩЪЫІЬЭЮЯ"[Math.floor(Math.random()*42)] : null,
-                active: true
-            });
-        }
-
+        // Logic
         function update() {
-            // SPEED
-            if(keys.b) baseSpeed = Math.max(0, baseSpeed - 0.2);
-            else if(baseSpeed < 10) baseSpeed += 0.01;
-            speed = baseSpeed * 0.002; // Normalized speed
+            // Speed Control
+            let speed = baseSpeed;
+            if(keys.b) speed *= 0.5;
 
-            // CAR MOVEMENT (Logic Space: X[-1,1], Y[0,1])
-            if(keys.l && car.x > -1) car.x -= 0.03;
-            if(keys.r && car.x < 1) car.x += 0.03;
-            if(keys.u && car.y > 0.1) car.y -= 0.02; // Move up towards horizon
-            if(keys.d && car.y < 1) car.y += 0.02;   // Move down towards screen
+            // Scroll Road
+            roadOffset += speed;
 
-            // ROAD MARKS
-            roadMarks.push({ y: 0, type: 'dash' }); // Spawn at top
-            roadMarks.forEach(m => m.y += speed);
-            roadMarks = roadMarks.filter(m => m.y < 1.1);
+            // Car Move
+            const moveSpd = 5;
+            if(keys.u && car.y > roadY) car.y -= moveSpd;
+            if(keys.d && car.y < canvas.height - car.h) car.y += moveSpd;
+            if(keys.l && car.x > 0) car.x -= moveSpd;
+            if(keys.r && car.x < canvas.width - car.w) car.x += moveSpd;
 
-            // OBJECTS
-            if(Math.random() < 0.03 + (baseSpeed*0.002)) spawnObject();
-            
-            objects.forEach(o => o.y += speed);
-            objects = objects.filter(o => o.y < 1.2 && o.active);
+            // Spawn
+            if(Math.random() < 0.02 + (score*0.001)) {
+                let typeRand = Math.random();
+                let type = 'obs';
+                if(typeRand > 0.7) type = 'letter';
+                if(typeRand > 0.95) type = 'flask';
 
-            // COLLISIONS
-            // Simple distance check in normalized space
-            objects.forEach(o => {
-                // Determine if 'close' enough to hit
-                // Car Logic Y vs Object Logic Y
-                if(Math.abs(o.y - car.y) < 0.05 && Math.abs(o.x - car.x) < 0.15) {
-                    if(o.active) {
-                        o.active = false;
-                        if(o.type === 'obs') {
+                let spawnW = 40; 
+                let spawnX = Math.random() * (canvas.width - spawnW);
+                
+                entities.push({
+                    x: spawnX, y: roadY - 50, w: spawnW, h: 40,
+                    type: type,
+                    char: type==='letter' ? "АӘБВГҒДЕЖЗИКҚЛМНҢОӨПРСТУҰҮФХҺЦЧШЩЪЫІЬЭЮЯ"[Math.floor(Math.random()*42)] : null,
+                    active: true
+                });
+            }
+
+            // Move Entities (Straight Down)
+            entities.forEach(e => e.y += speed);
+            entities = entities.filter(e => e.y < canvas.height && e.active);
+
+            // Collisions
+            entities.forEach(e => {
+                // AABB
+                if (car.x < e.x + e.w && car.x + car.w > e.x &&
+                    car.y < e.y + e.h && car.y + car.h > e.y) {
+                    
+                    if(e.active) {
+                        e.active = false;
+                        if(e.type === 'obs') {
                             car.health -= 20;
                             AudioSys.noise(0.2);
-                            spawnParticles(o);
-                        } else if(o.type === 'letter') {
-                            score++; collected += o.char;
-                            AudioSys.play(1000, 'sine', 0.1);
-                        } else if(o.type === 'flask') {
+                            spawnParticles(e.x+e.w/2, e.y+e.h/2, '#FF4500');
+                        }
+                        else if(e.type === 'letter') {
+                            score++; collected += e.char;
+                            AudioSys.play('sine', 1200, 0.1);
+                        }
+                        else if(e.type === 'flask') {
                             car.health = Math.min(100, car.health+20);
-                            AudioSys.play(600, 'square', 0.2);
+                            AudioSys.play('square', 600, 0.2);
                         }
                     }
                 }
             });
 
-            // UI
-            document.getElementById('hpFill').style.width = Math.max(0, car.health) + '%';
-            document.getElementById('hpFill').style.background = car.health < 30 ? 'red' : '#00FF00';
+            // Particles
+            particles.forEach((p,i) => {
+                p.x += p.vx; p.y += p.vy; p.l -= 0.1;
+                if(p.l<=0) particles.splice(i,1);
+            });
+
+            // HUD
+            document.getElementById('hpBar').style.width = Math.max(0,car.health)+'%';
+            document.getElementById('hpBar').style.background = car.health<30 ? 'red':'#00FF00';
             document.getElementById('scoreVal').innerText = score;
 
-            if(car.health <= 0) gameOver();
+            if(car.health<=0) gameOver();
         }
 
-        function spawnParticles(obj) {
-            // Get screen coords for explosion
-            const proj = getProjected(obj.x, obj.y, 10, 10);
-            for(let i=0; i<8; i++) {
-                particles.push({
-                    x: proj.x, y: proj.y,
-                    vx: (Math.random()-0.5)*10, vy: (Math.random()-0.5)*10,
-                    life: 1.0, color: '#FF4500'
-                });
+        function spawnParticles(x,y,c) {
+            for(let i=0;i<8;i++) particles.push({
+                x:x, y:y, vx:(Math.random()-0.5)*10, vy:(Math.random()-0.5)*10, l:1, c:c
+            });
+        }
+
+        // --- DRAWING ---
+
+        function drawStaticBackground() {
+            // Draw Sky
+            let grad = ctx.createLinearGradient(0,0,0,roadY);
+            grad.addColorStop(0, '#0a0a2a');
+            grad.addColorStop(1, '#2c3e50');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0,0,canvas.width, roadY);
+
+            // 1. Mountains (Back)
+            ctx.fillStyle = '#666';
+            ctx.beginPath(); ctx.moveTo(0, roadY);
+            for(let i=0; i<=canvas.width; i+=20) {
+                ctx.lineTo(i, roadY - (Math.random()*40 + 20));
+            }
+            ctx.lineTo(canvas.width, roadY); ctx.fill();
+
+            // 2. Kok Tobe Hill (Right)
+            ctx.fillStyle = '#1b4d1b'; // Dark Green
+            ctx.beginPath();
+            ctx.arc(canvas.width * 0.8, roadY + 50, 100, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 3. Kok Tobe Tower
+            let tx = canvas.width * 0.8;
+            ctx.strokeStyle = '#888'; ctx.lineWidth = 4;
+            ctx.beginPath(); ctx.moveTo(tx, roadY-20); ctx.lineTo(tx, roadY-120); ctx.stroke();
+            // The Apple
+            ctx.fillStyle = '#cc0000'; 
+            ctx.beginPath(); ctx.arc(tx, roadY-100, 8, 0, Math.PI*2); ctx.fill();
+            // Antenna
+            ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(tx, roadY-120); ctx.lineTo(tx, roadY-150); ctx.stroke();
+
+            // 4. Hotel Kazakhstan (Left Center)
+            let hx = canvas.width * 0.2;
+            let hy = roadY;
+            let hw = 60; let hh = 120;
+            // Main Building
+            ctx.fillStyle = '#999'; // Concrete
+            // Slight curve for the iconic shape
+            ctx.beginPath();
+            ctx.moveTo(hx, hy);
+            ctx.lineTo(hx, hy - hh);
+            ctx.quadraticCurveTo(hx + hw/2, hy - hh - 20, hx + hw, hy - hh); // Crown curve
+            ctx.lineTo(hx + hw, hy);
+            ctx.fill();
+            
+            // Windows
+            ctx.fillStyle = '#222';
+            for(let wy = hy - hh + 20; wy < hy; wy+=10) {
+                for(let wx = hx + 5; wx < hx + hw; wx += 8) {
+                    if(Math.random()>0.5) ctx.fillRect(wx, wy, 4, 6);
+                }
+            }
+            
+            // Crown Gold
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.arc(hx + hw/2, hy - hh - 5, 5, 0, Math.PI*2);
+            ctx.fill();
+        }
+
+        function drawRoad() {
+            // Road Rect
+            ctx.fillStyle = '#222';
+            ctx.fillRect(0, roadY, canvas.width, canvas.height - roadY);
+
+            // Sidewalks
+            ctx.fillStyle = '#444';
+            ctx.fillRect(0, roadY, 15, canvas.height - roadY);
+            ctx.fillRect(canvas.width-15, roadY, 15, canvas.height - roadY);
+
+            // Yellow Dashed Lines
+            ctx.fillStyle = '#FFD700'; // Proper Yellow
+            let laneCount = 4;
+            let laneW = canvas.width / laneCount;
+            let dashHeight = 40;
+            let gap = 60; // BIGGER INTERVAL
+            let totalPattern = dashHeight + gap;
+
+            for(let l=1; l<laneCount; l++) {
+                let lx = l * laneW;
+                // Calculate scrolling Y
+                for(let y = roadY - totalPattern; y < canvas.height; y += totalPattern) {
+                    let drawY = y + (roadOffset % totalPattern);
+                    if(drawY > roadY - dashHeight && drawY < canvas.height) {
+                        ctx.fillRect(lx - 2, drawY, 4, dashHeight);
+                    }
+                }
             }
         }
 
-        // --- RENDER ---
-        function draw() {
+        function drawCar() {
+            const {x,y,w,h} = car;
+            // Shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fillRect(x+5, y+5, w, h);
+
+            // Black Body
+            ctx.fillStyle = '#000';
+            ctx.fillRect(x, y, w, h);
+
+            // Roof
+            ctx.fillStyle = '#111';
+            ctx.fillRect(x+2, y+15, w-4, h-30);
+
+            // Windows
+            ctx.fillStyle = '#333';
+            ctx.fillRect(x+2, y+15, w-4, 8); // Front
+            ctx.fillRect(x+2, y+h-23, w-4, 8); // Rear
+
+            // "DAYINBALL" - Vertical Red Text
+            ctx.save();
+            ctx.translate(x + w/2, y + h/2);
+            ctx.rotate(Math.PI/2); // 90 deg
+            ctx.fillStyle = 'red';
+            ctx.font = 'bold 10px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText("DAYINBALL", 0, 0);
+            ctx.restore();
+
+            // Lights
+            ctx.fillStyle = 'yellow'; // Headlights (Top, assuming moving UP logic but objects move down. Wait. Objects move DOWN. Car faces UP.)
+            // So Front is Y (Top).
+            ctx.fillRect(x+2, y, 8, 4);
+            ctx.fillRect(x+w-10, y, 8, 4);
+
+            ctx.fillStyle = 'red'; // Tail
+            ctx.fillRect(x+2, y+h-4, 8, 4);
+            ctx.fillRect(x+w-10, y+h-4, 8, 4);
+        }
+
+        function drawEntities() {
+            entities.forEach(e => {
+                if(e.type === 'obs') {
+                    // Orange Barrier
+                    ctx.fillStyle = '#FF4500';
+                    ctx.fillRect(e.x, e.y, e.w, e.h);
+                    // Stripes
+                    ctx.fillStyle = '#000';
+                    ctx.beginPath(); ctx.moveTo(e.x,e.y); ctx.lineTo(e.x+10,e.y); ctx.lineTo(e.x,e.y+10); ctx.fill();
+                    ctx.beginPath(); ctx.moveTo(e.x+20,e.y); ctx.lineTo(e.x+30,e.y); ctx.lineTo(e.x,e.y+30); ctx.lineTo(e.x,e.y+20); ctx.fill();
+                }
+                else if(e.type === 'letter') {
+                    // Gold Coin style
+                    ctx.fillStyle = '#FFD700';
+                    ctx.beginPath(); ctx.arc(e.x+e.w/2, e.y+e.h/2, e.w/2, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = '#000';
+                    ctx.font = 'bold 24px Arial'; ctx.textAlign='center'; ctx.textBaseline='middle';
+                    ctx.fillText(e.char, e.x+e.w/2, e.y+e.h/2);
+                }
+                else if(e.type === 'flask') {
+                    // Blue Flask
+                    ctx.fillStyle = '#0000FF';
+                    ctx.fillRect(e.x+5, e.y+10, e.w-10, e.h-10); // Body
+                    ctx.fillRect(e.x+12, e.y, e.w-24, 10); // Neck
+                    
+                    // White Stripe
+                    ctx.fillStyle = '#FFF';
+                    ctx.fillRect(e.x+5, e.y+20, e.w-10, 8);
+                    
+                    // Red G
+                    ctx.fillStyle = 'red';
+                    ctx.font = 'bold 14px Arial'; ctx.textAlign='center'; 
+                    ctx.fillText('G', e.x+e.w/2, e.y+35);
+                }
+            });
+        }
+
+        function loop() {
             if(gameState !== 'PLAYING') return;
             ctx.clearRect(0,0,canvas.width,canvas.height);
 
-            // 1. BACKGROUND (Skyline)
-            let grad = ctx.createLinearGradient(0,0,0,horizonY);
-            grad.addColorStop(0, '#111'); grad.addColorStop(1, '#333');
-            ctx.fillStyle = grad; ctx.fillRect(0,0,canvas.width, horizonY);
+            drawStaticBackground(); // Top
+            drawRoad();             // Bottom
+            drawEntities();
             
-            // Mountains
-            ctx.fillStyle = '#222';
-            ctx.beginPath(); ctx.moveTo(0, horizonY);
-            for(let i=0; i<=canvas.width; i+=30) ctx.lineTo(i, horizonY - Math.random()*30 - 10);
-            ctx.lineTo(canvas.width, horizonY); ctx.fill();
-
-            // TV Tower Hill
-            ctx.fillStyle = '#1a1a1a';
-            ctx.beginPath(); ctx.arc(canvas.width*0.7, horizonY+20, 80, 0, Math.PI, true); ctx.fill();
-            // Tower
-            ctx.strokeStyle = '#555'; ctx.lineWidth=2;
-            ctx.beginPath(); ctx.moveTo(canvas.width*0.7, horizonY); ctx.lineTo(canvas.width*0.7, horizonY-100); ctx.stroke();
-            ctx.fillStyle='#900'; ctx.beginPath(); ctx.arc(canvas.width*0.7, horizonY-80, 4, 0, 6.28); ctx.fill();
-
-            // 2. ROAD (Trapezoid)
-            ctx.fillStyle = '#222';
-            ctx.beginPath();
-            const topLeft = (canvas.width/2) - (roadTopW/2);
-            const topRight = (canvas.width/2) + (roadTopW/2);
-            const botLeft = (canvas.width/2) - (roadBottomW/2);
-            const botRight = (canvas.width/2) + (roadBottomW/2);
-            
-            ctx.moveTo(topLeft, horizonY);
-            ctx.lineTo(topRight, horizonY);
-            ctx.lineTo(botRight, roadBottom);
-            ctx.lineTo(botLeft, roadBottom);
-            ctx.fill();
-
-            // 3. ROAD MARKS (Yellow)
-            ctx.fillStyle = '#FFD700'; // Proper Yellow
-            roadMarks.forEach(m => {
-                // Center Line
-                // Only draw if on screen (0 to 1)
-                if(m.y >= 0 && m.y <= 1) {
-                    const p = getProjected(0, m.y, 10, 40); // Base sizes
-                    ctx.fillRect(p.x - p.w/2, p.y, p.w, p.h);
-                }
-                // Side lines
-                if(m.y >= 0 && m.y <= 1) {
-                    const pL = getProjected(-0.95, m.y, 5, 40);
-                    const pR = getProjected(0.95, m.y, 5, 40);
-                    ctx.fillRect(pL.x, pL.y, pL.w, pL.h);
-                    ctx.fillRect(pR.x, pR.y, pR.w, pR.h);
-                }
+            // Particles
+            particles.forEach(p => {
+                ctx.fillStyle = p.c;
+                ctx.fillRect(p.x, p.y, 4, 4);
             });
 
-            // 4. OBJECTS (Sorted by Y so closer ones draw on top)
-            // But also, car needs to be sorted with them.
-            // Let's draw objects behind car if o.y < car.y, else front.
-            // Actually, simple Painter's algo: Sort all entities by Y.
-            
-            let drawList = [...objects];
-            // Add car to draw list as a proxy object
-            drawList.push({ type:'car', y: car.y, x: car.x });
-            
-            drawList.sort((a,b) => a.y - b.y);
-
-            drawList.forEach(obj => {
-                if(obj.y < 0) return;
-
-                // Base Dimensions (World Size) -> Reduced Scale
-                let baseW = 100, baseH = 80; // Standard block size
-                
-                if(obj.type === 'car') {
-                    // Car is smaller now
-                    baseW = 80; baseH = 140; 
-                    const p = getProjected(obj.x, obj.y, baseW, baseH);
-                    drawCarSprite(p.x, p.y, p.w, p.h);
-                } else {
-                    const p = getProjected(obj.x, obj.y, baseW, baseH);
-                    if(obj.type === 'obs') drawObstacle(p.x, p.y, p.w, p.h);
-                    if(obj.type === 'letter') drawLetter(p.x, p.y, p.w, p.h, obj.char);
-                    if(obj.type === 'flask') drawFlask(p.x, p.y, p.w, p.h);
-                }
-            });
-
-            // 5. PARTICLES
-            particles.forEach((p,i) => {
-                ctx.fillStyle = p.color;
-                ctx.fillRect(p.x, p.y, 5, 5);
-                p.x += p.vx; p.y += p.vy; p.life -= 0.1;
-                if(p.life <=0) particles.splice(i,1);
-            });
+            drawCar();
 
             update();
-            requestAnimationFrame(draw);
+            requestAnimationFrame(loop);
         }
 
-        // --- SPRITE DRAWING ---
-        function drawCarSprite(x, y, w, h) {
-            // x,y is center bottom anchor roughly? 
-            // getProjected returns center X. Let's adjust to top-left
-            const cx = x - w/2;
-            const cy = y - h; // Stand up
-
-            // Shadow
-            ctx.fillStyle = 'rgba(0,0,0,0.6)';
-            ctx.fillRect(cx+5, cy+h-5, w-10, 5);
-
-            // Body Black
-            ctx.fillStyle = '#000';
-            ctx.fillRect(cx, cy + h*0.2, w, h*0.6); // Main body
-            ctx.fillRect(cx + w*0.1, cy, w*0.8, h*0.2); // Roof/Cabin
-            
-            // Red Tag
-            ctx.fillStyle = 'red';
-            ctx.font = 'bold 10px Arial';
-            ctx.fillText('DAYIN', cx + 2, cy + h*0.5);
-
-            // Lights
-            ctx.fillStyle = '#FFFF00'; // Headlights
-            ctx.fillRect(cx+2, cy+h*0.3, 5, 5);
-            ctx.fillRect(cx+w-7, cy+h*0.3, 5, 5);
-            
-            ctx.fillStyle = '#CC0000'; // Tail
-            ctx.fillRect(cx, cy+h*0.7, w, 5);
-        }
-
-        function drawObstacle(x, y, w, h) {
-            const cx = x - w/2; const cy = y - h;
-            ctx.fillStyle = '#FF4500';
-            ctx.fillRect(cx, cy, w, h);
-            ctx.strokeStyle = '#000'; ctx.strokeRect(cx, cy, w, h);
-            // Stripes
-            ctx.fillStyle = 'rgba(0,0,0,0.3)';
-            ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx+w, cy+h); ctx.lineTo(cx+w-10, cy+h); ctx.lineTo(cx, cy+10); ctx.fill();
-        }
-
-        function drawLetter(x, y, w, h, char) {
-            const cx = x - w/2; const cy = y - h;
-            ctx.fillStyle = '#FFD700';
-            ctx.beginPath(); ctx.arc(x, cy + h/2, w/2, 0, 6.28); ctx.fill();
-            ctx.fillStyle = '#000';
-            ctx.font = 'bold '+Math.floor(h*0.6)+'px Arial';
-            ctx.textAlign = 'center'; ctx.textBaseline='middle';
-            ctx.fillText(char, x, cy + h/2);
-        }
-
-        function drawFlask(x, y, w, h) {
-            const cx = x - w/2; const cy = y - h;
-            // Bottle Blue
-            ctx.fillStyle = '#0000FF';
-            ctx.fillRect(cx, cy + h*0.2, w, h*0.8);
-            ctx.fillRect(cx + w*0.3, cy, w*0.4, h*0.2); // Neck
-            
-            // White Stripe
-            ctx.fillStyle = '#FFF';
-            ctx.fillRect(cx, cy + h*0.4, w, h*0.3);
-            
-            // Red G
-            ctx.fillStyle = 'red';
-            ctx.font = 'bold '+Math.floor(h*0.4)+'px Arial';
-            ctx.textAlign = 'center'; ctx.textBaseline='middle';
-            ctx.fillText("G", x, cy + h*0.55);
-        }
-
-        // --- FLOW ---
+        // Flow
         function initGame() {
             AudioSys.init();
-            document.getElementById('screen-start').style.display = 'none';
-            document.getElementById('screen-gameover').style.display = 'none';
+            document.getElementById('screen-start').style.display='none';
+            document.getElementById('screen-gameover').style.display='none';
             gameState = 'PLAYING';
             score = 0; collected = "";
-            car.health = 100; car.x=0; car.y=0.8;
-            objects = []; particles = []; roadMarks = [];
-            baseSpeed = 4;
-            draw();
+            entities = []; particles = [];
+            resize();
+            loop();
         }
-        
+
         function gameOver() {
             gameState = 'OVER';
-            document.getElementById('screen-gameover').style.display = 'flex';
+            document.getElementById('screen-gameover').style.display='flex';
             document.getElementById('end-collection').innerText = collected;
         }
 
