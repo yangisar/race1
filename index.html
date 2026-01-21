@@ -234,7 +234,7 @@
                         Gather letters and put the whole song JBRLA together!<br>
                         Әріптерді жинап, JBRLA әнін құрастыр!
                     </p>
-                    <div class="item-row">🥫 <span>Gorilla Bottle = Armor / Сауыт</span></div>
+                    <div class="item-row">🥫 <span>Gorilla Tin = Armor / Сауыт</span></div>
                     <div class="item-row">⚡ <span>Lightning = Invincible / Жеңілмес</span></div>
                     <div class="item-row">❄ <span>Brakes = Slow Down / Баяулау</span></div>
                 </div>
@@ -563,34 +563,125 @@ Next point: “And new, and still” - let’s go!
             // Mountains
             ctx.fillStyle = '#000033'; ctx.beginPath(); ctx.moveTo(0, roadY);
             bgCache.mountains.forEach(p => ctx.lineTo(p.x, roadY - p.y)); ctx.lineTo(canvas.width, roadY); ctx.fill();
+            
+            // Buildings
+            bgCache.buildings.forEach(b => {
+                ctx.fillStyle = '#0a0a2a'; ctx.fillRect(b.x, roadY - b.h, b.w, b.h);
+                ctx.fillStyle = '#FFFF00'; b.wins.forEach(w => { if(Math.random()>0.05) ctx.fillRect(b.x + w.x, roadY - b.h + w.y, 4, 5); });
+            });
+
+            drawLandmarks();
+
             // Road
             ctx.fillStyle = '#222'; ctx.fillRect(0, roadY, canvas.width, roadH);
-            ctx.fillStyle = '#888'; 
-            for(let l=1; l<4; l++) {
-                let lx = l * (canvas.width/4);
-                for(let y = roadY - 210; y < canvas.height; y += 210) {
-                    let dy = y + (roadOffset % 210);
-                    if(dy > roadY && dy < canvas.height) ctx.fillRect(lx - 2, dy, 4, 60);
+            ctx.fillStyle = '#1e1a15'; ctx.fillRect(0, roadY, 15, roadH); ctx.fillRect(canvas.width-15, roadY, 15, roadH);
+            ctx.fillStyle = '#111'; ctx.fillRect(0, roadY-2, canvas.width, 4);
+
+            // Markings
+            ctx.fillStyle = '#888888'; 
+            const laneCount = 4; const laneW = canvas.width / laneCount;
+            const dashH = 60; const dashGap = 150; const pattern = dashH + dashGap;
+            for(let l=1; l<laneCount; l++) {
+                let lx = l * laneW;
+                for(let y = roadY - pattern; y < canvas.height; y += pattern) {
+                    let dy = y + (roadOffset % pattern);
+                    if(dy > roadY - dashH && dy < canvas.height) ctx.fillRect(lx - 2, dy, 4, dashH);
                 }
             }
             
+            // Entities
             entities.forEach(e => {
-                if(e.type==='obs') { ctx.fillStyle=e.color; ctx.fillRect(e.x, e.y, e.w, e.h); ctx.strokeStyle="#FFF"; ctx.lineWidth=2; ctx.strokeRect(e.x,e.y,e.w,e.h); }
-                else if(e.type==='letter') { ctx.fillStyle='#FFD700'; ctx.beginPath(); ctx.arc(e.x+20,e.y+20,18,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#000'; ctx.font='bold 20px Arial'; ctx.textAlign='center'; ctx.fillText(e.char, e.x+20, e.y+27); }
-                else if(e.type==='flask') {
+                if(e.type === 'obs') {
+                    // Natural Boulder
+                    ctx.fillStyle = e.color; 
+                    ctx.beginPath();
+                    let off = e.off || 0;
+                    ctx.moveTo(e.x + e.w*0.2 - off, e.y + off); 
+                    ctx.lineTo(e.x + e.w*0.8 + off, e.y); 
+                    ctx.lineTo(e.x + e.w, e.y + e.h*0.5 + off); 
+                    ctx.lineTo(e.x + e.w*0.7 - off, e.y + e.h);
+                    ctx.lineTo(e.x + e.w*0.2 + off, e.y + e.h*0.9); 
+                    ctx.lineTo(e.x - off, e.y + e.h*0.4); 
+                    ctx.fill();
+                    // White outline
+                    ctx.strokeStyle = '#FFF'; ctx.lineWidth = 2; ctx.stroke();
+                    ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.fillRect(e.x+10, e.y+10, 10, 10);
+                } 
+                else if(e.type === 'letter') {
+                    ctx.fillStyle = '#FFD700'; ctx.beginPath(); ctx.arc(e.x+e.w/2, e.y+e.h/2, e.w/2, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = '#000'; ctx.font='bold 20px Arial'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(e.char, e.x+e.w/2, e.y+e.h/2);
+                    ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(e.x+e.w/2, e.y+e.h/2, e.w/2-2, 0, Math.PI*2); ctx.stroke();
+                } 
+                else if(e.type === 'flask') {
                     // TIN CAN (Silver with Red G)
                     ctx.fillStyle = '#C0C0C0'; ctx.fillRect(e.x, e.y, e.w, e.h); // Body
                     ctx.fillStyle = '#A0A0A0'; ctx.fillRect(e.x, e.y, e.w, 4); ctx.fillRect(e.x, e.y+e.h-4, e.w, 4); // Rims
                     ctx.fillStyle = '#F00'; ctx.font='bold 24px Arial'; ctx.textAlign='center'; 
                     ctx.save(); ctx.translate(e.x+e.w/2, e.y+e.h/2); ctx.scale(0.8, 1.5); ctx.fillText('G', 0, 8); ctx.restore();
                 }
-                else if(e.type==='slow') { ctx.fillStyle='#F00'; ctx.fillRect(e.x+e.w-10, e.y+5, 10, 20); ctx.fillStyle='#CCC'; ctx.beginPath(); ctx.arc(e.x+15, e.y+17, 14, 0, Math.PI*2); ctx.fill(); ctx.fillStyle='#555'; ctx.beginPath(); ctx.arc(e.x+15, e.y+17, 4, 0, Math.PI*2); ctx.fill(); }
-                else if(e.type==='ultra') { ctx.fillStyle='#9400D3'; ctx.fillRect(e.x, e.y, e.w, e.h); ctx.fillStyle='#FFF'; ctx.font='20px Arial'; ctx.fillText('⚡', e.x+10, e.y+30); }
+                else if(e.type === 'slow') {
+                    // Slow Down (Car Brakes)
+                    ctx.fillStyle = '#CCCCCC'; ctx.beginPath(); ctx.arc(e.x + e.w/2, e.y + e.h/2, e.w/2 - 2, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = '#555'; ctx.beginPath(); ctx.arc(e.x + e.w/2, e.y + e.h/2, 5, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = '#FF0000'; ctx.fillRect(e.x + e.w - 12, e.y + 8, 10, 24);
+                    ctx.fillStyle = '#FFF'; ctx.fillRect(e.x + 10, e.y + 10, 4, 4);
+                }
+                else if(e.type === 'ultra') {
+                    ctx.shadowBlur = 15; ctx.shadowColor = '#9400D3';
+                    ctx.fillStyle = '#9400D3'; ctx.fillRect(e.x, e.y+5, e.w, e.h-5); ctx.shadowBlur = 0;
+                    ctx.fillStyle = '#333'; ctx.fillRect(e.x+e.w*0.3, e.y, e.w*0.4, 5);
+                    ctx.fillStyle = '#FFF'; ctx.font='bold 22px Arial'; ctx.fillText('⚡', e.x+e.w/2, e.y+e.h/2+5);
+                }
             });
 
-            ctx.fillStyle = '#2979FF'; ctx.fillRect(car.x, car.y, car.w, car.h);
-            ctx.fillStyle = '#FFEB3B'; ctx.fillRect(car.x+2, car.y, 8, 5); ctx.fillRect(car.x+car.w-10, car.y, 8, 5); // Lights
+            drawCar();
             requestAnimationFrame(draw); update();
+        }
+
+        function drawLandmarks() {
+             let hx = canvas.width * 0.15; let hy = roadY;
+             ctx.fillStyle = '#444'; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx, hy-80); 
+             ctx.quadraticCurveTo(hx+30, hy-100, hx+60, hy-80); ctx.lineTo(hx+60, hy); ctx.fill();
+             ctx.fillStyle = '#FFD700'; ctx.beginPath(); ctx.arc(hx+30, hy-85, 4, 0, Math.PI*2); ctx.fill();
+             let tx = canvas.width * 0.85;
+             ctx.strokeStyle = '#555'; ctx.lineWidth = 3;
+             ctx.beginPath(); ctx.moveTo(tx, roadY-20); ctx.lineTo(tx, roadY-120); ctx.stroke();
+             ctx.fillStyle = '#D00'; ctx.beginPath(); ctx.arc(tx, roadY-100, 5, 0, Math.PI*2); ctx.fill();
+        }
+
+        function drawCar() {
+            const {x, y, w, h} = car;
+            const isSpiked = Date.now() < spikeEndTime;
+            if(isSpiked) {
+                ctx.fillStyle = '#AAA'; ctx.beginPath();
+                ctx.moveTo(x, y); ctx.lineTo(x+10, y-25); ctx.lineTo(x+15, y);
+                ctx.moveTo(x+12, y); ctx.lineTo(x+21, y-30); ctx.lineTo(x+30, y);
+                ctx.moveTo(x+27, y); ctx.lineTo(x+32, y-25); ctx.lineTo(x+w, y); ctx.fill();
+            }
+            ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(x+6, y+6, w, h);
+            
+            // CAR BODY - ELECTRIC BLUE
+            ctx.fillStyle = '#2979FF'; 
+            ctx.beginPath(); ctx.roundRect(x, y, w, h, 4); ctx.fill();
+            
+            // Windshield
+            ctx.fillStyle = '#222'; ctx.fillRect(x+2, y+18, w-4, h-30);
+            
+            // Text - WHITE/STRETCHED
+            ctx.save(); 
+            ctx.translate(x+w/2, y+h/2); 
+            ctx.rotate(-Math.PI/2);
+            ctx.scale(1, 1.8); 
+            ctx.fillStyle = '#FFFFFF'; 
+            ctx.font='bold 9px Arial'; ctx.textAlign='center'; ctx.fillText("DAIYNBALL", 0, 4);
+            ctx.restore();
+
+            // Lights
+            ctx.shadowBlur = 15; ctx.shadowColor = '#FF0';
+            ctx.fillStyle = '#FFEB3B'; ctx.fillRect(x+2, y, 8, 6); ctx.fillRect(x+w-10, y, 8, 6);
+            ctx.shadowBlur = 10; ctx.shadowColor = '#F00';
+            ctx.fillStyle = '#D32F2F'; ctx.fillRect(x+2, y+h-6, 8, 6); ctx.fillRect(x+w-10, y+h-6, 8, 6);
+            ctx.shadowBlur = 0;
         }
 
         function initGame(diff) {
