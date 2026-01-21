@@ -143,30 +143,28 @@
             100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
         }
 
-        /* --- CONTROLS (Reverted to Buttons, Smaller, Lower Opacity) --- */
+        /* --- CONTROLS --- */
         #controls {
             position: absolute; bottom: 10px; left: 5px; right: 5px;
             height: 150px; z-index: 20; pointer-events: none;
         }
         .ctrl-btn {
             position: absolute;
-            /* Lower opacity background and border */
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 50%;
             display: flex; justify-content: center; align-items: center;
-            /* Dimmer icon color */
             color: rgba(255, 255, 255, 0.3); 
             pointer-events: auto; touch-action: manipulation;
             transition: all 0.1s; backdrop-filter: blur(1px);
         }
         .ctrl-btn:active { background: rgba(255, 255, 255, 0.2); color: white; transform: scale(0.95); }
 
-        /* Smaller button sizes */
-        #btn-left { bottom: 5px; left: 5px; width: 80px; height: 80px; font-size: 2.5rem; }
-        #btn-up { bottom: 100px; left: 25px; width: 50px; height: 50px; font-size: 1.2rem; }
-        #btn-right { bottom: 5px; right: 5px; width: 80px; height: 80px; font-size: 2.5rem; }
-        #btn-down { bottom: 100px; right: 25px; width: 50px; height: 50px; font-size: 1.2rem; }
+        /* Smaller buttons */
+        #btn-left { bottom: 5px; left: 5px; width: 65px; height: 65px; font-size: 2rem; }
+        #btn-up { bottom: 85px; left: 20px; width: 40px; height: 40px; font-size: 1rem; }
+        #btn-right { bottom: 5px; right: 5px; width: 65px; height: 65px; font-size: 2rem; }
+        #btn-down { bottom: 85px; right: 20px; width: 40px; height: 40px; font-size: 1rem; }
 
         .credits {
             position: absolute; bottom: 10px; width: 100%; text-align: center;
@@ -179,6 +177,9 @@
 
     <audio id="bgMusic" loop>
         <source src="soundtrack.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="ultraSound">
+        <source src="ultra.mp3" type="audio/mpeg">
     </audio>
 
     <div id="gameContainer">
@@ -238,10 +239,13 @@
     <script>
         /** 🎵 AUDIO **/
         const AudioSys = {
-            ctx: null, bgMusic: document.getElementById('bgMusic'),
+            ctx: null, 
+            bgMusic: document.getElementById('bgMusic'),
+            ultraSound: document.getElementById('ultraSound'),
             init: function() { 
                 if(!this.ctx) this.ctx = new (window.AudioContext||window.webkitAudioContext)();
                 this.bgMusic.volume = 0.6; this.bgMusic.play().catch(e=>{});
+                this.ultraSound.volume = 0.8;
             },
             playTone: function(f,t,d,v=0.1) {
                 if(!this.ctx) return;
@@ -251,7 +255,14 @@
                 g.gain.exponentialRampToValueAtTime(0.01,this.ctx.currentTime+d);
                 o.connect(g); g.connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime+d);
             },
-            playSmash: function() { this.playTone(60,'sawtooth',0.2,0.4); this.playTone(100,'square',0.1,0.3); }
+            playSmash: function() { this.playTone(60,'sawtooth',0.2,0.4); this.playTone(100,'square',0.1,0.3); },
+            playUltra: function() {
+                this.ultraSound.currentTime = 0;
+                this.ultraSound.play().catch(e=>{});
+            },
+            stopUltra: function() {
+                this.ultraSound.pause();
+            }
         };
 
         /** ☁️ DREAMLO STORAGE **/
@@ -420,7 +431,6 @@ Next point: “And new, and still” - let’s go!
 
         function generateBackground() {
             bgCache.mountains = [];
-            // Increased height multipliers for steeper, taller mountains
             for(let i=0; i<=canvas.width; i+=5) {
                 bgCache.mountains.push({ x: i, y: (Math.sin(i*0.01)*100) + (Math.cos(i*0.025)*50) + 80 });
             }
@@ -466,7 +476,8 @@ Next point: “And new, and still” - let’s go!
             let currentSpeed = baseSpeed * difficulty;
             roadOffset += currentSpeed;
 
-            const moveSpd = 7 + (difficulty * 0.6);
+            // INCREASED SENSITIVITY (Base speed 7 -> 8.5)
+            const moveSpd = 8.5 + (difficulty * 0.6);
 
             let dx = 0, dy = 0;
             // Button Logic
@@ -492,6 +503,20 @@ Next point: “And new, and still” - let’s go!
             }
 
             let spawnChance = 0.02 + (difficulty * 0.003);
+
+            // ULTRA MODE CHAOS LOGIC
+            const isSpiked = Date.now() < spikeEndTime;
+            if(isSpiked) {
+                const timeRemaining = spikeEndTime - Date.now();
+                // If more than 1 second remains (90% of duration approx), massive boulders
+                if(timeRemaining > 1000) {
+                    spawnChance = 0.15; // Massive increase
+                }
+            } else {
+                // Stop audio if playing
+                AudioSys.stopUltra();
+            }
+
             if(Math.random() < spawnChance) spawnOther();
 
             entities.forEach(e => e.y += currentSpeed);
@@ -503,8 +528,6 @@ Next point: “And new, and still” - let’s go!
             });
 
             entities = entities.filter(e => e.y < canvas.height && e.active);
-
-            const isSpiked = Date.now() < spikeEndTime;
 
             entities.forEach(e => {
                 let hitX = e.type==='obs' ? e.x+5 : e.x;
@@ -532,7 +555,7 @@ Next point: “And new, and still” - let’s go!
                             triggerPopup('gorilla-popup');
                         } else if(e.type === 'ultra') {
                             spikeEndTime = Date.now() + 10000;
-                            AudioSys.playTone(300, 'sawtooth', 0.1); AudioSys.playTone(600, 'sawtooth', 0.3);
+                            AudioSys.playUltra(); // Start Audio
                             triggerPopup('jbrla-popup');
                         }
                     }
@@ -562,10 +585,15 @@ Next point: “And new, and still” - let’s go!
         function spawnOther() {
             let r = Math.random(); let x = Math.random() * (canvas.width - 50);
             if(r < 0.8) {
-                // Rocks: Changed to bright silver/white for contrast
+                // Rocks: Natural Colors
                 let s = Math.random(); let w = 40 + (s * 35); let h = 30 + (s * 25);
-                let c = Math.random() > 0.5 ? '#E0E0E0' : '#C0C0C0'; 
-                entities.push({ x:x, y:roadY-60, w:w, h:h, type:'obs', color:c, active:true });
+                const colors = ['#7a7a7a', '#8c8270', '#595959', '#636e72']; // Slate, Brown-Grey, Dark Grey
+                let c = colors[Math.floor(Math.random() * colors.length)];
+                
+                // Randomize shape offset slightly for natural look
+                let offset = Math.random() * 10;
+                
+                entities.push({ x:x, y:roadY-60, w:w, h:h, type:'obs', color:c, active:true, off: offset });
             } else if (r < 0.95) {
                 entities.push({x:x, y:roadY-60, w:30, h:40, type:'flask', active:true});
             } else {
@@ -593,11 +621,11 @@ Next point: “And new, and still” - let’s go!
             ctx.beginPath(); ctx.moveTo(0, roadY);
             bgCache.mountains.forEach(p => ctx.lineTo(p.x, roadY - p.y)); 
             ctx.lineTo(canvas.width, roadY); ctx.fill();
-            // Snow Caps (Adjusted for taller peaks)
+            
             ctx.fillStyle = '#FFF';
             bgCache.mountains.forEach((p, i) => {
                 if(i === 0 || i === bgCache.mountains.length-1) return;
-                if(p.y > 120) { // Only on tall peaks
+                if(p.y > 120) { 
                     ctx.beginPath();
                     ctx.moveTo(p.x, roadY - p.y);
                     ctx.lineTo(p.x - 15, roadY - p.y + 25);
@@ -617,8 +645,8 @@ Next point: “And new, and still” - let’s go!
             ctx.fillStyle = '#1e1a15'; ctx.fillRect(0, roadY, 15, roadH); ctx.fillRect(canvas.width-15, roadY, 15, roadH);
             ctx.fillStyle = '#111'; ctx.fillRect(0, roadY-2, canvas.width, 4);
 
-            // MARKINGS - WHITE
-            ctx.fillStyle = '#FFFFFF'; 
+            // MARKINGS - GREY
+            ctx.fillStyle = '#888888'; 
             const laneCount = 4; const laneW = canvas.width / laneCount;
             const dashH = 60; const dashGap = 150; const pattern = dashH + dashGap;
             for(let l=1; l<laneCount; l++) {
@@ -632,13 +660,18 @@ Next point: “And new, and still” - let’s go!
             // 4. ENTITIES
             entities.forEach(e => {
                 if(e.type === 'obs') {
-                    ctx.fillStyle = e.color; ctx.beginPath();
-                    ctx.moveTo(e.x+e.w*0.2, e.y); ctx.lineTo(e.x+e.w*0.8, e.y+e.h*0.1);
-                    ctx.lineTo(e.x+e.w, e.y+e.h*0.6); ctx.lineTo(e.x+e.w*0.7, e.y+e.h);
-                    ctx.lineTo(e.x+e.w*0.1, e.y+e.h*0.9); ctx.lineTo(e.x, e.y+e.h*0.4); ctx.fill();
-                    // White outline for contrast
-                    ctx.strokeStyle = '#FFF'; ctx.lineWidth = 2; ctx.stroke();
-                    ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.fillRect(e.x+10, e.y+10, 10, 10);
+                    // Draw Natural Boulder Shape
+                    ctx.fillStyle = e.color; 
+                    ctx.beginPath();
+                    // More irregular polygon
+                    let off = e.off || 0;
+                    ctx.moveTo(e.x + e.w*0.2 - off, e.y + off); 
+                    ctx.lineTo(e.x + e.w*0.8 + off, e.y); 
+                    ctx.lineTo(e.x + e.w, e.y + e.h*0.5 + off); 
+                    ctx.lineTo(e.x + e.w*0.7 - off, e.y + e.h);
+                    ctx.lineTo(e.x + e.w*0.2 + off, e.y + e.h*0.9); 
+                    ctx.lineTo(e.x - off, e.y + e.h*0.4); 
+                    ctx.fill();
                 } 
                 else if(e.type === 'letter') {
                     ctx.fillStyle = '#FFD700'; ctx.beginPath(); ctx.arc(e.x+e.w/2, e.y+e.h/2, e.w/2, 0, Math.PI*2); ctx.fill();
@@ -727,6 +760,7 @@ Next point: “And new, and still” - let’s go!
 
         async function gameOver() {
             gameState = 'OVER';
+            AudioSys.stopUltra();
             document.getElementById('screen-gameover').style.display = 'flex';
             document.getElementById('end-score').innerText = score;
             
