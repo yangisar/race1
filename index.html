@@ -19,7 +19,7 @@
 
         /* --- HUD --- */
         #hud {
-            position: absolute; top: 15%; left: 15px; right: 15px;
+            position: absolute; top: 10%; left: 15px; right: 15px;
             display: flex; justify-content: space-between;
             pointer-events: none; z-index: 10;
             color: #fff; text-shadow: 0 0 5px #000;
@@ -68,7 +68,7 @@
 
         .pixel-title-main {
             font-family: 'Press Start 2P', cursive;
-            font-size: 2rem; color: #FFF;
+            font-size: 1.8rem; color: #FFF;
             text-shadow: 4px 4px 0px #FF0000, -2px -2px 0px #0000FF;
             margin-bottom: 10px; line-height: 1.2;
         }
@@ -149,7 +149,11 @@
         #jbrla-popup { font-family: 'Rubik Glitch'; font-size: 3.5rem; color: #fff; text-shadow: 0 0 10px #9400D3; }
         #gorilla-popup { font-family: 'Permanent Marker'; font-size: 3rem; color: #00FFFF; text-shadow: 0 0 10px #00FF00; }
         #slow-popup { font-family: 'Permanent Marker'; font-size: 3rem; color: #FFF; text-shadow: 0 0 10px #00FFFF; }
-        #victory-popup { font-family: 'Press Start 2P'; font-size: 2.5rem; color: #FFD700; text-shadow: 4px 4px 0 #000; top: 30%; width: 100%; text-align: center; }
+        #victory-popup { 
+            position: absolute; top: 30%; width: 100%; text-align: center; 
+            font-family: 'Press Start 2P'; font-size: 2rem; color: #FFD700; 
+            text-shadow: 4px 4px 0 #000; opacity: 0; pointer-events: none; z-index: 45;
+        }
         
         .anim-pop { animation: popIn 1.5s forwards; }
         @keyframes popIn {
@@ -160,7 +164,7 @@
 
         /* --- CONTROLS (Android Optimized) --- */
         #controls {
-            position: absolute; bottom: 50px; /* Moved up for Android */
+            position: absolute; bottom: 60px; /* Moved up to avoid Android home bar */
             left: 5px; right: 5px;
             height: 150px; z-index: 20; pointer-events: none;
         }
@@ -230,7 +234,7 @@
                         Gather letters and put the whole song JBRLA together!<br>
                         Әріптерді жинап, JBRLA әнін құрастыр!
                     </p>
-                    <div class="item-row">🥫 <span>Gorilla Tin = Armor / Сауыт</span></div>
+                    <div class="item-row">🥫 <span>Gorilla Bottle = Armor / Сауыт</span></div>
                     <div class="item-row">⚡ <span>Lightning = Invincible / Жеңілмес</span></div>
                     <div class="item-row">❄ <span>Brakes = Slow Down / Баяулау</span></div>
                 </div>
