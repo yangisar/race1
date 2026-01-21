@@ -98,6 +98,7 @@
             cursor: pointer; text-transform: uppercase;
             box-shadow: 5px 5px 0px #222; transition: transform 0.1s;
             pointer-events: auto;
+            white-space: nowrap; /* Ensure text stays on one line */
         }
         .diff-btn:active { transform: translate(3px, 3px); box-shadow: 2px 2px 0px #111; }
 
@@ -128,22 +129,34 @@
         }
 
         .social-msg {
-            margin-top: 5px; width: 85%; max-width: 400px;
+            margin-top: 5px; width: 90%; max-width: 450px;
             font-size: 0.7rem; color: #FFD700; 
             text-align: center; opacity: 0.9; line-height: 1.4;
             font-family: 'Montserrat', sans-serif; font-weight: bold;
             text-transform: uppercase;
         }
 
+        /* MUSIC LINK BUTTON */
         .music-link {
-            display: block; margin-top: 10px;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            margin-top: 10px;
             color: #00FFFF; text-decoration: none;
-            border: 1px solid #00FFFF; padding: 10px; border-radius: 5px;
-            font-family: 'Montserrat', sans-serif; font-weight: bold; font-size: 0.7rem;
-            width: 80%; max-width: 350px; transition: all 0.2s;
+            border: 1px solid #00FFFF; padding: 12px; border-radius: 5px;
+            font-family: 'Montserrat', sans-serif; font-weight: bold; 
+            font-size: 0.65rem; /* Smaller text to fit one line */
+            width: 90%; max-width: 450px; transition: all 0.2s;
             pointer-events: auto;
+            white-space: nowrap; /* Force one line */
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .music-link:hover { background: rgba(0, 255, 255, 0.2); transform: scale(1.02); }
+        
+        /* Pixel Link Icon using SVG */
+        .icon-link {
+            width: 16px; height: 16px; fill: #00FFFF; flex-shrink: 0;
+            image-rendering: pixelated; /* Attempt to crisp edges */
+        }
 
         /* Hall of Fame */
         .hof-container {
@@ -273,8 +286,10 @@
             </div>
 
             <a href="https://bfan.link/jbrla" target="_blank" class="music-link">
-                LISTEN TO JBRLA ON ALL PLATFORMS<br>
-                JBRLA ӘНІН БАРЛЫҚ ПЛАТФОРМАЛАРДА ТЫҢДАҢЫЗ
+                <svg class="icon-link" viewBox="0 0 24 24">
+                    <path d="M4 12h4v-2H4v2zm0 4h4v-2H4v2zm12-4h4v2h-4v-2zm0 4h4v2h-4v-2zM8 10h2v4H8v-4zm6 0h2v4h-2v-4zM6 8h2v2H6V8zm10 0h2v2h-2V8zM8 14h8v2H8v-2z" shape-rendering="crispEdges"/>
+                </svg>
+                <span>LISTEN TO JBRLA / JBRLA ТЫҢДАҢЫЗ</span>
             </a>
 
             <div class="results-box" id="lyrics-result"></div>
@@ -296,7 +311,7 @@
 
         <div class="credits">
             Created using AI tools by 
-            <a href="https://www.instagram.com/yangisar/" target="_blank">Yadykar Ibraimov</a>
+            <a href="https://www.instagram.com/yangisar/" target="_blank">@yangisar</a>
         </div>
     </div>
 
@@ -674,10 +689,10 @@ Next point: “And new, and still” - let’s go!
                 entities.push({ x:x, y:roadY-60, w:w, h:h, type:'obs', color:c, active:true, off: offset });
 
             } else if (r < 0.96) {
-                // HEALTH
+                // HEALTH - LIGHT BLUE (NEW)
                 entities.push({x:x, y:roadY-60, w:30, h:40, type:'flask', active:true});
             } else {
-                // SLOW DOWN (4%)
+                // SLOW DOWN - BRAKES (NEW)
                 entities.push({x:x, y:roadY-60, w:30, h:40, type:'slow', active:true});
             }
         }
@@ -761,18 +776,40 @@ Next point: “And new, and still” - let’s go!
                     ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(e.x+e.w/2, e.y+e.h/2, e.w/2-2, 0, Math.PI*2); ctx.stroke();
                 } 
                 else if(e.type === 'flask') {
-                    // Health (Blue/Red)
-                    ctx.fillStyle = '#00f'; ctx.fillRect(e.x+5, e.y+10, e.w-10, e.h-10);
+                    // Health (Light Blue)
+                    ctx.fillStyle = '#00BFFF'; // Light Blue
+                    ctx.fillRect(e.x+5, e.y+10, e.w-10, e.h-10);
                     ctx.fillStyle = '#fff'; ctx.fillRect(e.x+5, e.y+20, e.w-10, 5);
-                    ctx.fillStyle = '#f00'; ctx.font='bold 12px Arial'; ctx.fillText('G', e.x+e.w/2, e.y+35);
-                    ctx.shadowBlur = 10; ctx.shadowColor = '#00f'; ctx.fillRect(e.x+8, e.y+12, e.w-16, e.h-14); ctx.shadowBlur = 0;
+                    
+                    // Stretched G
+                    ctx.save();
+                    ctx.translate(e.x + e.w/2, e.y + e.h/2 + 5);
+                    ctx.scale(1, 1.8);
+                    ctx.fillStyle = '#FFF'; 
+                    ctx.font='bold 12px Arial'; 
+                    ctx.textAlign='center'; 
+                    ctx.textBaseline='middle'; 
+                    ctx.fillText('G', 0, 0);
+                    ctx.restore();
+
+                    ctx.shadowBlur = 10; ctx.shadowColor = '#00BFFF'; ctx.fillRect(e.x+8, e.y+12, e.w-16, e.h-14); ctx.shadowBlur = 0;
                 }
                 else if(e.type === 'slow') {
-                    // Slow Down (Cyan/White)
-                    ctx.fillStyle = '#00FFFF'; ctx.fillRect(e.x+5, e.y+10, e.w-10, e.h-10);
-                    ctx.fillStyle = '#fff'; ctx.fillRect(e.x+5, e.y+20, e.w-10, 5);
-                    ctx.fillStyle = '#000'; ctx.font='bold 16px Arial'; ctx.fillText('❄', e.x+e.w/2, e.y+35);
-                    ctx.shadowBlur = 10; ctx.shadowColor = '#00FFFF'; ctx.fillRect(e.x+8, e.y+12, e.w-16, e.h-14); ctx.shadowBlur = 0;
+                    // Slow Down (Car Brakes - Pixelated Look)
+                    // Disc
+                    ctx.fillStyle = '#CCCCCC'; // Grey Disc
+                    ctx.beginPath();
+                    ctx.arc(e.x + e.w/2, e.y + e.h/2, e.w/2 - 2, 0, Math.PI*2);
+                    ctx.fill();
+                    // Inner hub
+                    ctx.fillStyle = '#555';
+                    ctx.beginPath(); ctx.arc(e.x + e.w/2, e.y + e.h/2, 5, 0, Math.PI*2); ctx.fill();
+                    // Caliper (Red Block)
+                    ctx.fillStyle = '#FF0000';
+                    ctx.fillRect(e.x + e.w - 12, e.y + 8, 10, 24);
+                    
+                    // Pixel shine
+                    ctx.fillStyle = '#FFF'; ctx.fillRect(e.x + 10, e.y + 10, 4, 4);
                 }
                 else if(e.type === 'ultra') {
                     ctx.shadowBlur = 15; ctx.shadowColor = '#9400D3';
