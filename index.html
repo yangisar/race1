@@ -11,9 +11,7 @@
             margin: 0; padding: 0; overflow: hidden;
             background-color: #050505;
             font-family: 'Montserrat', sans-serif;
-            touch-action: none; /* Prevents browser zooming/panning */
-            user-select: none; 
-            -webkit-user-select: none;
+            touch-action: none; user-select: none; -webkit-user-select: none;
         }
 
         #gameContainer { position: relative; width: 100vw; height: 100vh; background: #000; }
@@ -62,8 +60,7 @@
             background-size: 40px 40px;
             display: flex; flex-direction: column;
             justify-content: center; align-items: center;
-            z-index: 100; /* High Z-Index to be clickable */
-            color: #fff; text-align: center;
+            z-index: 100; color: #fff; text-align: center;
             font-family: 'Press Start 2P', cursive;
         }
 
@@ -77,16 +74,12 @@
             text-shadow: 2px 2px 0px #C23B22;
         }
         
-        /* INPUT FIX: explicit select allowed and pointer events */
         .pixel-input {
             padding: 15px; font-size: 1rem; font-family: 'Press Start 2P', cursive;
             border: 4px solid #FFF; background: #000; color: #0F0;
             text-align: center; text-transform: uppercase; width: 250px; margin-bottom: 30px;
             border-radius: 0; outline: none; box-shadow: 5px 5px 0px #333;
-            pointer-events: auto; /* Ensure clickable */
-            user-select: text; /* Allow typing */
-            -webkit-user-select: text;
-            touch-action: manipulation;
+            pointer-events: auto; user-select: text; -webkit-user-select: text; touch-action: manipulation;
         }
         .pixel-input:focus { border-color: #0F0; }
 
@@ -150,27 +143,30 @@
             100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
         }
 
-        /* --- JOYSTICK CONTROL --- */
-        #joystick-zone {
-            position: absolute; bottom: 30px; left: 50%;
-            transform: translateX(-50%);
-            width: 140px; height: 140px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px solid rgba(255, 255, 255, 0.3);
+        /* --- CONTROLS (Reverted to Buttons, Smaller, Lower Opacity) --- */
+        #controls {
+            position: absolute; bottom: 10px; left: 5px; right: 5px;
+            height: 150px; z-index: 20; pointer-events: none;
+        }
+        .ctrl-btn {
+            position: absolute;
+            /* Lower opacity background and border */
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 50%;
-            z-index: 20; touch-action: none;
             display: flex; justify-content: center; align-items: center;
+            /* Dimmer icon color */
+            color: rgba(255, 255, 255, 0.3); 
+            pointer-events: auto; touch-action: manipulation;
+            transition: all 0.1s; backdrop-filter: blur(1px);
         }
-        #joystick-knob {
-            width: 50px; height: 50px;
-            background: rgba(255, 0, 0, 0.6);
-            border: 2px solid #FFF;
-            border-radius: 50%;
-            box-shadow: 0 0 15px rgba(255,0,0,0.5);
-            position: relative;
-            left: 0; top: 0;
-            pointer-events: none;
-        }
+        .ctrl-btn:active { background: rgba(255, 255, 255, 0.2); color: white; transform: scale(0.95); }
+
+        /* Smaller button sizes */
+        #btn-left { bottom: 5px; left: 5px; width: 80px; height: 80px; font-size: 2.5rem; }
+        #btn-up { bottom: 100px; left: 25px; width: 50px; height: 50px; font-size: 1.2rem; }
+        #btn-right { bottom: 5px; right: 5px; width: 80px; height: 80px; font-size: 2.5rem; }
+        #btn-down { bottom: 100px; right: 25px; width: 50px; height: 50px; font-size: 1.2rem; }
 
         .credits {
             position: absolute; bottom: 10px; width: 100%; text-align: center;
@@ -229,8 +225,11 @@
             <button class="pixel-btn" style="margin-top: 10px; border-radius:10px; font-size: 0.8rem;" onclick="resetGame()">RIDE AGAIN</button>
         </div>
 
-        <div id="joystick-zone">
-            <div id="joystick-knob"></div>
+        <div id="controls">
+            <div id="btn-up" class="ctrl-btn">▲</div>
+            <div id="btn-left" class="ctrl-btn">◀</div>
+            <div id="btn-down" class="ctrl-btn">▼</div>
+            <div id="btn-right" class="ctrl-btn">▶</div>
         </div>
 
         <div class="credits">Created using AI tools by Yadykar Ibraimov</div>
@@ -262,15 +261,9 @@
             url: "https://www.dreamlo.com/lb/",
             
             save: async function(name, score) {
-                // Name handling for Cyrillic/Kazakh names
                 let safeName = encodeURIComponent(name);
                 if(!safeName || safeName.trim() === "") safeName = "RIDER";
-                
-                try { 
-                    await fetch(`${this.url}${this.privateCode}/add/${safeName}/${score}`); 
-                } catch (e) { 
-                    console.error("Score upload failed", e); 
-                }
+                try { await fetch(`${this.url}${this.privateCode}/add/${safeName}/${score}`); } catch (e) { console.error(e); }
             },
             getTop: async function() {
                 try {
@@ -280,12 +273,7 @@
                     let entries = data.dreamlo.leaderboard.entry;
                     if (!entries) return [];
                     if (!Array.isArray(entries)) entries = [entries];
-                    
-                    // Decode names coming back from server
-                    return entries.slice(0, 5).map(e => ({ 
-                        name: decodeURIComponent(e.name).replace(/\+/g, ' '), 
-                        score: parseInt(e.score) 
-                    }));
+                    return entries.slice(0, 5).map(e => ({ name: decodeURIComponent(e.name).replace(/\+/g, ' '), score: parseInt(e.score) }));
                 } catch (e) { return []; }
             }
         };
@@ -417,8 +405,6 @@ Next point: “And new, and still” - let’s go!
         let letterOnScreen = false;
         
         const car = { x:0, y:0, w:42, h:75, health:100 };
-        // Joystick State
-        let joystick = { active: false, x: 0, y: 0, originX: 0, originY: 0 };
         const keys = {u:false, d:false, l:false, r:false};
 
         function resize() {
@@ -434,8 +420,9 @@ Next point: “And new, and still” - let’s go!
 
         function generateBackground() {
             bgCache.mountains = [];
+            // Increased height multipliers for steeper, taller mountains
             for(let i=0; i<=canvas.width; i+=5) {
-                bgCache.mountains.push({ x: i, y: (Math.sin(i*0.01)*50) + (Math.cos(i*0.02)*25) + 60 });
+                bgCache.mountains.push({ x: i, y: (Math.sin(i*0.01)*100) + (Math.cos(i*0.025)*50) + 80 });
             }
             bgCache.buildings = [];
             let bx = 0;
@@ -450,63 +437,22 @@ Next point: “And new, and still” - let’s go!
             for(let i=0; i<40; i++) bgCache.stars.push({x: Math.random()*canvas.width, y: Math.random()*roadY*0.9, s: Math.random()*2, alpha: Math.random()});
         }
 
-        // --- JOYSTICK LOGIC ---
-        const joyZone = document.getElementById('joystick-zone');
-        const joyKnob = document.getElementById('joystick-knob');
-        const maxRadius = 45;
-
-        const handleStart = (e) => {
-            // Prevent default ONLY for the joystick, not the input field
-            if(e.target.tagName !== 'INPUT') {
-                 e.preventDefault();
-            }
-            joystick.active = true;
-            const touch = e.touches ? e.touches[0] : e;
-            const rect = joyZone.getBoundingClientRect();
-            joystick.originX = rect.left + rect.width / 2;
-            joystick.originY = rect.top + rect.height / 2;
-            handleMove(e);
+        // RESTORED BUTTON CONTROLS
+        const bindKey = (id, key) => {
+            const el = document.getElementById(id);
+            el.addEventListener('touchstart', (e)=>{e.preventDefault(); keys[key]=true;});
+            el.addEventListener('touchend', (e)=>{e.preventDefault(); keys[key]=false;});
+            el.addEventListener('mousedown', ()=>{keys[key]=true;});
+            el.addEventListener('mouseup', ()=>{keys[key]=false;});
         };
-
-        const handleMove = (e) => {
-            if(!joystick.active) return;
-            if(e.cancelable) e.preventDefault(); // Stop scroll while dragging
-            const touch = e.touches ? e.touches[0] : e;
-            
-            let dx = touch.clientX - joystick.originX;
-            let dy = touch.clientY - joystick.originY;
-            
-            const distance = Math.sqrt(dx*dx + dy*dy);
-            if (distance > maxRadius) {
-                const angle = Math.atan2(dy, dx);
-                dx = Math.cos(angle) * maxRadius;
-                dy = Math.sin(angle) * maxRadius;
-            }
-            joyKnob.style.transform = `translate(${dx}px, ${dy}px)`;
-            joystick.x = dx / maxRadius;
-            joystick.y = dy / maxRadius;
-        };
-
-        const handleEnd = (e) => {
-            if(joystick.active && e.cancelable) e.preventDefault();
-            joystick.active = false;
-            joystick.x = 0; joystick.y = 0;
-            joyKnob.style.transform = `translate(0px, 0px)`;
-        };
-
-        joyZone.addEventListener('mousedown', handleStart);
-        window.addEventListener('mousemove', handleMove);
-        window.addEventListener('mouseup', handleEnd);
-        joyZone.addEventListener('touchstart', handleStart);
-        window.addEventListener('touchmove', handleMove, {passive: false});
-        window.addEventListener('touchend', handleEnd);
+        bindKey('btn-up','u'); bindKey('btn-down','d'); bindKey('btn-left','l'); bindKey('btn-right','r');
 
         // Keyboard Backup
-        const bindKey = (code, key) => {
+        const bindKeyBd = (code, key) => {
             window.addEventListener('keydown', (e)=>{if(e.key===code) keys[key]=true;});
             window.addEventListener('keyup', (e)=>{if(e.key===code) keys[key]=false;});
         };
-        bindKey('ArrowUp','u'); bindKey('ArrowDown','d'); bindKey('ArrowLeft','l'); bindKey('ArrowRight','r');
+        bindKeyBd('ArrowUp','u'); bindKeyBd('ArrowDown','d'); bindKeyBd('ArrowLeft','l'); bindKeyBd('ArrowRight','r');
 
         function triggerPopup(id) {
             const el = document.getElementById(id);
@@ -523,19 +469,15 @@ Next point: “And new, and still” - let’s go!
             const moveSpd = 7 + (difficulty * 0.6);
 
             let dx = 0, dy = 0;
-            if(joystick.active) {
-                dx = joystick.x; dy = joystick.y;
-            } else {
-                if(keys.u) dy -= 1; if(keys.d) dy += 1;
-                if(keys.l) dx -= 1; if(keys.r) dx += 1;
-            }
+            // Button Logic
+            if(keys.u) dy -= 1; if(keys.d) dy += 1;
+            if(keys.l) dx -= 1; if(keys.r) dx += 1;
 
             car.x += dx * moveSpd;
             car.y += dy * moveSpd;
 
             if(car.x < 0) car.x = 0;
             if(car.x > canvas.width - car.w) car.x = canvas.width - car.w;
-            // FIX: Boundary check to prevent going above horizon
             if(car.y < roadY) car.y = roadY; 
             if(car.y > canvas.height - car.h) car.y = canvas.height - car.h;
 
@@ -620,8 +562,9 @@ Next point: “And new, and still” - let’s go!
         function spawnOther() {
             let r = Math.random(); let x = Math.random() * (canvas.width - 50);
             if(r < 0.8) {
+                // Rocks: Changed to bright silver/white for contrast
                 let s = Math.random(); let w = 40 + (s * 35); let h = 30 + (s * 25);
-                let c = Math.random() > 0.5 ? '#C2B280' : '#A9A9A9'; 
+                let c = Math.random() > 0.5 ? '#E0E0E0' : '#C0C0C0'; 
                 entities.push({ x:x, y:roadY-60, w:w, h:h, type:'obs', color:c, active:true });
             } else if (r < 0.95) {
                 entities.push({x:x, y:roadY-60, w:30, h:40, type:'flask', active:true});
@@ -650,15 +593,15 @@ Next point: “And new, and still” - let’s go!
             ctx.beginPath(); ctx.moveTo(0, roadY);
             bgCache.mountains.forEach(p => ctx.lineTo(p.x, roadY - p.y)); 
             ctx.lineTo(canvas.width, roadY); ctx.fill();
-            // Snow Caps
+            // Snow Caps (Adjusted for taller peaks)
             ctx.fillStyle = '#FFF';
             bgCache.mountains.forEach((p, i) => {
                 if(i === 0 || i === bgCache.mountains.length-1) return;
-                if(p.y > 60) {
+                if(p.y > 120) { // Only on tall peaks
                     ctx.beginPath();
                     ctx.moveTo(p.x, roadY - p.y);
-                    ctx.lineTo(p.x - 10, roadY - p.y + 15);
-                    ctx.lineTo(p.x + 10, roadY - p.y + 15);
+                    ctx.lineTo(p.x - 15, roadY - p.y + 25);
+                    ctx.lineTo(p.x + 15, roadY - p.y + 25);
                     ctx.fill();
                 }
             });
@@ -669,13 +612,9 @@ Next point: “And new, and still” - let’s go!
             });
             drawLandmarks();
 
-            // 3. ROAD (Darker for contrast)
+            // 3. ROAD
             ctx.fillStyle = '#222'; ctx.fillRect(0, roadY, canvas.width, roadH);
-            // Shoulders (Dark earth/grass)
-            ctx.fillStyle = '#1e1a15';
-            ctx.fillRect(0, roadY, 15, roadH); ctx.fillRect(canvas.width-15, roadY, 15, roadH);
-            
-            // Horizon Line
+            ctx.fillStyle = '#1e1a15'; ctx.fillRect(0, roadY, 15, roadH); ctx.fillRect(canvas.width-15, roadY, 15, roadH);
             ctx.fillStyle = '#111'; ctx.fillRect(0, roadY-2, canvas.width, 4);
 
             // MARKINGS - WHITE
@@ -697,7 +636,9 @@ Next point: “And new, and still” - let’s go!
                     ctx.moveTo(e.x+e.w*0.2, e.y); ctx.lineTo(e.x+e.w*0.8, e.y+e.h*0.1);
                     ctx.lineTo(e.x+e.w, e.y+e.h*0.6); ctx.lineTo(e.x+e.w*0.7, e.y+e.h);
                     ctx.lineTo(e.x+e.w*0.1, e.y+e.h*0.9); ctx.lineTo(e.x, e.y+e.h*0.4); ctx.fill();
-                    ctx.fillStyle = 'rgba(255,255,255,0.2)'; ctx.fillRect(e.x+10, e.y+10, 10, 10);
+                    // White outline for contrast
+                    ctx.strokeStyle = '#FFF'; ctx.lineWidth = 2; ctx.stroke();
+                    ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.fillRect(e.x+10, e.y+10, 10, 10);
                 } 
                 else if(e.type === 'letter') {
                     ctx.fillStyle = '#FFD700'; ctx.beginPath(); ctx.arc(e.x+e.w/2, e.y+e.h/2, e.w/2, 0, Math.PI*2); ctx.fill();
@@ -746,18 +687,18 @@ Next point: “And new, and still” - let’s go!
             }
             ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(x+6, y+6, w, h);
             
-            // CAR BODY - ELECTRIC BLUE -> REVISED TO YELLOW
+            // CAR BODY - ELECTRIC BLUE
             ctx.fillStyle = '#2979FF'; 
             ctx.beginPath(); ctx.roundRect(x, y, w, h, 4); ctx.fill();
             
             // Windshield
             ctx.fillStyle = '#222'; ctx.fillRect(x+2, y+18, w-4, h-30);
             
-            // Text - WHITE -> REVISED TO GREEN/STRETCHED
+            // Text - WHITE/STRETCHED
             ctx.save(); 
             ctx.translate(x+w/2, y+h/2); 
             ctx.rotate(-Math.PI/2);
-            ctx.scale(1, 1.8); // Stretch
+            ctx.scale(1, 1.8); 
             ctx.fillStyle = '#FFFFFF'; 
             ctx.font='bold 9px Arial'; ctx.textAlign='center'; ctx.fillText("DAIYNBALL", 0, 4);
             ctx.restore();
@@ -773,11 +714,10 @@ Next point: “And new, and still” - let’s go!
         function initGame() {
             let nick = document.getElementById('nickname').value.trim();
             if(!nick) { alert("ENTER NICKNAME / АТЫҢЫЗДЫ ЖАЗЫҢЫЗ"); return; }
-            nickname = nick; // Keep original casing/characters for now
+            nickname = nick; 
             AudioSys.init();
             document.getElementById('screen-start').style.display = 'none';
             document.getElementById('screen-gameover').style.display = 'none';
-            document.getElementById('joystick-zone').style.display = 'flex';
             
             gameState = 'PLAYING'; score = 0; car.health = 100; difficulty = 1; spikeEndTime = 0;
             lyricIndex = 0; letterOnScreen = false;
@@ -787,7 +727,6 @@ Next point: “And new, and still” - let’s go!
 
         async function gameOver() {
             gameState = 'OVER';
-            document.getElementById('joystick-zone').style.display = 'none';
             document.getElementById('screen-gameover').style.display = 'flex';
             document.getElementById('end-score').innerText = score;
             
@@ -814,8 +753,6 @@ Next point: “And new, and still” - let’s go!
             document.getElementById('screen-start').style.display = 'flex';
         }
         resize();
-        
-        document.getElementById('joystick-zone').style.display = 'none';
     </script>
 </body>
 </html>
