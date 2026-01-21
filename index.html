@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>DAIYNBALL: JBRLA</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rubik+Glitch&family=Montserrat:wght@400;700;900&family=Permanent+Marker&display=swap');
@@ -19,7 +19,7 @@
 
         /* --- HUD --- */
         #hud {
-            position: absolute; top: 22%; left: 15px; right: 15px;
+            position: absolute; top: 15%; left: 15px; right: 15px;
             display: flex; justify-content: space-between;
             pointer-events: none; z-index: 10;
             color: #fff; text-shadow: 0 0 5px #000;
@@ -49,8 +49,8 @@
             box-shadow: 0 0 10px #9400D3;
         }
 
-        /* --- START SCREEN --- */
-        #screen-start {
+        /* --- SCREENS --- */
+        .screen-overlay {
             position: absolute; top: 0; left: 0;
             width: 100%; height: 100%;
             background-color: #000;
@@ -61,102 +61,128 @@
             display: flex; flex-direction: column;
             justify-content: center; align-items: center;
             z-index: 100; color: #fff; text-align: center;
-            font-family: 'Press Start 2P', cursive;
+            font-family: 'Montserrat', sans-serif;
+            padding: 20px; box-sizing: border-box;
+            overflow-y: auto;
         }
 
         .pixel-title-main {
-            font-size: 2.5rem; color: #FFF;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 2rem; color: #FFF;
             text-shadow: 4px 4px 0px #FF0000, -2px -2px 0px #0000FF;
-            margin-bottom: 15px; line-height: 1.2;
+            margin-bottom: 10px; line-height: 1.2;
         }
-        .pixel-title-sub {
-            font-size: 1.2rem; color: #FFD700; margin-bottom: 30px;
-            text-shadow: 2px 2px 0px #C23B22;
+
+        /* INSTRUCTIONS */
+        .instructions {
+            background: rgba(0,0,0,0.8); border: 1px solid #555;
+            padding: 15px; margin-bottom: 15px; border-radius: 8px;
+            font-size: 0.75rem; color: #DDD; max-width: 400px; line-height: 1.5;
         }
+        .highlight { color: #FFD700; font-weight: bold; }
+        .item-row { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 4px 0; }
         
         .pixel-input {
-            padding: 15px; font-size: 1rem; font-family: 'Press Start 2P', cursive;
+            padding: 12px; font-size: 1rem; font-family: 'Press Start 2P', cursive;
             border: 4px solid #FFF; background: #000; color: #0F0;
-            text-align: center; text-transform: uppercase; width: 250px; margin-bottom: 20px;
+            text-align: center; text-transform: uppercase; width: 250px; margin-bottom: 15px;
             border-radius: 0; outline: none; box-shadow: 5px 5px 0px #333;
-            pointer-events: auto; user-select: text; -webkit-user-select: text; touch-action: manipulation;
-        }
-        .pixel-input:focus { border-color: #0F0; }
-
-        .diff-label {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 0.8rem; color: #AAA; margin-bottom: 10px;
-            text-transform: uppercase; letter-spacing: 1px;
-        }
-
-        /* DIFFICULTY BUTTONS */
-        .diff-btn {
-            display: block; width: 300px;
-            padding: 15px 10px; margin: 8px 0;
-            font-size: 0.8rem; font-family: 'Press Start 2P', cursive;
-            background: #000; border: 4px solid #FFF;
-            cursor: pointer; text-transform: uppercase;
-            box-shadow: 5px 5px 0px #222; transition: transform 0.1s;
             pointer-events: auto;
-            white-space: nowrap; /* Ensure text stays on one line */
         }
-        .diff-btn:active { transform: translate(3px, 3px); box-shadow: 2px 2px 0px #111; }
 
-        .btn-easy { border-color: #00FF00; color: #00FF00; box-shadow: 5px 5px 0px #005500; }
-        .btn-med  { border-color: #FFFF00; color: #FFFF00; box-shadow: 5px 5px 0px #555500; }
-        .btn-hard { border-color: #FF0000; color: #FF0000; box-shadow: 5px 5px 0px #550000; }
+        .pixel-btn-go {
+            padding: 15px 30px; font-size: 1rem; font-family: 'Press Start 2P', cursive;
+            background: #FF0000; color: #FFF; border: 4px solid #FFF;
+            cursor: pointer; box-shadow: 6px 6px 0px #8B0000; pointer-events: auto;
+            text-transform: uppercase;
+        }
+        .pixel-btn-go:active { transform: translate(3px, 3px); box-shadow: 2px 2px 0px #500; }
 
-        /* --- GAME OVER --- */
-        .overlay-gameover {
+        /* DIFFICULTY SCREEN */
+        #difficulty-section { display: none; flex-direction: column; align-items: center; width: 100%; }
+        .diff-btn {
+            display: block; width: 280px; max-width: 100%;
+            padding: 12px; margin: 8px 0;
+            font-size: 0.7rem; font-family: 'Press Start 2P', cursive;
+            background: #000; border: 3px solid #FFF;
+            cursor: pointer; text-transform: uppercase;
+            box-shadow: 4px 4px 0px #222; transition: transform 0.1s;
+            pointer-events: auto;
+        }
+        .btn-easy { border-color: #00FF00; color: #00FF00; }
+        .btn-med  { border-color: #FFFF00; color: #FFFF00; }
+        .btn-hard { border-color: #FF0000; color: #FF0000; }
+
+        /* --- GAME OVER / VICTORY --- */
+        .overlay-end {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.95); backdrop-filter: blur(5px);
             display: flex; flex-direction: column; align-items: center;
             z-index: 90; color: #fff; text-align: center; 
             font-family: 'Montserrat', sans-serif;
-            padding-top: 10px; box-sizing: border-box;
-            overflow-y: auto; 
+            padding-top: 10px; box-sizing: border-box; overflow-y: auto;
         }
 
         .results-box {
             background: #000; border: 2px solid #00FF00;
             width: 85%; max-width: 500px; height: 15%;
-            margin: 10px 0; padding: 10px;
-            overflow-y: auto; text-align: left;
-            font-family: 'Courier New', monospace; font-size: 0.8rem;
-            line-height: 1.4; white-space: pre-wrap;
-            box-shadow: 0 0 10px #00FF00;
-            color: #00FF00; text-shadow: 0 0 2px #00FF00;
+            margin: 10px 0; padding: 10px; overflow-y: auto;
+            color: #00FF00; font-family: 'Courier New', monospace; font-size: 0.8rem;
         }
 
-        .social-msg {
-            margin-top: 5px; width: 90%; max-width: 450px;
-            font-size: 0.7rem; color: #FFD700; 
-            text-align: center; opacity: 0.9; line-height: 1.4;
-            font-family: 'Montserrat', sans-serif; font-weight: bold;
-            text-transform: uppercase;
-        }
-
-        /* MUSIC LINK BUTTON */
         .music-link {
-            display: flex; align-items: center; justify-content: center; gap: 10px;
-            margin-top: 10px;
-            color: #00FFFF; text-decoration: none;
-            border: 1px solid #00FFFF; padding: 12px; border-radius: 5px;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            margin-top: 10px; color: #00FFFF; text-decoration: none;
+            border: 2px solid #00FFFF; padding: 10px; border-radius: 5px;
             font-family: 'Montserrat', sans-serif; font-weight: bold; 
-            font-size: 0.65rem; /* Smaller text to fit one line */
-            width: 90%; max-width: 450px; transition: all 0.2s;
-            pointer-events: auto;
-            white-space: nowrap; /* Force one line */
-            overflow: hidden;
-            text-overflow: ellipsis;
+            font-size: 0.7rem; width: 90%; max-width: 400px;
+            pointer-events: auto; background: rgba(0,0,0,0.5);
         }
-        .music-link:hover { background: rgba(0, 255, 255, 0.2); transform: scale(1.02); }
+        .icon-svg { width: 18px; height: 18px; fill: #00FFFF; flex-shrink: 0; }
+
+        /* --- POPUPS --- */
+        .popup-text {
+            position: absolute; top: 15%; left: 50%;
+            transform: translateX(-50%) scale(0);
+            pointer-events: none; z-index: 40; opacity: 0;
+        }
+        #jbrla-popup { font-family: 'Rubik Glitch'; font-size: 3.5rem; color: #fff; text-shadow: 0 0 10px #9400D3; }
+        #gorilla-popup { font-family: 'Permanent Marker'; font-size: 3rem; color: #00FFFF; text-shadow: 0 0 10px #00FF00; }
+        #slow-popup { font-family: 'Permanent Marker'; font-size: 3rem; color: #FFF; text-shadow: 0 0 10px #00FFFF; }
+        #victory-popup { font-family: 'Press Start 2P'; font-size: 2.5rem; color: #FFD700; text-shadow: 4px 4px 0 #000; top: 30%; width: 100%; text-align: center; }
         
-        /* Pixel Link Icon using SVG */
-        .icon-link {
-            width: 16px; height: 16px; fill: #00FFFF; flex-shrink: 0;
-            image-rendering: pixelated; /* Attempt to crisp edges */
+        .anim-pop { animation: popIn 1.5s forwards; }
+        @keyframes popIn {
+            0% { transform: translateX(-50%) scale(0.5); opacity: 0; }
+            20% { transform: translateX(-50%) scale(1.2) rotate(-5deg); opacity: 1; }
+            100% { transform: translateX(-50%) scale(2); opacity: 0; }
         }
+
+        /* --- CONTROLS (Android Optimized) --- */
+        #controls {
+            position: absolute; bottom: 50px; /* Moved up for Android */
+            left: 5px; right: 5px;
+            height: 150px; z-index: 20; pointer-events: none;
+        }
+        .ctrl-btn {
+            position: absolute; background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            color: rgba(255, 255, 255, 0.5); pointer-events: auto;
+            backdrop-filter: blur(2px);
+        }
+
+        #btn-left { bottom: 0px; left: 10px; width: 70px; height: 70px; font-size: 2rem; }
+        #btn-up { bottom: 85px; left: 25px; width: 45px; height: 45px; }
+        #btn-right { bottom: 0px; right: 10px; width: 70px; height: 70px; font-size: 2rem; }
+        #btn-down { bottom: 85px; right: 25px; width: 45px; height: 45px; }
+
+        /* --- CREDITS --- */
+        .credits {
+            margin-top: auto; padding-bottom: 10px;
+            font-size: 0.6rem; color: #888;
+        }
+        .credits a { color: #AAA; text-decoration: underline; pointer-events: auto; }
 
         /* Hall of Fame */
         .hof-container {
@@ -165,80 +191,15 @@
             border: 1px solid rgba(255,255,255,0.2);
         }
         .hof-list { list-style: none; padding: 0; margin: 0; font-size: 0.8rem; text-align: left; }
-        .hof-item { 
-            display: flex; justify-content: space-between; 
-            padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.1); 
-        }
+        .hof-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
         .hof-item:first-child { color: #FFD700; font-weight: bold; }
-
-        /* --- POPUPS --- */
-        .popup-text {
-            position: absolute; top: 15%; left: 50%;
-            transform: translateX(-50%) scale(0);
-            pointer-events: none; z-index: 40; opacity: 0; white-space: nowrap;
-        }
-        #jbrla-popup { font-family: 'Rubik Glitch'; font-size: 3.5rem; color: #fff; text-shadow: 0 0 10px #9400D3, 3px 3px 0px #000; }
-        #gorilla-popup { font-family: 'Permanent Marker'; font-size: 3rem; color: #00FFFF; text-shadow: 0 0 10px #00FF00, 3px 3px 0px #000; }
-        #slow-popup { font-family: 'Permanent Marker'; font-size: 3rem; color: #00FFFF; text-shadow: 0 0 10px #FFF, 3px 3px 0px #000; }
-        
-        .anim-pop { animation: popIn 1.5s forwards; }
-        @keyframes popIn {
-            0% { transform: translateX(-50%) scale(0.5); opacity: 0; }
-            20% { transform: translateX(-50%) scale(1.2) rotate(-5deg); opacity: 1; }
-            40% { transform: translateX(-50%) scale(1.0) rotate(5deg); opacity: 1; }
-            80% { transform: translateX(-50%) scale(1.1) rotate(0deg); opacity: 1; }
-            100% { transform: translateX(-50%) scale(2); opacity: 0; }
-        }
-
-        /* --- CONTROLS --- */
-        #controls {
-            position: absolute; bottom: 10px; left: 5px; right: 5px;
-            height: 150px; z-index: 20; pointer-events: none;
-        }
-        .ctrl-btn {
-            position: absolute;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            display: flex; justify-content: center; align-items: center;
-            color: rgba(255, 255, 255, 0.3); 
-            pointer-events: auto; touch-action: manipulation;
-            transition: all 0.1s; backdrop-filter: blur(1px);
-        }
-        .ctrl-btn:active { background: rgba(255, 255, 255, 0.2); color: white; transform: scale(0.95); }
-
-        #btn-left { bottom: 5px; left: 5px; width: 65px; height: 65px; font-size: 2rem; }
-        #btn-up { bottom: 85px; left: 20px; width: 40px; height: 40px; font-size: 1rem; }
-        #btn-right { bottom: 5px; right: 5px; width: 65px; height: 65px; font-size: 2rem; }
-        #btn-down { bottom: 85px; right: 20px; width: 40px; height: 40px; font-size: 1rem; }
-
-        .credits {
-            position: absolute; bottom: 10px; width: 100%; text-align: center;
-            font-size: 0.6rem; color: #666; font-family: sans-serif; 
-            z-index: 200; pointer-events: none;
-        }
-        .credits a {
-            color: #888; text-decoration: underline; pointer-events: auto;
-        }
-
-        .pixel-btn {
-            padding: 15px 25px; font-size: 0.9rem; font-family: 'Press Start 2P', cursive;
-            background: #FF0000; color: #FFF; border: 4px solid #FFF;
-            cursor: pointer; text-transform: uppercase;
-            box-shadow: 6px 6px 0px #8B0000; transition: transform 0.1s;
-            pointer-events: auto; margin-top: 10px;
-        }
 
     </style>
 </head>
 <body>
 
-    <audio id="bgMusic" loop>
-        <source src="soundtrack.mp3" type="audio/mpeg">
-    </audio>
-    <audio id="ultraSound">
-        <source src="ultra.mp3" type="audio/mpeg">
-    </audio>
+    <audio id="bgMusic" loop><source src="soundtrack.mp3" type="audio/mpeg"></audio>
+    <audio id="ultraSound"><source src="ultra.mp3" type="audio/mpeg"></audio>
 
     <div id="gameContainer">
         <canvas id="gameCanvas"></canvas>
@@ -247,59 +208,71 @@
             <div>
                 <div class="bar-label">ARMOR</div>
                 <div class="bar-wrap"><div id="hpBar" class="bar-fill"></div></div>
-                <div id="spikeTimerContainer">
-                    <div id="spikeTimerWrap"><div id="spikeTimerFill"></div></div>
-                </div>
+                <div id="spikeTimerContainer"><div id="spikeTimerWrap"><div id="spikeTimerFill"></div></div></div>
             </div>
             <div style="text-align: right;">
-                <span id="scoreVal" style="font-size: 2rem; color: #FFD700; text-shadow: 0 0 10px gold;">0</span><br>
-                <span class="bar-label">LYRICS</span>
+                <span id="scoreVal" style="font-size: 2rem; color: #FFD700;">0</span><br><span class="bar-label">LYRICS</span>
             </div>
         </div>
 
         <div id="jbrla-popup" class="popup-text">JBRLA!</div>
         <div id="gorilla-popup" class="popup-text">GORILLA!</div>
         <div id="slow-popup" class="popup-text">SLOW DOWN!</div>
+        <div id="victory-popup" class="popup-text">VICTORY!<br><span style="font-size:1rem; color:#FFF;">ЖЕҢІС!</span></div>
 
-        <div id="screen-start">
-            <div class="pixel-title-main">DAIYNBALL</div>
-            <div class="pixel-title-main" style="font-size:1.8rem; color:#0F0;">JBRLA</div>
-            <div class="pixel-title-sub">RACING GAME</div>
-            <input type="text" id="nickname" class="pixel-input" placeholder="NICKNAME" maxlength="12" autocomplete="off">
+        <div id="screen-start" class="screen-overlay">
+            <div class="pixel-title-main">DAIYNBALL: JBRLA</div>
             
-            <div class="diff-label">Choose Difficulty / Қиындықты таңдаңыз</div>
-            <div>
+            <div id="intro-section" style="display:flex; flex-direction:column; align-items:center; width:100%;">
+                <div class="instructions">
+                    <p style="margin:0 0 10px 0; border-bottom:1px solid #555; padding-bottom:5px;">
+                        <span class="highlight">GOAL / МАҚСАТ:</span><br>
+                        Gather letters and put the whole song JBRLA together!<br>
+                        Әріптерді жинап, JBRLA әнін құрастыр!
+                    </p>
+                    <div class="item-row">🥫 <span>Gorilla Tin = Armor / Сауыт</span></div>
+                    <div class="item-row">⚡ <span>Lightning = Invincible / Жеңілмес</span></div>
+                    <div class="item-row">❄ <span>Brakes = Slow Down / Баяулау</span></div>
+                </div>
+
+                <input type="text" id="nickname" class="pixel-input" placeholder="NICKNAME" maxlength="12">
+                <button class="pixel-btn-go" onclick="showDifficulty()">Let's Go! / Кеттік!</button>
+            </div>
+
+            <div id="difficulty-section">
+                <div style="margin-bottom:15px; font-size:0.8rem; color:#AAA;">CHOOSE DIFFICULTY / ҚИЫНДЫҚТЫ ТАҢДАҢЫЗ</div>
                 <button class="diff-btn btn-easy" onclick="initGame('easy')">Балапан - Lil homie</button>
                 <button class="diff-btn btn-med" onclick="initGame('medium')">Джига - Ma boy</button>
                 <button class="diff-btn btn-hard" onclick="initGame('hard')">Жабай - Savage</button>
             </div>
+
+            <div class="credits">
+                Created using AI tools by Yadykar Ibraimov <a href="https://www.instagram.com/yangisar/" target="_blank">@yangisar</a>
+            </div>
         </div>
 
-        <div id="screen-gameover" class="overlay-gameover" style="display:none;">
-            <div style="font-size: 2rem; color: #FF0000; font-family:'Rubik Glitch';">GAME OVER</div>
+        <div id="screen-end" class="overlay-end" style="display:none;">
+            <div id="end-title" style="font-size: 2rem; color: #FF0000; font-family:'Rubik Glitch'; margin-bottom:10px;">GAME OVER</div>
             
-            <div style="font-size: 0.8rem; color: #aaa; margin-top:5px;">STATS: <span id="end-score" style="color: #FFD700; font-weight:bold;">0</span> LETTERS</div>
-
-            <div class="social-msg">
-                Make a screenshot and share your results and tag us<br>
-                Скрин жасап, нәтижеңмен бөліс және бізді белгіле
-            </div>
-
-            <a href="https://bfan.link/jbrla" target="_blank" class="music-link">
-                <svg class="icon-link" viewBox="0 0 24 24">
-                    <path d="M4 12h4v-2H4v2zm0 4h4v-2H4v2zm12-4h4v2h-4v-2zm0 4h4v2h-4v-2zM8 10h2v4H8v-4zm6 0h2v4h-2v-4zM6 8h2v2H6V8zm10 0h2v2h-2V8zM8 14h8v2H8v-2z" shape-rendering="crispEdges"/>
-                </svg>
-                <span>LISTEN TO JBRLA / JBRLA ТЫҢДАҢЫЗ</span>
-            </a>
+            <div style="margin-bottom:10px;">Make a screenshot and share your results and tag us<br>Скрин жасап, нәтижеңмен бөліс және бізді белгіле</div>
 
             <div class="results-box" id="lyrics-result"></div>
+
+            <a href="https://bfan.link/jbrla" target="_blank" class="music-link">
+                <svg class="icon-svg" viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>
+                <span>LISTEN TO JBRLA / JBRLA ТЫҢДАҢЫЗ</span>
+            </a>
 
             <div class="hof-container">
                 <div style="color:#FFD700; font-family:'Permanent Marker'; margin-bottom:5px;">HALL OF FAME</div>
                 <ul id="hof-list" class="hof-list"></ul>
             </div>
             
-            <button class="pixel-btn" onclick="resetGame()">RIDE AGAIN</button>
+            <button class="pixel-btn-go" style="margin-top:15px; font-size:0.8rem;" onclick="resetGame()">RIDE AGAIN</button>
+
+            <div class="credits">
+                Created using AI tools by Yadykar Ibraimov <a href="https://www.instagram.com/yangisar/" target="_blank">@yangisar</a>
+            </div>
         </div>
 
         <div id="controls">
@@ -308,23 +281,15 @@
             <div id="btn-down" class="ctrl-btn">▼</div>
             <div id="btn-right" class="ctrl-btn">▶</div>
         </div>
-
-        <div class="credits">
-            Created using AI tools by Yadykar Ibraimov 
-            <a href="https://www.instagram.com/yangisar/" target="_blank">@yangisar</a>
-        </div>
     </div>
 
     <script>
         /** 🎵 AUDIO **/
         const AudioSys = {
-            ctx: null, 
-            bgMusic: document.getElementById('bgMusic'),
-            ultraSound: document.getElementById('ultraSound'),
+            ctx: null, bgMusic: document.getElementById('bgMusic'), ultraSound: document.getElementById('ultraSound'),
             init: function() { 
                 if(!this.ctx) this.ctx = new (window.AudioContext||window.webkitAudioContext)();
                 this.bgMusic.volume = 0.6; this.bgMusic.play().catch(e=>{});
-                this.ultraSound.volume = 0.8;
             },
             playTone: function(f,t,d,v=0.1) {
                 if(!this.ctx) return;
@@ -334,32 +299,25 @@
                 g.gain.exponentialRampToValueAtTime(0.01,this.ctx.currentTime+d);
                 o.connect(g); g.connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime+d);
             },
-            playSmash: function() { this.playTone(60,'sawtooth',0.2,0.4); this.playTone(100,'square',0.1,0.3); },
-            playUltra: function() {
-                this.ultraSound.currentTime = 0;
-                this.ultraSound.play().catch(e=>{});
-            },
-            stopUltra: function() {
-                this.ultraSound.pause();
-            }
+            playSmash: function() { this.playTone(60,'sawtooth',0.2,0.4); },
+            playUltra: function() { this.ultraSound.currentTime = 0; this.ultraSound.play().catch(e=>{}); },
+            stopUltra: function() { this.ultraSound.pause(); }
         };
 
-        /** ☁️ DREAMLO STORAGE **/
+        /** ☁️ LEADERBOARD (Updated Codes) **/
         const StorageSys = {
-            privateCode: "HI23JnppXkqNd_l5x-wG8AVKgXQhhZ3kO4Iv7OMBJsRw", 
-            publicCode:  "697058fc8f40bb1184b96f1a",  
+            privateCode: "TbEgYk4m1k6AiaZ5bguZqwNWpZbGt8hkSJBVFdEavkTw", 
+            publicCode:  "6971059b8f40bb1184ba9e1e",  
             url: "https://www.dreamlo.com/lb/",
-            
             save: async function(name, score) {
-                let safeName = encodeURIComponent(name);
-                if(!safeName || safeName.trim() === "") safeName = "RIDER";
-                try { await fetch(`${this.url}${this.privateCode}/add/${safeName}/${score}`); } catch (e) { console.error(e); }
+                let safeName = encodeURIComponent(name || "RIDER");
+                try { await fetch(`${this.url}${this.privateCode}/add/${safeName}/${score}`); } catch (e) {}
             },
             getTop: async function() {
                 try {
                     const res = await fetch(`${this.url}${this.publicCode}/json`);
                     const data = await res.json();
-                    if (!data || !data.dreamlo || !data.dreamlo.leaderboard) return [];
+                    if (!data?.dreamlo?.leaderboard) return [];
                     let entries = data.dreamlo.leaderboard.entry;
                     if (!entries) return [];
                     if (!Array.isArray(entries)) entries = [entries];
@@ -475,69 +433,30 @@ Next point: “And new, and still” - let’s go!
 Жыбырла
 Жыбырлa`;
 
-        /** 🎮 GAME ENGINE **/
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        
-        let roadY, roadH; 
-        let bgCache = { mountains: [], buildings: [], stars: [] };
-        let gameState = 'START';
-        let nickname = "";
-        
-        // Game Settings
-        let currentDiff = 'medium';
-        let damageDealt = 25;
-        let spawnMultiplier = 1.0;
-        let speedOffset = 0; // For Slow Down Flask
-        
-        let lyricIndex = 0; 
-        let spawnIndex = 0; 
-        let score = 0;      
-        
-        let baseSpeed = 7;
-        let difficulty = 1;
-        let roadOffset = 0;
-        let entities = [];
-        let particles = [];
-        let spikeEndTime = 0;
-        
-        let gameStartTime = 0;
-        let lastUltraSpawnTime = 0;
-        let nextLetterTime = 0;
-        
+        let roadY, roadH, bgCache = { mountains: [], buildings: [], stars: [] }, gameState = 'START';
+        let nickname = "", currentDiff = 'medium', damageDealt = 25, spawnMultiplier = 1.0, speedOffset = 0;
+        let spawnIndex = 0, score = 0, baseSpeed = 7, difficulty = 1, roadOffset = 0;
+        let entities = [], particles = [], spikeEndTime = 0, gameStartTime = 0, lastUltraSpawnTime = 0, nextLetterTime = 0;
         const car = { x:0, y:0, w:42, h:75, health:100 };
         const keys = {u:false, d:false, l:false, r:false};
 
         function resize() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            roadY = canvas.height * 0.21;
-            roadH = canvas.height - roadY;
-            car.x = canvas.width/2 - 21;
-            car.y = roadY + roadH * 0.7;
+            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+            roadY = canvas.height * 0.21; roadH = canvas.height - roadY;
+            car.x = canvas.width/2 - 21; car.y = roadY + roadH * 0.7;
             generateBackground();
         }
         window.addEventListener('resize', resize);
 
         function generateBackground() {
-            bgCache.mountains = [];
-            for(let i=0; i<=canvas.width; i+=5) {
-                bgCache.mountains.push({ x: i, y: (Math.sin(i*0.01)*100) + (Math.cos(i*0.025)*50) + 80 });
-            }
-            bgCache.buildings = [];
-            let bx = 0;
-            while(bx < canvas.width) {
-                let bw = 25 + Math.random() * 40; let bh = 20 + Math.random() * 60;
-                let wins = [];
-                for(let wy=4; wy<bh-5; wy+=10) for(let wx=4; wx<bw-4; wx+=8) if(Math.random()>0.3) wins.push({x:wx, y:wy});
-                bgCache.buildings.push({x:bx, w:bw, h:bh, wins: wins});
-                bx += bw;
-            }
-            bgCache.stars = [];
-            for(let i=0; i<40; i++) bgCache.stars.push({x: Math.random()*canvas.width, y: Math.random()*roadY*0.9, s: Math.random()*2, alpha: Math.random()});
+            bgCache.mountains = []; for(let i=0; i<=canvas.width; i+=5) bgCache.mountains.push({ x: i, y: (Math.sin(i*0.01)*100) + 80 });
+            bgCache.buildings = []; let bx = 0;
+            while(bx < canvas.width) { let bw = 25 + Math.random() * 40; bgCache.buildings.push({x:bx, w:bw, h:20 + Math.random() * 60, wins:[]}); bx += bw; }
+            bgCache.stars = []; for(let i=0; i<40; i++) bgCache.stars.push({x: Math.random()*canvas.width, y: Math.random()*roadY*0.9, s: Math.random()*2});
         }
 
-        // BUTTON CONTROLS
         const bindKey = (id, key) => {
             const el = document.getElementById(id);
             el.addEventListener('touchstart', (e)=>{e.preventDefault(); keys[key]=true;});
@@ -547,409 +466,179 @@ Next point: “And new, and still” - let’s go!
         };
         bindKey('btn-up','u'); bindKey('btn-down','d'); bindKey('btn-left','l'); bindKey('btn-right','r');
 
-        const bindKeyBd = (code, key) => {
-            window.addEventListener('keydown', (e)=>{if(e.key===code) keys[key]=true;});
-            window.addEventListener('keyup', (e)=>{if(e.key===code) keys[key]=false;});
-        };
-        bindKeyBd('ArrowUp','u'); bindKeyBd('ArrowDown','d'); bindKeyBd('ArrowLeft','l'); bindKeyBd('ArrowRight','r');
+        function showDifficulty() {
+            let nick = document.getElementById('nickname').value.trim();
+            if(!nick) { alert("ENTER NICKNAME / АТЫҢЫЗДЫ ЖАЗЫҢЫЗ"); return; }
+            nickname = nick;
+            document.getElementById('intro-section').style.display = 'none';
+            document.getElementById('difficulty-section').style.display = 'flex';
+        }
 
         function triggerPopup(id) {
-            const el = document.getElementById(id);
-            el.classList.remove('anim-pop');
-            void el.offsetWidth;
-            el.classList.add('anim-pop');
+            const el = document.getElementById(id); el.classList.remove('anim-pop'); void el.offsetWidth; el.classList.add('anim-pop');
         }
 
         function update() {
-            // Calculate Difficulty with Slow Down Offset
-            let rawDiff = 1 + (score / 50);
-            difficulty = Math.max(1, rawDiff - speedOffset);
-            
-            let currentSpeed = baseSpeed * difficulty;
-            roadOffset += currentSpeed;
+            // Difficulty Ramping
+            difficulty = Math.max(1, (1 + (score/50)) - speedOffset);
+            let currentSpeed = baseSpeed * difficulty; roadOffset += currentSpeed;
             const moveSpd = (baseSpeed * 1.2) + (difficulty * 0.6);
 
-            let dx = 0, dy = 0;
-            if(keys.u) dy -= 1; if(keys.d) dy += 1;
-            if(keys.l) dx -= 1; if(keys.r) dx += 1;
+            // Car Move
+            if(keys.u) car.y -= moveSpd; if(keys.d) car.y += moveSpd;
+            if(keys.l) car.x -= moveSpd; if(keys.r) car.x += moveSpd;
+            
+            // Constrain Car
+            if(car.x < 0) car.x = 0; if(car.x > canvas.width - car.w) car.x = canvas.width - car.w;
+            if(car.y < roadY) car.y = roadY; if(car.y > canvas.height - car.h) car.y = canvas.height - car.h;
 
-            car.x += dx * moveSpd;
-            car.y += dy * moveSpd;
-
-            if(car.x < 0) car.x = 0;
-            if(car.x > canvas.width - car.w) car.x = canvas.width - car.w;
-            if(car.y < roadY) car.y = roadY; 
-            if(car.y > canvas.height - car.h) car.y = canvas.height - car.h;
-
-            // --- LETTER SPAWNING ---
+            // SPAWN LETTERS
             if(Date.now() > nextLetterTime && spawnIndex < fullLyrics.length) {
-                while(spawnIndex < fullLyrics.length && (fullLyrics[spawnIndex] === ' ' || fullLyrics[spawnIndex] === '\n')) {
-                    spawnIndex++;
-                }
+                while(spawnIndex < fullLyrics.length && (fullLyrics[spawnIndex] === ' ' || fullLyrics[spawnIndex] === '\n')) spawnIndex++;
                 if(spawnIndex < fullLyrics.length) {
-                    spawnLetter(fullLyrics[spawnIndex]);
-                    spawnIndex++;
-                    nextLetterTime = Date.now() + 200 + Math.random() * 600;
+                    entities.push({x:Math.random()*(canvas.width-40), y:roadY-60, w:40, h:40, type:'letter', char:fullLyrics[spawnIndex], active:true});
+                    spawnIndex++; 
+                    nextLetterTime = Date.now() + 200 + Math.random()*600;
+                } else {
+                    // Song finished spawning
+                    if(entities.filter(e=>e.type==='letter').length === 0) endGame(true);
                 }
             }
 
-            let spawnChance = 0.02 * spawnMultiplier + (difficulty * 0.003);
+            // VICTORY CHECK: If spawnIndex finished and screens clear
+            if(spawnIndex >= fullLyrics.length && entities.length === 0) {
+                 endGame(true);
+            }
 
-            // ULTRA MODE
+            // SPAWN OBSTACLES
+            if(Math.random() < (0.02 * spawnMultiplier + (difficulty * 0.003))) spawnOther();
+
             const isSpiked = Date.now() < spikeEndTime;
-            if(isSpiked) {
-                const timeRemaining = spikeEndTime - Date.now();
-                if(timeRemaining > 1000) {
-                    if(currentDiff === 'hard') spawnChance = 0.18; 
-                    else if(currentDiff === 'medium') spawnChance = 0.12; 
-                    else spawnChance = 0.08; 
-                }
-            } else {
-                AudioSys.stopUltra();
-            }
+            if(!isSpiked) AudioSys.stopUltra();
 
-            if(Math.random() < spawnChance) spawnOther();
-
-            entities.forEach(e => e.y += currentSpeed);
-            entities = entities.filter(e => e.y < canvas.height && e.active);
-
+            // ENTITY LOGIC
             entities.forEach(e => {
-                let hitX = e.type==='obs' ? e.x+5 : e.x;
-                let hitW = e.type==='obs' ? e.w-10 : e.w;
-
-                if (car.x < hitX + hitW && car.x + car.w > hitX &&
-                    car.y < e.y + e.h && car.y + car.h > e.y) {
-                    
-                    if(e.active) {
-                        e.active = false;
-                        if(e.type === 'obs') {
-                            if(isSpiked) {
-                                AudioSys.playSmash(); spawnParticles(e.x+e.w/2, e.y+e.h/2, '#777', 15);
-                            } else {
-                                car.health -= damageDealt; 
-                                AudioSys.playTone(100, 'sawtooth', 0.2); spawnParticles(e.x+e.w/2, e.y+e.h/2, e.color, 10);
-                            }
-                        } else if(e.type === 'letter') {
-                            score++; 
-                            AudioSys.playTone(1000, 'sine', 0.1);
-                        } else if(e.type === 'flask') {
-                            car.health = Math.min(100, car.health+20); 
-                            AudioSys.playTone(600, 'square', 0.15);
-                            triggerPopup('gorilla-popup');
-                        } else if(e.type === 'slow') {
-                            speedOffset = (score / 50); 
-                            AudioSys.playTone(200, 'sine', 0.3);
-                            triggerPopup('slow-popup');
-                        } else if(e.type === 'ultra') {
-                            spikeEndTime = Date.now() + 10000;
-                            AudioSys.playUltra(); 
-                            triggerPopup('jbrla-popup');
-                        }
-                    }
+                e.y += currentSpeed;
+                if (car.x < e.x+e.w && car.x+car.w > e.x && car.y < e.y+e.h && car.y+car.h > e.y && e.active) {
+                    e.active = false;
+                    if(e.type==='obs' && !isSpiked) { car.health -= damageDealt; AudioSys.playTone(100,'sawtooth',0.2); }
+                    else if(e.type==='letter') { score++; AudioSys.playTone(1000,'sine',0.1); }
+                    else if(e.type==='flask') { car.health = Math.min(100, car.health+20); triggerPopup('gorilla-popup'); }
+                    else if(e.type==='slow') { speedOffset = (score/50); triggerPopup('slow-popup'); }
+                    else if(e.type==='ultra') { spikeEndTime = Date.now()+10000; AudioSys.playUltra(); triggerPopup('jbrla-popup'); }
                 }
             });
-
-            particles.forEach((p,i) => { p.x += p.vx; p.y += p.vy; p.vy += 0.5; p.l -= 0.05; if(p.l<=0) particles.splice(i,1); });
-
-            document.getElementById('hpBar').style.width = Math.max(0,car.health) + '%';
-            document.getElementById('hpBar').style.background = car.health > 50 ? '#00FF00' : (car.health > 25 ? '#FFFF00' : '#FF0000');
-            document.getElementById('scoreVal').innerText = score;
+            entities = entities.filter(e => e.y < canvas.height && e.active);
+            if(car.health <= 0) endGame(false);
             
+            // HUD Update
+            document.getElementById('hpBar').style.width = Math.max(0, car.health) + '%';
+            document.getElementById('scoreVal').innerText = score;
             const timerEl = document.getElementById('spikeTimerContainer');
             if(isSpiked) {
                 timerEl.style.opacity = '1';
                 document.getElementById('spikeTimerFill').style.width = ((Math.max(0, spikeEndTime - Date.now()) / 10000) * 100) + '%';
             } else { timerEl.style.opacity = '0'; }
-
-            if(car.health <= 0) gameOver();
-        }
-
-        function spawnLetter(char) {
-            let x = Math.random() * (canvas.width - 50);
-            entities.push({x:x, y:roadY-60, w:40, h:40, type:'letter', char:char, active:true});
         }
 
         function spawnOther() {
-            let r = Math.random(); let x = Math.random() * (canvas.width - 50);
-            const now = Date.now();
-
-            // ULTRA SPAWN LOGIC (9s cooldown)
-            if (now - lastUltraSpawnTime > 9000 && Math.random() < 0.3) {
-                 entities.push({x:x, y:roadY-60, w:35, h:45, type:'ultra', active:true});
-                 lastUltraSpawnTime = now;
-                 return; 
-            }
-            
-            if(r < 0.85) {
-                // ROCKS
-                let s = Math.random(); let w = 40 + (s * 35); let h = 30 + (s * 25);
-                const colors = ['#8B5A2B', '#6F4E37', '#5C4033', '#966F33', '#4E3629']; 
-                let c = colors[Math.floor(Math.random() * colors.length)];
-                let offset = Math.random() * 10;
-                entities.push({ x:x, y:roadY-60, w:w, h:h, type:'obs', color:c, active:true, off: offset });
-
-            } else if (r < 0.96) {
-                // HEALTH - LIGHT BLUE (NEW)
-                entities.push({x:x, y:roadY-60, w:30, h:40, type:'flask', active:true});
-            } else {
-                // SLOW DOWN - BRAKES (NEW)
-                entities.push({x:x, y:roadY-60, w:30, h:40, type:'slow', active:true});
-            }
-        }
-
-        function spawnParticles(x,y,c,count) {
-            for(let i=0;i<count;i++) particles.push({x:x, y:y, vx:(Math.random()-0.5)*15, vy:(Math.random()-1)*15, l:1, color:c});
+            let x = Math.random()*(canvas.width-40), now = Date.now(), r = Math.random();
+            if(now - lastUltraSpawnTime > 9000 && r < 0.1) { entities.push({x, y:roadY-60, w:35, h:45, type:'ultra', active:true}); lastUltraSpawnTime = now; }
+            else if(r < 0.8) entities.push({x, y:roadY-60, w:40, h:40, type:'obs', color:'#6F4E37', active:true});
+            else if(r < 0.95) entities.push({x, y:roadY-60, w:30, h:45, type:'flask', active:true});
+            else entities.push({x, y:roadY-60, w:35, h:35, type:'slow', active:true});
         }
 
         function draw() {
             if(gameState !== 'PLAYING') return;
             ctx.clearRect(0,0,canvas.width,canvas.height);
-
-            // 1. BG
-            let grad = ctx.createLinearGradient(0,0,0,roadY);
-            grad.addColorStop(0, '#000022'); grad.addColorStop(1, '#000055');
+            // Sky
+            let grad = ctx.createLinearGradient(0,0,0,roadY); grad.addColorStop(0,'#000022'); grad.addColorStop(1,'#000055');
             ctx.fillStyle = grad; ctx.fillRect(0,0,canvas.width, roadY);
-            ctx.fillStyle = '#FFF'; bgCache.stars.forEach(s => { ctx.globalAlpha = Math.random() * s.alpha; ctx.fillRect(s.x, s.y, s.s, s.s); }); ctx.globalAlpha = 1.0;
-
-            // 2. Mountains
-            ctx.fillStyle = '#000033'; 
-            ctx.beginPath(); ctx.moveTo(0, roadY);
-            bgCache.mountains.forEach(p => ctx.lineTo(p.x, roadY - p.y)); 
-            ctx.lineTo(canvas.width, roadY); ctx.fill();
-            
-            ctx.fillStyle = '#FFF';
-            bgCache.mountains.forEach((p, i) => {
-                if(i === 0 || i === bgCache.mountains.length-1) return;
-                if(p.y > 120) { 
-                    ctx.beginPath();
-                    ctx.moveTo(p.x, roadY - p.y);
-                    ctx.lineTo(p.x - 15, roadY - p.y + 25);
-                    ctx.lineTo(p.x + 15, roadY - p.y + 25);
-                    ctx.fill();
-                }
-            });
-            
-            bgCache.buildings.forEach(b => {
-                ctx.fillStyle = '#0a0a2a'; ctx.fillRect(b.x, roadY - b.h, b.w, b.h);
-                ctx.fillStyle = '#FFFF00'; b.wins.forEach(w => { if(Math.random()>0.05) ctx.fillRect(b.x + w.x, roadY - b.h + w.y, 4, 5); });
-            });
-            drawLandmarks();
-
-            // 3. ROAD
+            ctx.fillStyle = '#FFF'; bgCache.stars.forEach(s => { ctx.fillRect(s.x, s.y, s.s, s.s); });
+            // Mountains
+            ctx.fillStyle = '#000033'; ctx.beginPath(); ctx.moveTo(0, roadY);
+            bgCache.mountains.forEach(p => ctx.lineTo(p.x, roadY - p.y)); ctx.lineTo(canvas.width, roadY); ctx.fill();
+            // Road
             ctx.fillStyle = '#222'; ctx.fillRect(0, roadY, canvas.width, roadH);
-            ctx.fillStyle = '#1e1a15'; ctx.fillRect(0, roadY, 15, roadH); ctx.fillRect(canvas.width-15, roadY, 15, roadH);
-            ctx.fillStyle = '#111'; ctx.fillRect(0, roadY-2, canvas.width, 4);
-
-            // MARKINGS
-            ctx.fillStyle = '#888888'; 
-            const laneCount = 4; const laneW = canvas.width / laneCount;
-            const dashH = 60; const dashGap = 150; const pattern = dashH + dashGap;
-            for(let l=1; l<laneCount; l++) {
-                let lx = l * laneW;
-                for(let y = roadY - pattern; y < canvas.height; y += pattern) {
-                    let dy = y + (roadOffset % pattern);
-                    if(dy > roadY - dashH && dy < canvas.height) ctx.fillRect(lx - 2, dy, 4, dashH);
+            ctx.fillStyle = '#888'; 
+            for(let l=1; l<4; l++) {
+                let lx = l * (canvas.width/4);
+                for(let y = roadY - 210; y < canvas.height; y += 210) {
+                    let dy = y + (roadOffset % 210);
+                    if(dy > roadY && dy < canvas.height) ctx.fillRect(lx - 2, dy, 4, 60);
                 }
             }
-
-            // 4. ENTITIES
+            
             entities.forEach(e => {
-                if(e.type === 'obs') {
-                    // Natural Boulder
-                    ctx.fillStyle = e.color; 
-                    ctx.beginPath();
-                    let off = e.off || 0;
-                    ctx.moveTo(e.x + e.w*0.2 - off, e.y + off); 
-                    ctx.lineTo(e.x + e.w*0.8 + off, e.y); 
-                    ctx.lineTo(e.x + e.w, e.y + e.h*0.5 + off); 
-                    ctx.lineTo(e.x + e.w*0.7 - off, e.y + e.h);
-                    ctx.lineTo(e.x + e.w*0.2 + off, e.y + e.h*0.9); 
-                    ctx.lineTo(e.x - off, e.y + e.h*0.4); 
-                    ctx.fill();
-                    // White outline
-                    ctx.strokeStyle = '#FFF'; ctx.lineWidth = 2; ctx.stroke();
-                    ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.fillRect(e.x+10, e.y+10, 10, 10);
-                } 
-                else if(e.type === 'letter') {
-                    ctx.fillStyle = '#FFD700'; ctx.beginPath(); ctx.arc(e.x+e.w/2, e.y+e.h/2, e.w/2, 0, Math.PI*2); ctx.fill();
-                    ctx.fillStyle = '#000'; ctx.font='bold 20px Arial'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(e.char, e.x+e.w/2, e.y+e.h/2);
-                    ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(e.x+e.w/2, e.y+e.h/2, e.w/2-2, 0, Math.PI*2); ctx.stroke();
-                } 
-                else if(e.type === 'flask') {
-                    // Health (Light Blue)
-                    ctx.fillStyle = '#00BFFF'; // Light Blue
-                    ctx.fillRect(e.x+5, e.y+10, e.w-10, e.h-10);
-                    ctx.fillStyle = '#fff'; ctx.fillRect(e.x+5, e.y+20, e.w-10, 5);
-                    
-                    // Stretched G
-                    ctx.save();
-                    ctx.translate(e.x + e.w/2, e.y + e.h/2 + 5);
-                    ctx.scale(1, 1.8);
-                    ctx.fillStyle = '#FFF'; 
-                    ctx.font='bold 12px Arial'; 
-                    ctx.textAlign='center'; 
-                    ctx.textBaseline='middle'; 
-                    ctx.fillText('G', 0, 0);
-                    ctx.restore();
-
-                    ctx.shadowBlur = 10; ctx.shadowColor = '#00BFFF'; ctx.fillRect(e.x+8, e.y+12, e.w-16, e.h-14); ctx.shadowBlur = 0;
+                if(e.type==='obs') { ctx.fillStyle=e.color; ctx.fillRect(e.x, e.y, e.w, e.h); ctx.strokeStyle="#FFF"; ctx.lineWidth=2; ctx.strokeRect(e.x,e.y,e.w,e.h); }
+                else if(e.type==='letter') { ctx.fillStyle='#FFD700'; ctx.beginPath(); ctx.arc(e.x+20,e.y+20,18,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#000'; ctx.font='bold 20px Arial'; ctx.textAlign='center'; ctx.fillText(e.char, e.x+20, e.y+27); }
+                else if(e.type==='flask') {
+                    // TIN CAN (Silver with Red G)
+                    ctx.fillStyle = '#C0C0C0'; ctx.fillRect(e.x, e.y, e.w, e.h); // Body
+                    ctx.fillStyle = '#A0A0A0'; ctx.fillRect(e.x, e.y, e.w, 4); ctx.fillRect(e.x, e.y+e.h-4, e.w, 4); // Rims
+                    ctx.fillStyle = '#F00'; ctx.font='bold 24px Arial'; ctx.textAlign='center'; 
+                    ctx.save(); ctx.translate(e.x+e.w/2, e.y+e.h/2); ctx.scale(0.8, 1.5); ctx.fillText('G', 0, 8); ctx.restore();
                 }
-                else if(e.type === 'slow') {
-                    // Slow Down (Car Brakes - Pixelated Look)
-                    // Disc
-                    ctx.fillStyle = '#CCCCCC'; // Grey Disc
-                    ctx.beginPath();
-                    ctx.arc(e.x + e.w/2, e.y + e.h/2, e.w/2 - 2, 0, Math.PI*2);
-                    ctx.fill();
-                    // Inner hub
-                    ctx.fillStyle = '#555';
-                    ctx.beginPath(); ctx.arc(e.x + e.w/2, e.y + e.h/2, 5, 0, Math.PI*2); ctx.fill();
-                    // Caliper (Red Block)
-                    ctx.fillStyle = '#FF0000';
-                    ctx.fillRect(e.x + e.w - 12, e.y + 8, 10, 24);
-                    
-                    // Pixel shine
-                    ctx.fillStyle = '#FFF'; ctx.fillRect(e.x + 10, e.y + 10, 4, 4);
-                }
-                else if(e.type === 'ultra') {
-                    ctx.shadowBlur = 15; ctx.shadowColor = '#9400D3';
-                    ctx.fillStyle = '#9400D3'; ctx.fillRect(e.x, e.y+5, e.w, e.h-5); ctx.shadowBlur = 0;
-                    ctx.fillStyle = '#333'; ctx.fillRect(e.x+e.w*0.3, e.y, e.w*0.4, 5);
-                    ctx.fillStyle = '#FFF'; ctx.font='bold 22px Arial'; ctx.fillText('⚡', e.x+e.w/2, e.y+e.h/2+5);
-                }
+                else if(e.type==='slow') { ctx.fillStyle='#F00'; ctx.fillRect(e.x+e.w-10, e.y+5, 10, 20); ctx.fillStyle='#CCC'; ctx.beginPath(); ctx.arc(e.x+15, e.y+17, 14, 0, Math.PI*2); ctx.fill(); ctx.fillStyle='#555'; ctx.beginPath(); ctx.arc(e.x+15, e.y+17, 4, 0, Math.PI*2); ctx.fill(); }
+                else if(e.type==='ultra') { ctx.fillStyle='#9400D3'; ctx.fillRect(e.x, e.y, e.w, e.h); ctx.fillStyle='#FFF'; ctx.font='20px Arial'; ctx.fillText('⚡', e.x+10, e.y+30); }
             });
 
-            drawCar();
-            particles.forEach(p => { ctx.fillStyle=p.color; ctx.fillRect(p.x, p.y, 4, 4); });
-            requestAnimationFrame(draw);
-            update();
-        }
-
-        function drawLandmarks() {
-             let hx = canvas.width * 0.15; let hy = roadY;
-             ctx.fillStyle = '#444'; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx, hy-80); 
-             ctx.quadraticCurveTo(hx+30, hy-100, hx+60, hy-80); ctx.lineTo(hx+60, hy); ctx.fill();
-             ctx.fillStyle = '#FFD700'; ctx.beginPath(); ctx.arc(hx+30, hy-85, 4, 0, Math.PI*2); ctx.fill();
-             let tx = canvas.width * 0.85;
-             ctx.strokeStyle = '#555'; ctx.lineWidth = 3;
-             ctx.beginPath(); ctx.moveTo(tx, roadY-20); ctx.lineTo(tx, roadY-120); ctx.stroke();
-             ctx.fillStyle = '#D00'; ctx.beginPath(); ctx.arc(tx, roadY-100, 5, 0, Math.PI*2); ctx.fill();
-        }
-
-        function drawCar() {
-            const {x, y, w, h} = car;
-            const isSpiked = Date.now() < spikeEndTime;
-            if(isSpiked) {
-                ctx.fillStyle = '#AAA'; ctx.beginPath();
-                ctx.moveTo(x, y); ctx.lineTo(x+10, y-25); ctx.lineTo(x+15, y);
-                ctx.moveTo(x+12, y); ctx.lineTo(x+21, y-30); ctx.lineTo(x+30, y);
-                ctx.moveTo(x+27, y); ctx.lineTo(x+32, y-25); ctx.lineTo(x+w, y); ctx.fill();
-            }
-            ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(x+6, y+6, w, h);
-            
-            // CAR BODY - ELECTRIC BLUE
-            ctx.fillStyle = '#2979FF'; 
-            ctx.beginPath(); ctx.roundRect(x, y, w, h, 4); ctx.fill();
-            
-            // Windshield
-            ctx.fillStyle = '#222'; ctx.fillRect(x+2, y+18, w-4, h-30);
-            
-            // Text - WHITE/STRETCHED
-            ctx.save(); 
-            ctx.translate(x+w/2, y+h/2); 
-            ctx.rotate(-Math.PI/2);
-            ctx.scale(1, 1.8); 
-            ctx.fillStyle = '#FFFFFF'; 
-            ctx.font='bold 9px Arial'; ctx.textAlign='center'; ctx.fillText("DAIYNBALL", 0, 4);
-            ctx.restore();
-
-            // Lights
-            ctx.shadowBlur = 15; ctx.shadowColor = '#FF0';
-            ctx.fillStyle = '#FFEB3B'; ctx.fillRect(x+2, y, 8, 6); ctx.fillRect(x+w-10, y, 8, 6);
-            ctx.shadowBlur = 10; ctx.shadowColor = '#F00';
-            ctx.fillStyle = '#D32F2F'; ctx.fillRect(x+2, y+h-6, 8, 6); ctx.fillRect(x+w-10, y+h-6, 8, 6);
-            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#2979FF'; ctx.fillRect(car.x, car.y, car.w, car.h);
+            ctx.fillStyle = '#FFEB3B'; ctx.fillRect(car.x+2, car.y, 8, 5); ctx.fillRect(car.x+car.w-10, car.y, 8, 5); // Lights
+            requestAnimationFrame(draw); update();
         }
 
         function initGame(diff) {
-            let nick = document.getElementById('nickname').value.trim();
-            if(!nick) { alert("ENTER NICKNAME / АТЫҢЫЗДЫ ЖАЗЫҢЫЗ"); return; }
-            nickname = nick; 
-
-            // SET DIFFICULTY
             currentDiff = diff;
-            if(diff === 'easy') {
-                baseSpeed = 5;
-                spawnMultiplier = 0.5; // Fewer rocks
-                damageDealt = 15;
-            } else if (diff === 'medium') {
-                baseSpeed = 7;
-                spawnMultiplier = 1.0;
-                damageDealt = 25;
-            } else {
-                baseSpeed = 9;
-                spawnMultiplier = 1.2; // More rocks
-                damageDealt = 34; // 3 hits
-            }
-
+            baseSpeed = diff === 'easy' ? 5 : (diff === 'medium' ? 7 : 9);
+            damageDealt = diff === 'easy' ? 15 : (diff === 'medium' ? 25 : 34);
+            spawnMultiplier = diff === 'easy' ? 0.6 : (diff === 'medium' ? 1.0 : 1.3);
             AudioSys.init();
             document.getElementById('screen-start').style.display = 'none';
-            document.getElementById('screen-gameover').style.display = 'none';
+            document.getElementById('screen-end').style.display = 'none';
             
-            gameState = 'PLAYING'; score = 0; car.health = 100; difficulty = 1; spikeEndTime = 0;
-            
-            // RESET
-            lyricIndex = 0; 
-            spawnIndex = 0; 
-            score = 0;
-            speedOffset = 0;
-            entities = []; particles = []; 
-            
-            // SPAWN LOGIC RESET
-            gameStartTime = Date.now();
-            lastUltraSpawnTime = Date.now(); 
-            nextLetterTime = Date.now() + 1000;
-
+            // Reset
+            lyricIndex = 0; spawnIndex = 0; score = 0; speedOffset = 0; car.health = 100;
+            entities = []; spikeEndTime = 0;
+            gameState = 'PLAYING'; gameStartTime = Date.now(); nextLetterTime = Date.now() + 1000;
             resize(); draw();
         }
 
-        async function gameOver() {
+        async function endGame(isVictory) {
             gameState = 'OVER';
             AudioSys.stopUltra();
-            document.getElementById('screen-gameover').style.display = 'flex';
-            document.getElementById('end-score').innerText = score;
+            document.getElementById('screen-end').style.display = 'flex';
             
+            const titleEl = document.getElementById('end-title');
+            if(isVictory) {
+                titleEl.innerText = "VICTORY!";
+                titleEl.style.color = "#FFD700";
+                triggerPopup('victory-popup');
+            } else {
+                titleEl.innerText = "GAME OVER";
+                titleEl.style.color = "#FF0000";
+            }
+
+            // Show lyrics collected
             let collected = "";
             let tempIndex = 0;
             let lettersFound = 0;
             while(lettersFound < score && tempIndex < fullLyrics.length) {
-                 if(fullLyrics[tempIndex] !== ' ' && fullLyrics[tempIndex] !== '\n') {
-                     lettersFound++;
-                 }
+                 if(fullLyrics[tempIndex] !== ' ' && fullLyrics[tempIndex] !== '\n') lettersFound++;
                  collected += fullLyrics[tempIndex];
                  tempIndex++;
             }
-            document.getElementById('lyrics-result').innerText = collected;
+            document.getElementById('lyrics-result').innerText = collected + (isVictory ? "..." : "");
 
-            const listEl = document.getElementById('hof-list');
-            listEl.innerHTML = "<li class='hof-item' style='color:#aaa'>UPLOADING...</li>";
-
+            // Leaderboard
+            document.getElementById('hof-list').innerHTML = "<li style='color:#888'>Loading...</li>";
             await StorageSys.save(nickname, score);
-            const topList = await StorageSys.getTop();
+            const top = await StorageSys.getTop();
+            document.getElementById('hof-list').innerHTML = top.length ? top.map(e => `<li class='hof-item'><span>${e.name}</span><span>${e.score}</span></li>`).join('') : "<li>No scores yet</li>";
+        }
 
-            listEl.innerHTML = "";
-            if(topList.length === 0) listEl.innerHTML = "<li class='hof-item'>No scores yet!</li>";
-            
-            topList.forEach((entry, idx) => {
-                let li = document.createElement('li'); li.className = 'hof-item';
-                li.innerHTML = `<span>#${idx+1} ${entry.name}</span><span>${entry.score}</span>`;
-                listEl.appendChild(li);
-            });
-        }
-        function resetGame() {
-            document.getElementById('screen-gameover').style.display = 'none';
-            document.getElementById('screen-start').style.display = 'flex';
-        }
+        function resetGame() { location.reload(); }
         resize();
     </script>
 </body>
