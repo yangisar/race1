@@ -11,7 +11,9 @@
             margin: 0; padding: 0; overflow: hidden;
             background-color: #050505;
             font-family: 'Montserrat', sans-serif;
-            touch-action: none; user-select: none; -webkit-user-select: none;
+            touch-action: none; /* Prevents browser zooming/panning */
+            user-select: none; 
+            -webkit-user-select: none;
         }
 
         #gameContainer { position: relative; width: 100vw; height: 100vh; background: #000; }
@@ -49,7 +51,7 @@
             box-shadow: 0 0 10px #9400D3;
         }
 
-        /* --- START SCREEN (80s Pixel) --- */
+        /* --- START SCREEN --- */
         #screen-start {
             position: absolute; top: 0; left: 0;
             width: 100%; height: 100%;
@@ -60,7 +62,8 @@
             background-size: 40px 40px;
             display: flex; flex-direction: column;
             justify-content: center; align-items: center;
-            z-index: 60; color: #fff; text-align: center;
+            z-index: 100; /* High Z-Index to be clickable */
+            color: #fff; text-align: center;
             font-family: 'Press Start 2P', cursive;
         }
 
@@ -74,11 +77,16 @@
             text-shadow: 2px 2px 0px #C23B22;
         }
         
+        /* INPUT FIX: explicit select allowed and pointer events */
         .pixel-input {
-            padding: 15px; font-size: 0.8rem; font-family: 'Press Start 2P', cursive;
+            padding: 15px; font-size: 1rem; font-family: 'Press Start 2P', cursive;
             border: 4px solid #FFF; background: #000; color: #0F0;
             text-align: center; text-transform: uppercase; width: 250px; margin-bottom: 30px;
             border-radius: 0; outline: none; box-shadow: 5px 5px 0px #333;
+            pointer-events: auto; /* Ensure clickable */
+            user-select: text; /* Allow typing */
+            -webkit-user-select: text;
+            touch-action: manipulation;
         }
         .pixel-input:focus { border-color: #0F0; }
 
@@ -87,6 +95,7 @@
             background: #FF0000; color: #FFF; border: 4px solid #FFF;
             cursor: pointer; text-transform: uppercase;
             box-shadow: 6px 6px 0px #8B0000; transition: transform 0.1s;
+            pointer-events: auto;
         }
         .pixel-btn:active { transform: translate(4px, 4px); box-shadow: 2px 2px 0px #8B0000; }
 
@@ -95,7 +104,7 @@
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.95); backdrop-filter: blur(5px);
             display: flex; flex-direction: column; align-items: center;
-            z-index: 50; color: #fff; text-align: center; 
+            z-index: 90; color: #fff; text-align: center; 
             font-family: 'Montserrat', sans-serif;
             padding-top: 40px; box-sizing: border-box;
         }
@@ -160,7 +169,7 @@
             box-shadow: 0 0 15px rgba(255,0,0,0.5);
             position: relative;
             left: 0; top: 0;
-            pointer-events: none; /* Let clicks pass to zone */
+            pointer-events: none;
         }
 
         .credits {
@@ -200,7 +209,7 @@
             <div class="pixel-title-main">DAIYNBALL</div>
             <div class="pixel-title-main" style="font-size:1.8rem; color:#0F0;">JBRLA</div>
             <div class="pixel-title-sub">RACING GAME</div>
-            <input type="text" id="nickname" class="pixel-input" placeholder="NICKNAME" maxlength="8">
+            <input type="text" id="nickname" class="pixel-input" placeholder="NICKNAME" maxlength="12" autocomplete="off">
             <button class="pixel-btn" onclick="initGame()">КЕТТІК / LET'S GO</button>
         </div>
 
@@ -251,9 +260,19 @@
             privateCode: "HI23JnppXkqNd_l5x-wG8AVKgXQhhZ3kO4Iv7OMBJsRw", 
             publicCode:  "697058fc8f40bb1184b96f1a",  
             url: "https://www.dreamlo.com/lb/",
+            
             save: async function(name, score) {
-                const safeName = name.replace(/[^a-zA-Z0-9]/g, "").substring(0, 10); 
-                try { await fetch(`${this.url}${this.privateCode}/add/${safeName}/${score}`); } catch (e) { console.error(e); }
+                // FIXED: Better name handling for Cyrillic/Kazakh names
+                // Dreamlo needs URI encoding for special characters
+                let safeName = encodeURIComponent(name);
+                // If empty or just spaces, use RIDER
+                if(!safeName || safeName.trim() === "") safeName = "RIDER";
+                
+                try { 
+                    await fetch(`${this.url}${this.privateCode}/add/${safeName}/${score}`); 
+                } catch (e) { 
+                    console.error("Score upload failed", e); 
+                }
             },
             getTop: async function() {
                 try {
@@ -263,7 +282,12 @@
                     let entries = data.dreamlo.leaderboard.entry;
                     if (!entries) return [];
                     if (!Array.isArray(entries)) entries = [entries];
-                    return entries.slice(0, 5).map(e => ({ name: e.name, score: parseInt(e.score) }));
+                    
+                    // Decode names coming back from server
+                    return entries.slice(0, 5).map(e => ({ 
+                        name: decodeURIComponent(e.name).replace(/\+/g, ' '), 
+                        score: parseInt(e.score) 
+                    }));
                 } catch (e) { return []; }
             }
         };
@@ -397,7 +421,6 @@ Next point: “And new, and still” - let’s go!
         const car = { x:0, y:0, w:42, h:75, health:100 };
         // Joystick State
         let joystick = { active: false, x: 0, y: 0, originX: 0, originY: 0 };
-        // Keyboard State (Backup)
         const keys = {u:false, d:false, l:false, r:false};
 
         function resize() {
@@ -413,13 +436,11 @@ Next point: “And new, and still” - let’s go!
 
         function generateBackground() {
             bgCache.mountains = [];
-            // Mountains with parallax points
             for(let i=0; i<=canvas.width; i+=5) {
-                // Higher peaks to look like mountains
+                // Taller peaks for better visibility
                 bgCache.mountains.push({ x: i, y: (Math.sin(i*0.01)*50) + (Math.cos(i*0.02)*25) + 60 });
             }
             bgCache.buildings = [];
-            // Reduced buildings to emphasize mountains, but keeping some for parallax
             let bx = 0;
             while(bx < canvas.width) {
                 let bw = 25 + Math.random() * 40; let bh = 20 + Math.random() * 60;
@@ -435,13 +456,15 @@ Next point: “And new, and still” - let’s go!
         // --- JOYSTICK LOGIC ---
         const joyZone = document.getElementById('joystick-zone');
         const joyKnob = document.getElementById('joystick-knob');
-        const maxRadius = 45; // Max distance knob moves
+        const maxRadius = 45;
 
         const handleStart = (e) => {
-            e.preventDefault();
+            // Prevent default ONLY for the joystick, not the input field
+            if(e.target.tagName !== 'INPUT') {
+                 e.preventDefault();
+            }
             joystick.active = true;
             const touch = e.touches ? e.touches[0] : e;
-            // Get center of joystick zone
             const rect = joyZone.getBoundingClientRect();
             joystick.originX = rect.left + rect.width / 2;
             joystick.originY = rect.top + rect.height / 2;
@@ -450,33 +473,27 @@ Next point: “And new, and still” - let’s go!
 
         const handleMove = (e) => {
             if(!joystick.active) return;
-            e.preventDefault();
+            if(e.cancelable) e.preventDefault(); // Stop scroll while dragging
             const touch = e.touches ? e.touches[0] : e;
             
             let dx = touch.clientX - joystick.originX;
             let dy = touch.clientY - joystick.originY;
             
-            // Calculate distance and clamp
             const distance = Math.sqrt(dx*dx + dy*dy);
             if (distance > maxRadius) {
                 const angle = Math.atan2(dy, dx);
                 dx = Math.cos(angle) * maxRadius;
                 dy = Math.sin(angle) * maxRadius;
             }
-
-            // Move knob visually
             joyKnob.style.transform = `translate(${dx}px, ${dy}px)`;
-
-            // Normalize values for game logic (-1 to 1)
             joystick.x = dx / maxRadius;
             joystick.y = dy / maxRadius;
         };
 
         const handleEnd = (e) => {
-            e.preventDefault();
+            if(joystick.active && e.cancelable) e.preventDefault();
             joystick.active = false;
-            joystick.x = 0;
-            joystick.y = 0;
+            joystick.x = 0; joystick.y = 0;
             joyKnob.style.transform = `translate(0px, 0px)`;
         };
 
@@ -508,27 +525,21 @@ Next point: “And new, and still” - let’s go!
 
             const moveSpd = 7 + (difficulty * 0.6);
 
-            // Movement Logic (Joystick + Keyboard)
             let dx = 0, dy = 0;
             if(joystick.active) {
-                dx = joystick.x; 
-                dy = joystick.y;
+                dx = joystick.x; dy = joystick.y;
             } else {
-                if(keys.u) dy -= 1;
-                if(keys.d) dy += 1;
-                if(keys.l) dx -= 1;
-                if(keys.r) dx += 1;
+                if(keys.u) dy -= 1; if(keys.d) dy += 1;
+                if(keys.l) dx -= 1; if(keys.r) dx += 1;
             }
 
             car.x += dx * moveSpd;
             car.y += dy * moveSpd;
 
-            // Boundaries
             if(car.x < 0) car.x = 0;
             if(car.x > canvas.width - car.w) car.x = canvas.width - car.w;
-            if(car.y > roadY) car.y = roadY; // Horizon limit
+            if(car.y > roadY) car.y = roadY;
             if(car.y > canvas.height - car.h) car.y = canvas.height - car.h;
-
 
             if(!letterOnScreen && lyricIndex < fullLyrics.length) {
                 while(lyricIndex < fullLyrics.length && (fullLyrics[lyricIndex] === ' ' || fullLyrics[lyricIndex] === '\n')) {
@@ -547,9 +558,7 @@ Next point: “And new, and still” - let’s go!
             
             entities.forEach(e => {
                 if(e.y > canvas.height && e.active) {
-                    if(e.type === 'letter') {
-                        letterOnScreen = false;
-                    }
+                    if(e.type === 'letter') letterOnScreen = false;
                 }
             });
 
@@ -613,7 +622,6 @@ Next point: “And new, and still” - let’s go!
         function spawnOther() {
             let r = Math.random(); let x = Math.random() * (canvas.width - 50);
             if(r < 0.8) {
-                // Rock (Contrast Colors: Tan, Light Grey)
                 let s = Math.random(); let w = 40 + (s * 35); let h = 30 + (s * 25);
                 let c = Math.random() > 0.5 ? '#C2B280' : '#A9A9A9'; 
                 entities.push({ x:x, y:roadY-60, w:w, h:h, type:'obs', color:c, active:true });
@@ -640,16 +648,14 @@ Next point: “And new, and still” - let’s go!
             ctx.fillStyle = '#FFF'; bgCache.stars.forEach(s => { ctx.globalAlpha = Math.random() * s.alpha; ctx.fillRect(s.x, s.y, s.s, s.s); }); ctx.globalAlpha = 1.0;
 
             // 2. Mountains (Dark Blue with Snow Caps)
-            // Body
             ctx.fillStyle = '#000033'; 
             ctx.beginPath(); ctx.moveTo(0, roadY);
             bgCache.mountains.forEach(p => ctx.lineTo(p.x, roadY - p.y)); 
             ctx.lineTo(canvas.width, roadY); ctx.fill();
-            // Snow Caps (Top 30% of each peak triangle)
+            // Snow Caps
             ctx.fillStyle = '#FFF';
             bgCache.mountains.forEach((p, i) => {
                 if(i === 0 || i === bgCache.mountains.length-1) return;
-                // Simple snow cap triangle on top
                 if(p.y > 60) {
                     ctx.beginPath();
                     ctx.moveTo(p.x, roadY - p.y);
@@ -659,7 +665,6 @@ Next point: “And new, and still” - let’s go!
                 }
             });
             
-            // Buildings (Background decor)
             bgCache.buildings.forEach(b => {
                 ctx.fillStyle = '#0a0a2a'; ctx.fillRect(b.x, roadY - b.h, b.w, b.h);
                 ctx.fillStyle = '#FFFF00'; b.wins.forEach(w => { if(Math.random()>0.05) ctx.fillRect(b.x + w.x, roadY - b.h + w.y, 4, 5); });
@@ -670,7 +675,9 @@ Next point: “And new, and still” - let’s go!
             ctx.fillStyle = '#111'; ctx.fillRect(0, roadY, canvas.width, roadH);
             if(score % 2 === 0) { ctx.fillStyle = 'rgba(255,255,255,0.03)'; for(let i=0; i<30; i++) ctx.fillRect(Math.random()*canvas.width, roadY+Math.random()*roadH, 2, 2); }
             ctx.fillStyle = '#000'; ctx.fillRect(0, roadY, 15, roadH); ctx.fillRect(canvas.width-15, roadY, 15, roadH);
-            ctx.fillStyle = '#FFD700'; 
+            
+            // WHITE MARKINGS
+            ctx.fillStyle = '#FFFFFF'; 
             const laneCount = 4; const laneW = canvas.width / laneCount;
             const dashH = 60; const dashGap = 150; const pattern = dashH + dashGap;
             for(let l=1; l<laneCount; l++) {
@@ -684,12 +691,10 @@ Next point: “And new, and still” - let’s go!
             // 4. ENTITIES
             entities.forEach(e => {
                 if(e.type === 'obs') {
-                    // Rock - Light Tan/Grey for contrast
                     ctx.fillStyle = e.color; ctx.beginPath();
                     ctx.moveTo(e.x+e.w*0.2, e.y); ctx.lineTo(e.x+e.w*0.8, e.y+e.h*0.1);
                     ctx.lineTo(e.x+e.w, e.y+e.h*0.6); ctx.lineTo(e.x+e.w*0.7, e.y+e.h);
                     ctx.lineTo(e.x+e.w*0.1, e.y+e.h*0.9); ctx.lineTo(e.x, e.y+e.h*0.4); ctx.fill();
-                    // Highlights for visibility
                     ctx.fillStyle = 'rgba(255,255,255,0.2)'; ctx.fillRect(e.x+10, e.y+10, 10, 10);
                 } 
                 else if(e.type === 'letter') {
@@ -739,17 +744,20 @@ Next point: “And new, and still” - let’s go!
             }
             ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(x+6, y+6, w, h);
             
-            // CAR BODY - GREEN
-            ctx.fillStyle = '#008000'; // Green
+            // CAR BODY - BRIGHT YELLOW
+            ctx.fillStyle = '#FFFF00'; 
             ctx.beginPath(); ctx.roundRect(x, y, w, h, 4); ctx.fill();
             
             // Windshield
             ctx.fillStyle = '#222'; ctx.fillRect(x+2, y+18, w-4, h-30);
             
-            // Text - DARK RED
-            ctx.save(); ctx.translate(x+w/2, y+h/2); ctx.rotate(-Math.PI/2);
-            ctx.fillStyle = '#8B0000'; // Dark Red
-            ctx.font='bold 11px Arial'; ctx.textAlign='center'; ctx.fillText("DAIYNBALL", 0, 4);
+            // Text - GREEN and STRETCHED
+            ctx.save(); 
+            ctx.translate(x+w/2, y+h/2); 
+            ctx.rotate(-Math.PI/2);
+            ctx.scale(1, 1.8); // Stretch width (which is height when rotated)
+            ctx.fillStyle = '#008000'; // Green
+            ctx.font='bold 9px Arial'; ctx.textAlign='center'; ctx.fillText("DAIYNBALL", 0, 4);
             ctx.restore();
 
             // Lights
@@ -763,11 +771,10 @@ Next point: “And new, and still” - let’s go!
         function initGame() {
             let nick = document.getElementById('nickname').value.trim();
             if(!nick) { alert("ENTER NICKNAME / АТЫҢЫЗДЫ ЖАЗЫҢЫЗ"); return; }
-            nickname = nick.toUpperCase();
+            nickname = nick; // Keep original casing/characters for now
             AudioSys.init();
             document.getElementById('screen-start').style.display = 'none';
             document.getElementById('screen-gameover').style.display = 'none';
-            // Show Joystick
             document.getElementById('joystick-zone').style.display = 'flex';
             
             gameState = 'PLAYING'; score = 0; car.health = 100; difficulty = 1; spikeEndTime = 0;
@@ -782,11 +789,9 @@ Next point: “And new, and still” - let’s go!
             document.getElementById('screen-gameover').style.display = 'flex';
             document.getElementById('end-score').innerText = score;
             
-            // Show ONLY collected lyrics
             const collected = fullLyrics.substring(0, lyricIndex);
             document.getElementById('lyrics-result').innerText = collected;
 
-            // Global Scores
             const listEl = document.getElementById('hof-list');
             listEl.innerHTML = "<li class='hof-item' style='color:#aaa'>UPLOADING...</li>";
 
@@ -808,7 +813,6 @@ Next point: “And new, and still” - let’s go!
         }
         resize();
         
-        // Hide joystick initially
         document.getElementById('joystick-zone').style.display = 'none';
     </script>
 </body>
