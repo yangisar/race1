@@ -70,27 +70,35 @@
             margin-bottom: 15px; line-height: 1.2;
         }
         .pixel-title-sub {
-            font-size: 1.2rem; color: #FFD700; margin-bottom: 40px;
+            font-size: 1.2rem; color: #FFD700; margin-bottom: 30px;
             text-shadow: 2px 2px 0px #C23B22;
         }
         
         .pixel-input {
             padding: 15px; font-size: 1rem; font-family: 'Press Start 2P', cursive;
             border: 4px solid #FFF; background: #000; color: #0F0;
-            text-align: center; text-transform: uppercase; width: 250px; margin-bottom: 30px;
+            text-align: center; text-transform: uppercase; width: 250px; margin-bottom: 20px;
             border-radius: 0; outline: none; box-shadow: 5px 5px 0px #333;
             pointer-events: auto; user-select: text; -webkit-user-select: text; touch-action: manipulation;
         }
         .pixel-input:focus { border-color: #0F0; }
 
-        .pixel-btn {
-            padding: 20px 30px; font-size: 1rem; font-family: 'Press Start 2P', cursive;
-            background: #FF0000; color: #FFF; border: 4px solid #FFF;
+        /* DIFFICULTY BUTTONS */
+        .diff-btn {
+            display: block; width: 300px;
+            padding: 15px 10px; margin: 8px 0;
+            font-size: 0.8rem; font-family: 'Press Start 2P', cursive;
+            background: #000; border: 4px solid #FFF;
             cursor: pointer; text-transform: uppercase;
-            box-shadow: 6px 6px 0px #8B0000; transition: transform 0.1s;
+            box-shadow: 5px 5px 0px #222; transition: transform 0.1s;
             pointer-events: auto;
         }
-        .pixel-btn:active { transform: translate(4px, 4px); box-shadow: 2px 2px 0px #8B0000; }
+        .diff-btn:active { transform: translate(3px, 3px); box-shadow: 2px 2px 0px #111; }
+
+        .btn-easy { border-color: #00FF00; color: #00FF00; box-shadow: 5px 5px 0px #005500; }
+        .btn-med  { border-color: #FFFF00; color: #FFFF00; box-shadow: 5px 5px 0px #555500; }
+        .btn-hard { border-color: #FF0000; color: #FF0000; box-shadow: 5px 5px 0px #550000; }
+
 
         /* --- GAME OVER --- */
         .overlay-gameover {
@@ -136,9 +144,7 @@
 
         /* --- POPUPS --- */
         .popup-text {
-            position: absolute; 
-            top: 15%; 
-            left: 50%;
+            position: absolute; top: 15%; left: 50%;
             transform: translateX(-50%) scale(0);
             pointer-events: none; z-index: 40; opacity: 0; white-space: nowrap;
         }
@@ -171,7 +177,6 @@
         }
         .ctrl-btn:active { background: rgba(255, 255, 255, 0.2); color: white; transform: scale(0.95); }
 
-        /* Smaller buttons */
         #btn-left { bottom: 5px; left: 5px; width: 65px; height: 65px; font-size: 2rem; }
         #btn-up { bottom: 85px; left: 20px; width: 40px; height: 40px; font-size: 1rem; }
         #btn-right { bottom: 5px; right: 5px; width: 65px; height: 65px; font-size: 2rem; }
@@ -218,7 +223,12 @@
             <div class="pixel-title-main" style="font-size:1.8rem; color:#0F0;">JBRLA</div>
             <div class="pixel-title-sub">RACING GAME</div>
             <input type="text" id="nickname" class="pixel-input" placeholder="NICKNAME" maxlength="12" autocomplete="off">
-            <button class="pixel-btn" onclick="initGame()">КЕТТІК / LET'S GO</button>
+            
+            <div style="margin-top:10px;">
+                <button class="diff-btn btn-easy" onclick="initGame('easy')">Балапан - Lil homie</button>
+                <button class="diff-btn btn-med" onclick="initGame('medium')">Джига - Ma boy</button>
+                <button class="diff-btn btn-hard" onclick="initGame('hard')">Жабай - Savage</button>
+            </div>
         </div>
 
         <div id="screen-gameover" class="overlay-gameover" style="display:none;">
@@ -421,6 +431,11 @@ Next point: “And new, and still” - let’s go!
         let gameState = 'START';
         let nickname = "";
         
+        // Game Settings based on Difficulty
+        let currentDiff = 'medium';
+        let damageDealt = 25;
+        let spawnMultiplier = 1.0;
+        
         let lyricIndex = 0; 
         let spawnIndex = 0; 
         let score = 0;      
@@ -496,7 +511,8 @@ Next point: “And new, and still” - let’s go!
             difficulty = 1 + (score / 50);
             let currentSpeed = baseSpeed * difficulty;
             roadOffset += currentSpeed;
-            const moveSpd = 8.5 + (difficulty * 0.6);
+            // Speed logic based on difficulty baseSpeed
+            const moveSpd = (baseSpeed * 1.2) + (difficulty * 0.6);
 
             let dx = 0, dy = 0;
             if(keys.u) dy -= 1; if(keys.d) dy += 1;
@@ -510,7 +526,7 @@ Next point: “And new, and still” - let’s go!
             if(car.y < roadY) car.y = roadY; 
             if(car.y > canvas.height - car.h) car.y = canvas.height - car.h;
 
-            // --- LETTER SPAWNING (STREAM LOGIC) ---
+            // --- LETTER SPAWNING ---
             if(Date.now() > nextLetterTime && spawnIndex < fullLyrics.length) {
                 while(spawnIndex < fullLyrics.length && (fullLyrics[spawnIndex] === ' ' || fullLyrics[spawnIndex] === '\n')) {
                     spawnIndex++;
@@ -522,13 +538,19 @@ Next point: “And new, and still” - let’s go!
                 }
             }
 
-            let spawnChance = 0.02 + (difficulty * 0.003);
+            // --- OBSTACLE SPAWN CHANCE (Affected by difficulty) ---
+            let spawnChance = 0.02 * spawnMultiplier + (difficulty * 0.003);
 
             // ULTRA MODE & BOULDER SPAWN
             const isSpiked = Date.now() < spikeEndTime;
             if(isSpiked) {
                 const timeRemaining = spikeEndTime - Date.now();
-                if(timeRemaining > 1000) spawnChance = 0.15; 
+                if(timeRemaining > 1000) {
+                    // Chaos level depends on difficulty
+                    if(currentDiff === 'hard') spawnChance = 0.18; // Savage chaos
+                    else if(currentDiff === 'medium') spawnChance = 0.12; 
+                    else spawnChance = 0.08; // Easy chaos
+                }
             } else {
                 AudioSys.stopUltra();
             }
@@ -551,7 +573,8 @@ Next point: “And new, and still” - let’s go!
                             if(isSpiked) {
                                 AudioSys.playSmash(); spawnParticles(e.x+e.w/2, e.y+e.h/2, '#777', 15);
                             } else {
-                                car.health -= 25; AudioSys.playTone(100, 'sawtooth', 0.2); spawnParticles(e.x+e.w/2, e.y+e.h/2, e.color, 10);
+                                car.health -= damageDealt; // Variable Damage
+                                AudioSys.playTone(100, 'sawtooth', 0.2); spawnParticles(e.x+e.w/2, e.y+e.h/2, e.color, 10);
                             }
                         } else if(e.type === 'letter') {
                             score++; 
@@ -593,13 +616,11 @@ Next point: “And new, and still” - let’s go!
             let r = Math.random(); let x = Math.random() * (canvas.width - 50);
             const now = Date.now();
 
-            // ULTRA SPAWN LOGIC:
-            // 1. Must be after 9s cooldown
-            // 2. High chance (30%) if eligible
+            // ULTRA SPAWN LOGIC (9s cooldown)
             if (now - lastUltraSpawnTime > 9000 && Math.random() < 0.3) {
                  entities.push({x:x, y:roadY-60, w:35, h:45, type:'ultra', active:true});
                  lastUltraSpawnTime = now;
-                 return; // Spawn only this
+                 return; 
             }
             
             if(r < 0.85) {
@@ -760,10 +781,27 @@ Next point: “And new, and still” - let’s go!
             ctx.shadowBlur = 0;
         }
 
-        function initGame() {
+        function initGame(diff) {
             let nick = document.getElementById('nickname').value.trim();
             if(!nick) { alert("ENTER NICKNAME / АТЫҢЫЗДЫ ЖАЗЫҢЫЗ"); return; }
             nickname = nick; 
+
+            // SET DIFFICULTY VARS
+            currentDiff = diff;
+            if(diff === 'easy') {
+                baseSpeed = 5;
+                spawnMultiplier = 0.5; // Fewer rocks
+                damageDealt = 15;
+            } else if (diff === 'medium') {
+                baseSpeed = 7;
+                spawnMultiplier = 1.0;
+                damageDealt = 25;
+            } else {
+                baseSpeed = 9;
+                spawnMultiplier = 1.2; // More rocks
+                damageDealt = 34; // 3 hits = dead
+            }
+
             AudioSys.init();
             document.getElementById('screen-start').style.display = 'none';
             document.getElementById('screen-gameover').style.display = 'none';
@@ -771,14 +809,14 @@ Next point: “And new, and still” - let’s go!
             gameState = 'PLAYING'; score = 0; car.health = 100; difficulty = 1; spikeEndTime = 0;
             
             // RESET GAME VARIABLES
-            lyricIndex = 0; // for collected score text
-            spawnIndex = 0; // for letter stream
+            lyricIndex = 0; 
+            spawnIndex = 0; 
             score = 0;
             entities = []; particles = []; 
             
             // SPAWN LOGIC RESET
             gameStartTime = Date.now();
-            lastUltraSpawnTime = Date.now(); // Reset this so it starts counting from game start
+            lastUltraSpawnTime = Date.now(); 
             nextLetterTime = Date.now() + 1000;
 
             resize(); draw();
