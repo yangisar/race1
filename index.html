@@ -99,7 +99,7 @@
             display: flex; flex-direction: column; align-items: center;
             z-index: 90; color: #fff; text-align: center; 
             font-family: 'Montserrat', sans-serif;
-            padding-top: 40px; box-sizing: border-box;
+            padding-top: 20px; box-sizing: border-box;
         }
 
         .results-box {
@@ -111,6 +111,14 @@
             line-height: 1.4; white-space: pre-wrap;
             box-shadow: 0 0 10px #00FF00;
             color: #00FF00; text-shadow: 0 0 2px #00FF00;
+        }
+
+        .social-msg {
+            margin-top: 15px; width: 85%; max-width: 400px;
+            font-size: 0.75rem; color: #FFD700; 
+            text-align: center; opacity: 0.9; line-height: 1.6;
+            font-family: 'Montserrat', sans-serif; font-weight: bold;
+            text-transform: uppercase;
         }
 
         /* Hall of Fame */
@@ -126,15 +134,14 @@
         }
         .hof-item:first-child { color: #FFD700; font-weight: bold; }
 
-        /* --- POPUPS (UPDATED: TOP & SMALLER) --- */
+        /* --- POPUPS --- */
         .popup-text {
             position: absolute; 
-            top: 15%; /* Moved to top */
+            top: 15%; 
             left: 50%;
-            transform: translateX(-50%) scale(0); /* Centered X, scaled 0 */
+            transform: translateX(-50%) scale(0);
             pointer-events: none; z-index: 40; opacity: 0; white-space: nowrap;
         }
-        /* Smaller Fonts */
         #jbrla-popup { font-family: 'Rubik Glitch'; font-size: 3.5rem; color: #fff; text-shadow: 0 0 10px #9400D3, 3px 3px 0px #000; }
         #gorilla-popup { font-family: 'Permanent Marker'; font-size: 3rem; color: #00FFFF; text-shadow: 0 0 10px #00FF00, 3px 3px 0px #000; }
         
@@ -219,6 +226,11 @@
             <div style="font-size: 1.2rem; color: #FFF; margin-bottom: 5px;">ОЙЫН АЯҚТАЛДЫ</div>
             
             <div style="font-size: 0.9rem; color: #aaa;">STATS: <span id="end-score" style="color: #FFD700; font-weight:bold;">0</span> LETTERS</div>
+
+            <div class="social-msg">
+                Make a screenshot and share your results and tag us<br>
+                Скрин жасап, нәтижеңмен бөліс және бізді белгіле
+            </div>
 
             <div class="results-box" id="lyrics-result"></div>
 
@@ -410,8 +422,8 @@ Next point: “And new, and still” - let’s go!
         let nickname = "";
         
         let lyricIndex = 0; 
-        let spawnIndex = 0; // Tracks which letter to put on road
-        let score = 0;      // Tracks letters collected
+        let spawnIndex = 0; 
+        let score = 0;      
         
         let baseSpeed = 7;
         let difficulty = 1;
@@ -420,7 +432,7 @@ Next point: “And new, and still” - let’s go!
         let particles = [];
         let spikeEndTime = 0;
         
-        // Spawn Control Variables
+        // Spawn Control
         let gameStartTime = 0;
         let lastUltraSpawnTime = 0;
         let nextLetterTime = 0;
@@ -500,14 +512,12 @@ Next point: “And new, and still” - let’s go!
 
             // --- LETTER SPAWNING (STREAM LOGIC) ---
             if(Date.now() > nextLetterTime && spawnIndex < fullLyrics.length) {
-                // Skip spaces
                 while(spawnIndex < fullLyrics.length && (fullLyrics[spawnIndex] === ' ' || fullLyrics[spawnIndex] === '\n')) {
                     spawnIndex++;
                 }
                 if(spawnIndex < fullLyrics.length) {
                     spawnLetter(fullLyrics[spawnIndex]);
                     spawnIndex++;
-                    // Spawn next letter randomly between 200ms and 800ms (Creates clusters)
                     nextLetterTime = Date.now() + 200 + Math.random() * 600;
                 }
             }
@@ -518,7 +528,7 @@ Next point: “And new, and still” - let’s go!
             const isSpiked = Date.now() < spikeEndTime;
             if(isSpiked) {
                 const timeRemaining = spikeEndTime - Date.now();
-                if(timeRemaining > 1000) spawnChance = 0.15; // Chaos
+                if(timeRemaining > 1000) spawnChance = 0.15; 
             } else {
                 AudioSys.stopUltra();
             }
@@ -545,8 +555,6 @@ Next point: “And new, and still” - let’s go!
                             }
                         } else if(e.type === 'letter') {
                             score++; 
-                            // Update display to match score (letters collected)
-                            // We use `score` as the index for lyric display at end game
                             AudioSys.playTone(1000, 'sine', 0.1);
                         } else if(e.type === 'flask') {
                             car.health = Math.min(100, car.health+20); 
@@ -583,11 +591,16 @@ Next point: “And new, and still” - let’s go!
 
         function spawnOther() {
             let r = Math.random(); let x = Math.random() * (canvas.width - 50);
-            
-            // Logic: 
-            // 85% Rock
-            // 14% Flask
-            // 1% Ultra (With Cooldown Constraints)
+            const now = Date.now();
+
+            // ULTRA SPAWN LOGIC:
+            // 1. Must be after 9s cooldown
+            // 2. High chance (30%) if eligible
+            if (now - lastUltraSpawnTime > 9000 && Math.random() < 0.3) {
+                 entities.push({x:x, y:roadY-60, w:35, h:45, type:'ultra', active:true});
+                 lastUltraSpawnTime = now;
+                 return; // Spawn only this
+            }
             
             if(r < 0.85) {
                 // ROCKS - Shades of Brown
@@ -597,24 +610,9 @@ Next point: “And new, and still” - let’s go!
                 let offset = Math.random() * 10;
                 entities.push({ x:x, y:roadY-60, w:w, h:h, type:'obs', color:c, active:true, off: offset });
 
-            } else if (r < 0.99) {
+            } else {
                 // FLASK
                 entities.push({x:x, y:roadY-60, w:30, h:40, type:'flask', active:true});
-
-            } else {
-                // ULTRA 
-                const now = Date.now();
-                // 1. Must be after 10s of gameplay
-                // 2. Must be 20s since last ultra
-                if ((now - gameStartTime > 10000) && (now - lastUltraSpawnTime > 20000)) {
-                    entities.push({x:x, y:roadY-60, w:35, h:45, type:'ultra', active:true});
-                    lastUltraSpawnTime = now;
-                } else {
-                    // Fallback to rock if cooldown active
-                    let s = Math.random(); let w = 40 + (s * 35); let h = 30 + (s * 25);
-                    let c = '#6F4E37';
-                    entities.push({ x:x, y:roadY-60, w:w, h:h, type:'obs', color:c, active:true, off: 5 });
-                }
             }
         }
 
@@ -780,7 +778,7 @@ Next point: “And new, and still” - let’s go!
             
             // SPAWN LOGIC RESET
             gameStartTime = Date.now();
-            lastUltraSpawnTime = 0;
+            lastUltraSpawnTime = Date.now(); // Reset this so it starts counting from game start
             nextLetterTime = Date.now() + 1000;
 
             resize(); draw();
@@ -792,14 +790,10 @@ Next point: “And new, and still” - let’s go!
             document.getElementById('screen-gameover').style.display = 'flex';
             document.getElementById('end-score').innerText = score;
             
-            // Show collected lyrics based on score (since score = collected count)
-            // Note: because we spawn stream, we might have skipped letters if missed.
-            // But to keep it simple, we just show the first N characters of lyrics.
             let collected = "";
             let tempIndex = 0;
             let lettersFound = 0;
             while(lettersFound < score && tempIndex < fullLyrics.length) {
-                // skip spaces/newlines in logic
                  if(fullLyrics[tempIndex] !== ' ' && fullLyrics[tempIndex] !== '\n') {
                      lettersFound++;
                  }
