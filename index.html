@@ -141,27 +141,27 @@
             100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
         }
 
-        /* --- CONTROLS --- */
-        #controls {
-            position: absolute; bottom: 20px; left: 10px; right: 10px;
-            height: 180px; z-index: 20; pointer-events: none;
-        }
-        .ctrl-btn {
-            position: absolute;
-            background: rgba(255, 255, 255, 0.08);
-            border: 2px solid rgba(255, 255, 255, 0.2);
+        /* --- JOYSTICK CONTROL --- */
+        #joystick-zone {
+            position: absolute; bottom: 30px; left: 50%;
+            transform: translateX(-50%);
+            width: 140px; height: 140px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
+            z-index: 20; touch-action: none;
             display: flex; justify-content: center; align-items: center;
-            color: rgba(255, 255, 255, 0.6); font-size: 2rem;
-            pointer-events: auto; touch-action: manipulation;
-            transition: all 0.1s; backdrop-filter: blur(2px);
         }
-        .ctrl-btn:active { background: rgba(255, 0, 0, 0.5); border-color: #ff0000; color: white; transform: scale(0.95); }
-
-        #btn-left { bottom: 10px; left: 10px; width: 110px; height: 110px; font-size: 3rem; }
-        #btn-up { bottom: 130px; left: 35px; width: 60px; height: 60px; font-size: 1.5rem; }
-        #btn-right { bottom: 10px; right: 10px; width: 110px; height: 110px; font-size: 3rem; }
-        #btn-down { bottom: 130px; right: 35px; width: 60px; height: 60px; font-size: 1.5rem; }
+        #joystick-knob {
+            width: 50px; height: 50px;
+            background: rgba(255, 0, 0, 0.6);
+            border: 2px solid #FFF;
+            border-radius: 50%;
+            box-shadow: 0 0 15px rgba(255,0,0,0.5);
+            position: relative;
+            left: 0; top: 0;
+            pointer-events: none; /* Let clicks pass to zone */
+        }
 
         .credits {
             position: absolute; bottom: 10px; width: 100%; text-align: center;
@@ -220,11 +220,8 @@
             <button class="pixel-btn" style="margin-top: 10px; border-radius:10px; font-size: 0.8rem;" onclick="resetGame()">RIDE AGAIN</button>
         </div>
 
-        <div id="controls">
-            <div id="btn-up" class="ctrl-btn">▲</div>
-            <div id="btn-left" class="ctrl-btn">◀</div>
-            <div id="btn-down" class="ctrl-btn">▼</div>
-            <div id="btn-right" class="ctrl-btn">▶</div>
+        <div id="joystick-zone">
+            <div id="joystick-knob"></div>
         </div>
 
         <div class="credits">Created using AI tools by Yadykar Ibraimov</div>
@@ -249,31 +246,23 @@
             playSmash: function() { this.playTone(60,'sawtooth',0.2,0.4); this.playTone(100,'square',0.1,0.3); }
         };
 
-        /** ☁️ GLOBAL SCOREBOARD (DREAMLO) **/
+        /** ☁️ DREAMLO STORAGE **/
         const StorageSys = {
             privateCode: "HI23JnppXkqNd_l5x-wG8AVKgXQhhZ3kO4Iv7OMBJsRw", 
             publicCode:  "697058fc8f40bb1184b96f1a",  
-            
             url: "https://www.dreamlo.com/lb/",
-
             save: async function(name, score) {
-                // Sanitize name
                 const safeName = name.replace(/[^a-zA-Z0-9]/g, "").substring(0, 10); 
-                try {
-                    await fetch(`${this.url}${this.privateCode}/add/${safeName}/${score}`);
-                } catch (e) { console.error(e); }
+                try { await fetch(`${this.url}${this.privateCode}/add/${safeName}/${score}`); } catch (e) { console.error(e); }
             },
-
             getTop: async function() {
                 try {
                     const res = await fetch(`${this.url}${this.publicCode}/json`);
                     const data = await res.json();
                     if (!data || !data.dreamlo || !data.dreamlo.leaderboard) return [];
-                    
                     let entries = data.dreamlo.leaderboard.entry;
                     if (!entries) return [];
                     if (!Array.isArray(entries)) entries = [entries];
-                    
                     return entries.slice(0, 5).map(e => ({ name: e.name, score: parseInt(e.score) }));
                 } catch (e) { return []; }
             }
@@ -406,6 +395,9 @@ Next point: “And new, and still” - let’s go!
         let letterOnScreen = false;
         
         const car = { x:0, y:0, w:42, h:75, health:100 };
+        // Joystick State
+        let joystick = { active: false, x: 0, y: 0, originX: 0, originY: 0 };
+        // Keyboard State (Backup)
         const keys = {u:false, d:false, l:false, r:false};
 
         function resize() {
@@ -421,10 +413,13 @@ Next point: “And new, and still” - let’s go!
 
         function generateBackground() {
             bgCache.mountains = [];
+            // Mountains with parallax points
             for(let i=0; i<=canvas.width; i+=5) {
-                bgCache.mountains.push({ x: i, y: (Math.sin(i*0.01)*25) + (Math.cos(i*0.02)*15) + 30 });
+                // Higher peaks to look like mountains
+                bgCache.mountains.push({ x: i, y: (Math.sin(i*0.01)*50) + (Math.cos(i*0.02)*25) + 60 });
             }
             bgCache.buildings = [];
+            // Reduced buildings to emphasize mountains, but keeping some for parallax
             let bx = 0;
             while(bx < canvas.width) {
                 let bw = 25 + Math.random() * 40; let bh = 20 + Math.random() * 60;
@@ -437,14 +432,67 @@ Next point: “And new, and still” - let’s go!
             for(let i=0; i<40; i++) bgCache.stars.push({x: Math.random()*canvas.width, y: Math.random()*roadY*0.9, s: Math.random()*2, alpha: Math.random()});
         }
 
-        const bindKey = (id, key) => {
-            const el = document.getElementById(id);
-            el.addEventListener('touchstart', (e)=>{e.preventDefault(); keys[key]=true;});
-            el.addEventListener('touchend', (e)=>{e.preventDefault(); keys[key]=false;});
-            el.addEventListener('mousedown', ()=>{keys[key]=true;});
-            el.addEventListener('mouseup', ()=>{keys[key]=false;});
+        // --- JOYSTICK LOGIC ---
+        const joyZone = document.getElementById('joystick-zone');
+        const joyKnob = document.getElementById('joystick-knob');
+        const maxRadius = 45; // Max distance knob moves
+
+        const handleStart = (e) => {
+            e.preventDefault();
+            joystick.active = true;
+            const touch = e.touches ? e.touches[0] : e;
+            // Get center of joystick zone
+            const rect = joyZone.getBoundingClientRect();
+            joystick.originX = rect.left + rect.width / 2;
+            joystick.originY = rect.top + rect.height / 2;
+            handleMove(e);
         };
-        bindKey('btn-up','u'); bindKey('btn-down','d'); bindKey('btn-left','l'); bindKey('btn-right','r');
+
+        const handleMove = (e) => {
+            if(!joystick.active) return;
+            e.preventDefault();
+            const touch = e.touches ? e.touches[0] : e;
+            
+            let dx = touch.clientX - joystick.originX;
+            let dy = touch.clientY - joystick.originY;
+            
+            // Calculate distance and clamp
+            const distance = Math.sqrt(dx*dx + dy*dy);
+            if (distance > maxRadius) {
+                const angle = Math.atan2(dy, dx);
+                dx = Math.cos(angle) * maxRadius;
+                dy = Math.sin(angle) * maxRadius;
+            }
+
+            // Move knob visually
+            joyKnob.style.transform = `translate(${dx}px, ${dy}px)`;
+
+            // Normalize values for game logic (-1 to 1)
+            joystick.x = dx / maxRadius;
+            joystick.y = dy / maxRadius;
+        };
+
+        const handleEnd = (e) => {
+            e.preventDefault();
+            joystick.active = false;
+            joystick.x = 0;
+            joystick.y = 0;
+            joyKnob.style.transform = `translate(0px, 0px)`;
+        };
+
+        joyZone.addEventListener('mousedown', handleStart);
+        window.addEventListener('mousemove', handleMove);
+        window.addEventListener('mouseup', handleEnd);
+        joyZone.addEventListener('touchstart', handleStart);
+        window.addEventListener('touchmove', handleMove, {passive: false});
+        window.addEventListener('touchend', handleEnd);
+
+        // Keyboard Backup
+        const bindKey = (code, key) => {
+            window.addEventListener('keydown', (e)=>{if(e.key===code) keys[key]=true;});
+            window.addEventListener('keyup', (e)=>{if(e.key===code) keys[key]=false;});
+        };
+        bindKey('ArrowUp','u'); bindKey('ArrowDown','d'); bindKey('ArrowLeft','l'); bindKey('ArrowRight','r');
 
         function triggerPopup(id) {
             const el = document.getElementById(id);
@@ -458,11 +506,29 @@ Next point: “And new, and still” - let’s go!
             let currentSpeed = baseSpeed * difficulty;
             roadOffset += currentSpeed;
 
-            const moveSpd = 5 + (difficulty * 0.6);
-            if(keys.u && car.y > roadY) car.y -= moveSpd;
-            if(keys.d && car.y < canvas.height - car.h) car.y += moveSpd;
-            if(keys.l && car.x > 0) car.x -= moveSpd;
-            if(keys.r && car.x < canvas.width - car.w) car.x += moveSpd;
+            const moveSpd = 7 + (difficulty * 0.6);
+
+            // Movement Logic (Joystick + Keyboard)
+            let dx = 0, dy = 0;
+            if(joystick.active) {
+                dx = joystick.x; 
+                dy = joystick.y;
+            } else {
+                if(keys.u) dy -= 1;
+                if(keys.d) dy += 1;
+                if(keys.l) dx -= 1;
+                if(keys.r) dx += 1;
+            }
+
+            car.x += dx * moveSpd;
+            car.y += dy * moveSpd;
+
+            // Boundaries
+            if(car.x < 0) car.x = 0;
+            if(car.x > canvas.width - car.w) car.x = canvas.width - car.w;
+            if(car.y > roadY) car.y = roadY; // Horizon limit
+            if(car.y > canvas.height - car.h) car.y = canvas.height - car.h;
+
 
             if(!letterOnScreen && lyricIndex < fullLyrics.length) {
                 while(lyricIndex < fullLyrics.length && (fullLyrics[lyricIndex] === ' ' || fullLyrics[lyricIndex] === '\n')) {
@@ -547,8 +613,9 @@ Next point: “And new, and still” - let’s go!
         function spawnOther() {
             let r = Math.random(); let x = Math.random() * (canvas.width - 50);
             if(r < 0.8) {
+                // Rock (Contrast Colors: Tan, Light Grey)
                 let s = Math.random(); let w = 40 + (s * 35); let h = 30 + (s * 25);
-                let c = Math.random() > 0.5 ? '#606060' : '#4a3b32';
+                let c = Math.random() > 0.5 ? '#C2B280' : '#A9A9A9'; 
                 entities.push({ x:x, y:roadY-60, w:w, h:h, type:'obs', color:c, active:true });
             } else if (r < 0.95) {
                 entities.push({x:x, y:roadY-60, w:30, h:40, type:'flask', active:true});
@@ -565,22 +632,44 @@ Next point: “And new, and still” - let’s go!
             if(gameState !== 'PLAYING') return;
             ctx.clearRect(0,0,canvas.width,canvas.height);
 
-            // BG
+            // 1. BG - Dark Blue Sky
             let grad = ctx.createLinearGradient(0,0,0,roadY);
-            grad.addColorStop(0, '#020210'); grad.addColorStop(1, '#15202B');
+            grad.addColorStop(0, '#000022'); grad.addColorStop(1, '#000055');
             ctx.fillStyle = grad; ctx.fillRect(0,0,canvas.width, roadY);
+            
             ctx.fillStyle = '#FFF'; bgCache.stars.forEach(s => { ctx.globalAlpha = Math.random() * s.alpha; ctx.fillRect(s.x, s.y, s.s, s.s); }); ctx.globalAlpha = 1.0;
-            ctx.fillStyle = '#0f172a'; ctx.beginPath(); ctx.moveTo(0, roadY); bgCache.mountains.forEach(p => ctx.lineTo(p.x, roadY - p.y)); ctx.lineTo(canvas.width, roadY); ctx.fill();
+
+            // 2. Mountains (Dark Blue with Snow Caps)
+            // Body
+            ctx.fillStyle = '#000033'; 
+            ctx.beginPath(); ctx.moveTo(0, roadY);
+            bgCache.mountains.forEach(p => ctx.lineTo(p.x, roadY - p.y)); 
+            ctx.lineTo(canvas.width, roadY); ctx.fill();
+            // Snow Caps (Top 30% of each peak triangle)
+            ctx.fillStyle = '#FFF';
+            bgCache.mountains.forEach((p, i) => {
+                if(i === 0 || i === bgCache.mountains.length-1) return;
+                // Simple snow cap triangle on top
+                if(p.y > 60) {
+                    ctx.beginPath();
+                    ctx.moveTo(p.x, roadY - p.y);
+                    ctx.lineTo(p.x - 10, roadY - p.y + 15);
+                    ctx.lineTo(p.x + 10, roadY - p.y + 15);
+                    ctx.fill();
+                }
+            });
+            
+            // Buildings (Background decor)
             bgCache.buildings.forEach(b => {
-                ctx.fillStyle = '#1e293b'; ctx.fillRect(b.x, roadY - b.h, b.w, b.h);
-                ctx.fillStyle = '#FCD34D'; b.wins.forEach(w => { if(Math.random()>0.05) ctx.fillRect(b.x + w.x, roadY - b.h + w.y, 4, 5); });
+                ctx.fillStyle = '#0a0a2a'; ctx.fillRect(b.x, roadY - b.h, b.w, b.h);
+                ctx.fillStyle = '#FFFF00'; b.wins.forEach(w => { if(Math.random()>0.05) ctx.fillRect(b.x + w.x, roadY - b.h + w.y, 4, 5); });
             });
             drawLandmarks();
 
-            // ROAD
-            ctx.fillStyle = '#1a1a1a'; ctx.fillRect(0, roadY, canvas.width, roadH);
+            // 3. ROAD
+            ctx.fillStyle = '#111'; ctx.fillRect(0, roadY, canvas.width, roadH);
             if(score % 2 === 0) { ctx.fillStyle = 'rgba(255,255,255,0.03)'; for(let i=0; i<30; i++) ctx.fillRect(Math.random()*canvas.width, roadY+Math.random()*roadH, 2, 2); }
-            ctx.fillStyle = '#111'; ctx.fillRect(0, roadY, 15, roadH); ctx.fillRect(canvas.width-15, roadY, 15, roadH);
+            ctx.fillStyle = '#000'; ctx.fillRect(0, roadY, 15, roadH); ctx.fillRect(canvas.width-15, roadY, 15, roadH);
             ctx.fillStyle = '#FFD700'; 
             const laneCount = 4; const laneW = canvas.width / laneCount;
             const dashH = 60; const dashGap = 150; const pattern = dashH + dashGap;
@@ -592,15 +681,16 @@ Next point: “And new, and still” - let’s go!
                 }
             }
 
-            // ENTITIES
+            // 4. ENTITIES
             entities.forEach(e => {
                 if(e.type === 'obs') {
+                    // Rock - Light Tan/Grey for contrast
                     ctx.fillStyle = e.color; ctx.beginPath();
                     ctx.moveTo(e.x+e.w*0.2, e.y); ctx.lineTo(e.x+e.w*0.8, e.y+e.h*0.1);
                     ctx.lineTo(e.x+e.w, e.y+e.h*0.6); ctx.lineTo(e.x+e.w*0.7, e.y+e.h);
                     ctx.lineTo(e.x+e.w*0.1, e.y+e.h*0.9); ctx.lineTo(e.x, e.y+e.h*0.4); ctx.fill();
-                    ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath();
-                    ctx.moveTo(e.x+e.w, e.y+e.h*0.6); ctx.lineTo(e.x+e.w+10, e.y+e.h); ctx.lineTo(e.x+e.w*0.5, e.y+e.h); ctx.fill();
+                    // Highlights for visibility
+                    ctx.fillStyle = 'rgba(255,255,255,0.2)'; ctx.fillRect(e.x+10, e.y+10, 10, 10);
                 } 
                 else if(e.type === 'letter') {
                     ctx.fillStyle = '#FFD700'; ctx.beginPath(); ctx.arc(e.x+e.w/2, e.y+e.h/2, e.w/2, 0, Math.PI*2); ctx.fill();
@@ -629,11 +719,11 @@ Next point: “And new, and still” - let’s go!
 
         function drawLandmarks() {
              let hx = canvas.width * 0.15; let hy = roadY;
-             ctx.fillStyle = '#555'; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx, hy-80); 
+             ctx.fillStyle = '#444'; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx, hy-80); 
              ctx.quadraticCurveTo(hx+30, hy-100, hx+60, hy-80); ctx.lineTo(hx+60, hy); ctx.fill();
              ctx.fillStyle = '#FFD700'; ctx.beginPath(); ctx.arc(hx+30, hy-85, 4, 0, Math.PI*2); ctx.fill();
              let tx = canvas.width * 0.85;
-             ctx.strokeStyle = '#666'; ctx.lineWidth = 3;
+             ctx.strokeStyle = '#555'; ctx.lineWidth = 3;
              ctx.beginPath(); ctx.moveTo(tx, roadY-20); ctx.lineTo(tx, roadY-120); ctx.stroke();
              ctx.fillStyle = '#D00'; ctx.beginPath(); ctx.arc(tx, roadY-100, 5, 0, Math.PI*2); ctx.fill();
         }
@@ -648,13 +738,21 @@ Next point: “And new, and still” - let’s go!
                 ctx.moveTo(x+27, y); ctx.lineTo(x+32, y-25); ctx.lineTo(x+w, y); ctx.fill();
             }
             ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(x+6, y+6, w, h);
-            ctx.fillStyle = '#080808'; ctx.beginPath(); ctx.roundRect(x, y, w, h, 4); ctx.fill();
+            
+            // CAR BODY - GREEN
+            ctx.fillStyle = '#008000'; // Green
+            ctx.beginPath(); ctx.roundRect(x, y, w, h, 4); ctx.fill();
+            
+            // Windshield
             ctx.fillStyle = '#222'; ctx.fillRect(x+2, y+18, w-4, h-30);
             
+            // Text - DARK RED
             ctx.save(); ctx.translate(x+w/2, y+h/2); ctx.rotate(-Math.PI/2);
-            ctx.fillStyle = '#D00'; ctx.font='bold 11px Arial'; ctx.textAlign='center'; ctx.fillText("DAIYNBALL", 0, 4);
+            ctx.fillStyle = '#8B0000'; // Dark Red
+            ctx.font='bold 11px Arial'; ctx.textAlign='center'; ctx.fillText("DAIYNBALL", 0, 4);
             ctx.restore();
 
+            // Lights
             ctx.shadowBlur = 15; ctx.shadowColor = '#FF0';
             ctx.fillStyle = '#FFEB3B'; ctx.fillRect(x+2, y, 8, 6); ctx.fillRect(x+w-10, y, 8, 6);
             ctx.shadowBlur = 10; ctx.shadowColor = '#F00';
@@ -669,6 +767,9 @@ Next point: “And new, and still” - let’s go!
             AudioSys.init();
             document.getElementById('screen-start').style.display = 'none';
             document.getElementById('screen-gameover').style.display = 'none';
+            // Show Joystick
+            document.getElementById('joystick-zone').style.display = 'flex';
+            
             gameState = 'PLAYING'; score = 0; car.health = 100; difficulty = 1; spikeEndTime = 0;
             lyricIndex = 0; letterOnScreen = false;
             entities = []; particles = []; 
@@ -677,6 +778,7 @@ Next point: “And new, and still” - let’s go!
 
         async function gameOver() {
             gameState = 'OVER';
+            document.getElementById('joystick-zone').style.display = 'none';
             document.getElementById('screen-gameover').style.display = 'flex';
             document.getElementById('end-score').innerText = score;
             
@@ -705,6 +807,9 @@ Next point: “And new, and still” - let’s go!
             document.getElementById('screen-start').style.display = 'flex';
         }
         resize();
+        
+        // Hide joystick initially
+        document.getElementById('joystick-zone').style.display = 'none';
     </script>
 </body>
 </html>
