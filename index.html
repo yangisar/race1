@@ -83,6 +83,12 @@
         }
         .pixel-input:focus { border-color: #0F0; }
 
+        .diff-label {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.8rem; color: #AAA; margin-bottom: 10px;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+
         /* DIFFICULTY BUTTONS */
         .diff-btn {
             display: block; width: 300px;
@@ -98,7 +104,6 @@
         .btn-easy { border-color: #00FF00; color: #00FF00; box-shadow: 5px 5px 0px #005500; }
         .btn-med  { border-color: #FFFF00; color: #FFFF00; box-shadow: 5px 5px 0px #555500; }
         .btn-hard { border-color: #FF0000; color: #FF0000; box-shadow: 5px 5px 0px #550000; }
-
 
         /* --- GAME OVER --- */
         .overlay-gameover {
@@ -150,6 +155,7 @@
         }
         #jbrla-popup { font-family: 'Rubik Glitch'; font-size: 3.5rem; color: #fff; text-shadow: 0 0 10px #9400D3, 3px 3px 0px #000; }
         #gorilla-popup { font-family: 'Permanent Marker'; font-size: 3rem; color: #00FFFF; text-shadow: 0 0 10px #00FF00, 3px 3px 0px #000; }
+        #slow-popup { font-family: 'Permanent Marker'; font-size: 3rem; color: #00FFFF; text-shadow: 0 0 10px #FFF, 3px 3px 0px #000; }
         
         .anim-pop { animation: popIn 1.5s forwards; }
         @keyframes popIn {
@@ -184,7 +190,17 @@
 
         .credits {
             position: absolute; bottom: 10px; width: 100%; text-align: center;
-            font-size: 0.7rem; color: #666; font-family: sans-serif; z-index: 60; pointer-events: none;
+            font-size: 0.7rem; color: #666; font-family: sans-serif; 
+            z-index: 200; /* Highest Z to show on all screens */
+            pointer-events: none;
+        }
+
+        .pixel-btn {
+            padding: 20px 30px; font-size: 1rem; font-family: 'Press Start 2P', cursive;
+            background: #FF0000; color: #FFF; border: 4px solid #FFF;
+            cursor: pointer; text-transform: uppercase;
+            box-shadow: 6px 6px 0px #8B0000; transition: transform 0.1s;
+            pointer-events: auto;
         }
 
     </style>
@@ -217,6 +233,7 @@
 
         <div id="jbrla-popup" class="popup-text">JBRLA!</div>
         <div id="gorilla-popup" class="popup-text">GORILLA!</div>
+        <div id="slow-popup" class="popup-text">SLOW DOWN!</div>
 
         <div id="screen-start">
             <div class="pixel-title-main">DAIYNBALL</div>
@@ -224,7 +241,8 @@
             <div class="pixel-title-sub">RACING GAME</div>
             <input type="text" id="nickname" class="pixel-input" placeholder="NICKNAME" maxlength="12" autocomplete="off">
             
-            <div style="margin-top:10px;">
+            <div class="diff-label">Choose Difficulty / Қиындықты таңдаңыз</div>
+            <div>
                 <button class="diff-btn btn-easy" onclick="initGame('easy')">Балапан - Lil homie</button>
                 <button class="diff-btn btn-med" onclick="initGame('medium')">Джига - Ma boy</button>
                 <button class="diff-btn btn-hard" onclick="initGame('hard')">Жабай - Savage</button>
@@ -431,10 +449,11 @@ Next point: “And new, and still” - let’s go!
         let gameState = 'START';
         let nickname = "";
         
-        // Game Settings based on Difficulty
+        // Game Settings
         let currentDiff = 'medium';
         let damageDealt = 25;
         let spawnMultiplier = 1.0;
+        let speedOffset = 0; // For Slow Down Flask
         
         let lyricIndex = 0; 
         let spawnIndex = 0; 
@@ -447,7 +466,6 @@ Next point: “And new, and still” - let’s go!
         let particles = [];
         let spikeEndTime = 0;
         
-        // Spawn Control
         let gameStartTime = 0;
         let lastUltraSpawnTime = 0;
         let nextLetterTime = 0;
@@ -508,10 +526,13 @@ Next point: “And new, and still” - let’s go!
         }
 
         function update() {
-            difficulty = 1 + (score / 50);
+            // Calculate Difficulty with Slow Down Offset
+            // speedOffset subtracts from the difficulty ramp-up
+            let rawDiff = 1 + (score / 50);
+            difficulty = Math.max(1, rawDiff - speedOffset);
+            
             let currentSpeed = baseSpeed * difficulty;
             roadOffset += currentSpeed;
-            // Speed logic based on difficulty baseSpeed
             const moveSpd = (baseSpeed * 1.2) + (difficulty * 0.6);
 
             let dx = 0, dy = 0;
@@ -538,18 +559,16 @@ Next point: “And new, and still” - let’s go!
                 }
             }
 
-            // --- OBSTACLE SPAWN CHANCE (Affected by difficulty) ---
             let spawnChance = 0.02 * spawnMultiplier + (difficulty * 0.003);
 
-            // ULTRA MODE & BOULDER SPAWN
+            // ULTRA MODE
             const isSpiked = Date.now() < spikeEndTime;
             if(isSpiked) {
                 const timeRemaining = spikeEndTime - Date.now();
                 if(timeRemaining > 1000) {
-                    // Chaos level depends on difficulty
-                    if(currentDiff === 'hard') spawnChance = 0.18; // Savage chaos
+                    if(currentDiff === 'hard') spawnChance = 0.18; 
                     else if(currentDiff === 'medium') spawnChance = 0.12; 
-                    else spawnChance = 0.08; // Easy chaos
+                    else spawnChance = 0.08; 
                 }
             } else {
                 AudioSys.stopUltra();
@@ -573,7 +592,7 @@ Next point: “And new, and still” - let’s go!
                             if(isSpiked) {
                                 AudioSys.playSmash(); spawnParticles(e.x+e.w/2, e.y+e.h/2, '#777', 15);
                             } else {
-                                car.health -= damageDealt; // Variable Damage
+                                car.health -= damageDealt; 
                                 AudioSys.playTone(100, 'sawtooth', 0.2); spawnParticles(e.x+e.w/2, e.y+e.h/2, e.color, 10);
                             }
                         } else if(e.type === 'letter') {
@@ -583,6 +602,12 @@ Next point: “And new, and still” - let’s go!
                             car.health = Math.min(100, car.health+20); 
                             AudioSys.playTone(600, 'square', 0.15);
                             triggerPopup('gorilla-popup');
+                        } else if(e.type === 'slow') {
+                            // RESET SPEED LOGIC
+                            // We set speedOffset to cancel out the current score multiplier
+                            speedOffset = (score / 50); 
+                            AudioSys.playTone(200, 'sine', 0.3);
+                            triggerPopup('slow-popup');
                         } else if(e.type === 'ultra') {
                             spikeEndTime = Date.now() + 10000;
                             AudioSys.playUltra(); 
@@ -624,16 +649,19 @@ Next point: “And new, and still” - let’s go!
             }
             
             if(r < 0.85) {
-                // ROCKS - Shades of Brown
+                // ROCKS
                 let s = Math.random(); let w = 40 + (s * 35); let h = 30 + (s * 25);
                 const colors = ['#8B5A2B', '#6F4E37', '#5C4033', '#966F33', '#4E3629']; 
                 let c = colors[Math.floor(Math.random() * colors.length)];
                 let offset = Math.random() * 10;
                 entities.push({ x:x, y:roadY-60, w:w, h:h, type:'obs', color:c, active:true, off: offset });
 
-            } else {
-                // FLASK
+            } else if (r < 0.96) {
+                // HEALTH FLASK
                 entities.push({x:x, y:roadY-60, w:30, h:40, type:'flask', active:true});
+            } else {
+                // SLOW DOWN FLASK (Rare: 4%)
+                entities.push({x:x, y:roadY-60, w:30, h:40, type:'slow', active:true});
             }
         }
 
@@ -680,7 +708,7 @@ Next point: “And new, and still” - let’s go!
             ctx.fillStyle = '#1e1a15'; ctx.fillRect(0, roadY, 15, roadH); ctx.fillRect(canvas.width-15, roadY, 15, roadH);
             ctx.fillStyle = '#111'; ctx.fillRect(0, roadY-2, canvas.width, 4);
 
-            // MARKINGS - GREY
+            // MARKINGS
             ctx.fillStyle = '#888888'; 
             const laneCount = 4; const laneW = canvas.width / laneCount;
             const dashH = 60; const dashGap = 150; const pattern = dashH + dashGap;
@@ -716,10 +744,18 @@ Next point: “And new, and still” - let’s go!
                     ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(e.x+e.w/2, e.y+e.h/2, e.w/2-2, 0, Math.PI*2); ctx.stroke();
                 } 
                 else if(e.type === 'flask') {
+                    // Health (Blue/Red)
                     ctx.fillStyle = '#00f'; ctx.fillRect(e.x+5, e.y+10, e.w-10, e.h-10);
                     ctx.fillStyle = '#fff'; ctx.fillRect(e.x+5, e.y+20, e.w-10, 5);
                     ctx.fillStyle = '#f00'; ctx.font='bold 12px Arial'; ctx.fillText('G', e.x+e.w/2, e.y+35);
                     ctx.shadowBlur = 10; ctx.shadowColor = '#00f'; ctx.fillRect(e.x+8, e.y+12, e.w-16, e.h-14); ctx.shadowBlur = 0;
+                }
+                else if(e.type === 'slow') {
+                    // Slow Down (Cyan/White)
+                    ctx.fillStyle = '#00FFFF'; ctx.fillRect(e.x+5, e.y+10, e.w-10, e.h-10);
+                    ctx.fillStyle = '#fff'; ctx.fillRect(e.x+5, e.y+20, e.w-10, 5);
+                    ctx.fillStyle = '#000'; ctx.font='bold 16px Arial'; ctx.fillText('❄', e.x+e.w/2, e.y+35);
+                    ctx.shadowBlur = 10; ctx.shadowColor = '#00FFFF'; ctx.fillRect(e.x+8, e.y+12, e.w-16, e.h-14); ctx.shadowBlur = 0;
                 }
                 else if(e.type === 'ultra') {
                     ctx.shadowBlur = 15; ctx.shadowColor = '#9400D3';
@@ -786,7 +822,7 @@ Next point: “And new, and still” - let’s go!
             if(!nick) { alert("ENTER NICKNAME / АТЫҢЫЗДЫ ЖАЗЫҢЫЗ"); return; }
             nickname = nick; 
 
-            // SET DIFFICULTY VARS
+            // SET DIFFICULTY
             currentDiff = diff;
             if(diff === 'easy') {
                 baseSpeed = 5;
@@ -799,7 +835,7 @@ Next point: “And new, and still” - let’s go!
             } else {
                 baseSpeed = 9;
                 spawnMultiplier = 1.2; // More rocks
-                damageDealt = 34; // 3 hits = dead
+                damageDealt = 34; // 3 hits
             }
 
             AudioSys.init();
@@ -808,10 +844,11 @@ Next point: “And new, and still” - let’s go!
             
             gameState = 'PLAYING'; score = 0; car.health = 100; difficulty = 1; spikeEndTime = 0;
             
-            // RESET GAME VARIABLES
+            // RESET
             lyricIndex = 0; 
             spawnIndex = 0; 
             score = 0;
+            speedOffset = 0;
             entities = []; particles = []; 
             
             // SPAWN LOGIC RESET
