@@ -102,14 +102,13 @@
 
         .results-box {
             background: #000; border: 2px solid #00FF00;
-            width: 85%; max-width: 500px; height: 30%; /* Fixed height for scroll */
+            width: 85%; max-width: 500px; height: 25%;
             margin: 10px 0; padding: 15px;
             overflow-y: auto; text-align: left;
             font-family: 'Courier New', monospace; font-size: 0.9rem;
             line-height: 1.4; white-space: pre-wrap;
             box-shadow: 0 0 10px #00FF00;
-            color: #00FF00;
-            text-shadow: 0 0 2px #00FF00;
+            color: #00FF00; text-shadow: 0 0 2px #00FF00;
         }
 
         /* Hall of Fame */
@@ -250,15 +249,33 @@
             playSmash: function() { this.playTone(60,'sawtooth',0.2,0.4); this.playTone(100,'square',0.1,0.3); }
         };
 
-        /** 💾 STORAGE **/
+        /** ☁️ GLOBAL SCOREBOARD (DREAMLO) **/
         const StorageSys = {
-            save: function(name, score) {
-                let list = JSON.parse(localStorage.getItem('dayinball_scores')) || [];
-                list.push({name: name || 'ANON', score: score});
-                list.sort((a,b) => b.score - a.score);
-                list = list.slice(0, 5);
-                localStorage.setItem('dayinball_scores', JSON.stringify(list));
-                return list;
+            privateCode: "HI23JnppXkqNd_l5x-wG8AVKgXQhhZ3kO4Iv7OMBJsRw", 
+            publicCode:  "697058fc8f40bb1184b96f1a",  
+            
+            url: "https://www.dreamlo.com/lb/",
+
+            save: async function(name, score) {
+                // Sanitize name
+                const safeName = name.replace(/[^a-zA-Z0-9]/g, "").substring(0, 10); 
+                try {
+                    await fetch(`${this.url}${this.privateCode}/add/${safeName}/${score}`);
+                } catch (e) { console.error(e); }
+            },
+
+            getTop: async function() {
+                try {
+                    const res = await fetch(`${this.url}${this.publicCode}/json`);
+                    const data = await res.json();
+                    if (!data || !data.dreamlo || !data.dreamlo.leaderboard) return [];
+                    
+                    let entries = data.dreamlo.leaderboard.entry;
+                    if (!entries) return [];
+                    if (!Array.isArray(entries)) entries = [entries];
+                    
+                    return entries.slice(0, 5).map(e => ({ name: e.name, score: parseInt(e.score) }));
+                } catch (e) { return []; }
             }
         };
 
@@ -658,19 +675,25 @@ Next point: “And new, and still” - let’s go!
             resize(); draw();
         }
 
-        function gameOver() {
+        async function gameOver() {
             gameState = 'OVER';
             document.getElementById('screen-gameover').style.display = 'flex';
             document.getElementById('end-score').innerText = score;
             
-            // Show only collected lyrics
+            // Show ONLY collected lyrics
             const collected = fullLyrics.substring(0, lyricIndex);
             document.getElementById('lyrics-result').innerText = collected;
 
-            // Hall of Fame
-            const topList = StorageSys.save(nickname, score);
+            // Global Scores
             const listEl = document.getElementById('hof-list');
+            listEl.innerHTML = "<li class='hof-item' style='color:#aaa'>UPLOADING...</li>";
+
+            await StorageSys.save(nickname, score);
+            const topList = await StorageSys.getTop();
+
             listEl.innerHTML = "";
+            if(topList.length === 0) listEl.innerHTML = "<li class='hof-item'>No scores yet!</li>";
+            
             topList.forEach((entry, idx) => {
                 let li = document.createElement('li'); li.className = 'hof-item';
                 li.innerHTML = `<span>#${idx+1} ${entry.name}</span><span>${entry.score}</span>`;
