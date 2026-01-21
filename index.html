@@ -414,6 +414,7 @@ Next point: “And new, and still” - let’s go!
         let particles = [];
         let spikeEndTime = 0;
         let letterOnScreen = false;
+        let lastSpawnType = null; // To prevent consecutive Ultras
         
         const car = { x:0, y:0, w:42, h:75, health:100 };
         const keys = {u:false, d:false, l:false, r:false};
@@ -447,7 +448,7 @@ Next point: “And new, and still” - let’s go!
             for(let i=0; i<40; i++) bgCache.stars.push({x: Math.random()*canvas.width, y: Math.random()*roadY*0.9, s: Math.random()*2, alpha: Math.random()});
         }
 
-        // RESTORED BUTTON CONTROLS
+        // BUTTON CONTROLS
         const bindKey = (id, key) => {
             const el = document.getElementById(id);
             el.addEventListener('touchstart', (e)=>{e.preventDefault(); keys[key]=true;});
@@ -457,7 +458,7 @@ Next point: “And new, and still” - let’s go!
         };
         bindKey('btn-up','u'); bindKey('btn-down','d'); bindKey('btn-left','l'); bindKey('btn-right','r');
 
-        // Keyboard Backup
+        // Keyboard
         const bindKeyBd = (code, key) => {
             window.addEventListener('keydown', (e)=>{if(e.key===code) keys[key]=true;});
             window.addEventListener('keyup', (e)=>{if(e.key===code) keys[key]=false;});
@@ -476,11 +477,10 @@ Next point: “And new, and still” - let’s go!
             let currentSpeed = baseSpeed * difficulty;
             roadOffset += currentSpeed;
 
-            // INCREASED SENSITIVITY (Base speed 7 -> 8.5)
+            // SENSITIVITY: 8.5
             const moveSpd = 8.5 + (difficulty * 0.6);
 
             let dx = 0, dy = 0;
-            // Button Logic
             if(keys.u) dy -= 1; if(keys.d) dy += 1;
             if(keys.l) dx -= 1; if(keys.r) dx += 1;
 
@@ -504,16 +504,15 @@ Next point: “And new, and still” - let’s go!
 
             let spawnChance = 0.02 + (difficulty * 0.003);
 
-            // ULTRA MODE CHAOS LOGIC
+            // ULTRA MODE
             const isSpiked = Date.now() < spikeEndTime;
             if(isSpiked) {
                 const timeRemaining = spikeEndTime - Date.now();
-                // If more than 1 second remains (90% of duration approx), massive boulders
+                // 90% of duration = Boulders chaos
                 if(timeRemaining > 1000) {
-                    spawnChance = 0.15; // Massive increase
+                    spawnChance = 0.15; // Chaos
                 }
             } else {
-                // Stop audio if playing
                 AudioSys.stopUltra();
             }
 
@@ -555,7 +554,7 @@ Next point: “And new, and still” - let’s go!
                             triggerPopup('gorilla-popup');
                         } else if(e.type === 'ultra') {
                             spikeEndTime = Date.now() + 10000;
-                            AudioSys.playUltra(); // Start Audio
+                            AudioSys.playUltra(); 
                             triggerPopup('jbrla-popup');
                         }
                     }
@@ -584,20 +583,38 @@ Next point: “And new, and still” - let’s go!
 
         function spawnOther() {
             let r = Math.random(); let x = Math.random() * (canvas.width - 50);
-            if(r < 0.8) {
-                // Rocks: Natural Colors
+            
+            // Logic: 
+            // 85% Rock
+            // 14% Flask
+            // 1% Ultra (only if previous wasn't ultra)
+            
+            if(r < 0.85) {
+                // ROCKS - Shades of Brown
                 let s = Math.random(); let w = 40 + (s * 35); let h = 30 + (s * 25);
-                const colors = ['#7a7a7a', '#8c8270', '#595959', '#636e72']; // Slate, Brown-Grey, Dark Grey
+                const colors = ['#8B5A2B', '#6F4E37', '#5C4033', '#966F33', '#4E3629']; // Brown Palette
                 let c = colors[Math.floor(Math.random() * colors.length)];
-                
-                // Randomize shape offset slightly for natural look
                 let offset = Math.random() * 10;
-                
                 entities.push({ x:x, y:roadY-60, w:w, h:h, type:'obs', color:c, active:true, off: offset });
-            } else if (r < 0.95) {
+                lastSpawnType = 'obs';
+
+            } else if (r < 0.99) {
+                // FLASK
                 entities.push({x:x, y:roadY-60, w:30, h:40, type:'flask', active:true});
+                lastSpawnType = 'flask';
+
             } else {
-                entities.push({x:x, y:roadY-60, w:35, h:45, type:'ultra', active:true});
+                // ULTRA (Very rare, no doubles)
+                if (lastSpawnType !== 'ultra') {
+                    entities.push({x:x, y:roadY-60, w:35, h:45, type:'ultra', active:true});
+                    lastSpawnType = 'ultra';
+                } else {
+                    // Fallback to rock if double ultra attempted
+                    let s = Math.random(); let w = 40 + (s * 35); let h = 30 + (s * 25);
+                    let c = '#6F4E37';
+                    entities.push({ x:x, y:roadY-60, w:w, h:h, type:'obs', color:c, active:true, off: 5 });
+                    lastSpawnType = 'obs';
+                }
             }
         }
 
@@ -616,7 +633,7 @@ Next point: “And new, and still” - let’s go!
             
             ctx.fillStyle = '#FFF'; bgCache.stars.forEach(s => { ctx.globalAlpha = Math.random() * s.alpha; ctx.fillRect(s.x, s.y, s.s, s.s); }); ctx.globalAlpha = 1.0;
 
-            // 2. Mountains (Dark Blue with Snow Caps)
+            // 2. Mountains
             ctx.fillStyle = '#000033'; 
             ctx.beginPath(); ctx.moveTo(0, roadY);
             bgCache.mountains.forEach(p => ctx.lineTo(p.x, roadY - p.y)); 
@@ -660,10 +677,9 @@ Next point: “And new, and still” - let’s go!
             // 4. ENTITIES
             entities.forEach(e => {
                 if(e.type === 'obs') {
-                    // Draw Natural Boulder Shape
+                    // Natural Boulder
                     ctx.fillStyle = e.color; 
                     ctx.beginPath();
-                    // More irregular polygon
                     let off = e.off || 0;
                     ctx.moveTo(e.x + e.w*0.2 - off, e.y + off); 
                     ctx.lineTo(e.x + e.w*0.8 + off, e.y); 
@@ -672,6 +688,9 @@ Next point: “And new, and still” - let’s go!
                     ctx.lineTo(e.x + e.w*0.2 + off, e.y + e.h*0.9); 
                     ctx.lineTo(e.x - off, e.y + e.h*0.4); 
                     ctx.fill();
+                    // White outline
+                    ctx.strokeStyle = '#FFF'; ctx.lineWidth = 2; ctx.stroke();
+                    ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.fillRect(e.x+10, e.y+10, 10, 10);
                 } 
                 else if(e.type === 'letter') {
                     ctx.fillStyle = '#FFD700'; ctx.beginPath(); ctx.arc(e.x+e.w/2, e.y+e.h/2, e.w/2, 0, Math.PI*2); ctx.fill();
