@@ -112,38 +112,49 @@
             display: flex; flex-direction: column; align-items: center;
             z-index: 90; color: #fff; text-align: center; 
             font-family: 'Montserrat', sans-serif;
-            padding-top: 20px; box-sizing: border-box;
+            padding-top: 10px; box-sizing: border-box;
+            overflow-y: auto; 
         }
 
         .results-box {
             background: #000; border: 2px solid #00FF00;
-            width: 85%; max-width: 500px; height: 25%;
-            margin: 10px 0; padding: 15px;
+            width: 85%; max-width: 500px; height: 15%;
+            margin: 10px 0; padding: 10px;
             overflow-y: auto; text-align: left;
-            font-family: 'Courier New', monospace; font-size: 0.9rem;
+            font-family: 'Courier New', monospace; font-size: 0.8rem;
             line-height: 1.4; white-space: pre-wrap;
             box-shadow: 0 0 10px #00FF00;
             color: #00FF00; text-shadow: 0 0 2px #00FF00;
         }
 
         .social-msg {
-            margin-top: 15px; width: 85%; max-width: 400px;
-            font-size: 0.75rem; color: #FFD700; 
-            text-align: center; opacity: 0.9; line-height: 1.6;
+            margin-top: 5px; width: 85%; max-width: 400px;
+            font-size: 0.7rem; color: #FFD700; 
+            text-align: center; opacity: 0.9; line-height: 1.4;
             font-family: 'Montserrat', sans-serif; font-weight: bold;
             text-transform: uppercase;
         }
 
+        .music-link {
+            display: block; margin-top: 10px;
+            color: #00FFFF; text-decoration: none;
+            border: 1px solid #00FFFF; padding: 10px; border-radius: 5px;
+            font-family: 'Montserrat', sans-serif; font-weight: bold; font-size: 0.7rem;
+            width: 80%; max-width: 350px; transition: all 0.2s;
+            pointer-events: auto;
+        }
+        .music-link:hover { background: rgba(0, 255, 255, 0.2); transform: scale(1.02); }
+
         /* Hall of Fame */
         .hof-container {
             margin-top: 10px; background: rgba(255,255,255,0.08);
-            padding: 15px; border-radius: 10px; width: 85%; max-width: 350px;
+            padding: 10px; border-radius: 10px; width: 85%; max-width: 350px;
             border: 1px solid rgba(255,255,255,0.2);
         }
-        .hof-list { list-style: none; padding: 0; margin: 0; font-size: 0.9rem; text-align: left; }
+        .hof-list { list-style: none; padding: 0; margin: 0; font-size: 0.8rem; text-align: left; }
         .hof-item { 
             display: flex; justify-content: space-between; 
-            padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.1); 
+            padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.1); 
         }
         .hof-item:first-child { color: #FFD700; font-weight: bold; }
 
@@ -190,17 +201,19 @@
 
         .credits {
             position: absolute; bottom: 10px; width: 100%; text-align: center;
-            font-size: 0.7rem; color: #666; font-family: sans-serif; 
-            z-index: 200; /* Highest Z to show on all screens */
-            pointer-events: none;
+            font-size: 0.6rem; color: #666; font-family: sans-serif; 
+            z-index: 200; pointer-events: none;
+        }
+        .credits a {
+            color: #888; text-decoration: underline; pointer-events: auto;
         }
 
         .pixel-btn {
-            padding: 20px 30px; font-size: 1rem; font-family: 'Press Start 2P', cursive;
+            padding: 15px 25px; font-size: 0.9rem; font-family: 'Press Start 2P', cursive;
             background: #FF0000; color: #FFF; border: 4px solid #FFF;
             cursor: pointer; text-transform: uppercase;
             box-shadow: 6px 6px 0px #8B0000; transition: transform 0.1s;
-            pointer-events: auto;
+            pointer-events: auto; margin-top: 10px;
         }
 
     </style>
@@ -250,24 +263,28 @@
         </div>
 
         <div id="screen-gameover" class="overlay-gameover" style="display:none;">
-            <div style="font-size: 2.5rem; color: #FF0000; font-family:'Rubik Glitch';">GAME OVER</div>
-            <div style="font-size: 1.2rem; color: #FFF; margin-bottom: 5px;">ОЙЫН АЯҚТАЛДЫ</div>
+            <div style="font-size: 2rem; color: #FF0000; font-family:'Rubik Glitch';">GAME OVER</div>
             
-            <div style="font-size: 0.9rem; color: #aaa;">STATS: <span id="end-score" style="color: #FFD700; font-weight:bold;">0</span> LETTERS</div>
+            <div style="font-size: 0.8rem; color: #aaa; margin-top:5px;">STATS: <span id="end-score" style="color: #FFD700; font-weight:bold;">0</span> LETTERS</div>
 
             <div class="social-msg">
                 Make a screenshot and share your results and tag us<br>
                 Скрин жасап, нәтижеңмен бөліс және бізді белгіле
             </div>
 
+            <a href="https://bfan.link/jbrla" target="_blank" class="music-link">
+                LISTEN TO JBRLA ON ALL PLATFORMS<br>
+                JBRLA ӘНІН БАРЛЫҚ ПЛАТФОРМАЛАРДА ТЫҢДАҢЫЗ
+            </a>
+
             <div class="results-box" id="lyrics-result"></div>
 
             <div class="hof-container">
-                <div style="color:#FFD700; font-family:'Permanent Marker'; margin-bottom:10px;">HALL OF FAME</div>
+                <div style="color:#FFD700; font-family:'Permanent Marker'; margin-bottom:5px;">HALL OF FAME</div>
                 <ul id="hof-list" class="hof-list"></ul>
             </div>
             
-            <button class="pixel-btn" style="margin-top: 10px; border-radius:10px; font-size: 0.8rem;" onclick="resetGame()">RIDE AGAIN</button>
+            <button class="pixel-btn" onclick="resetGame()">RIDE AGAIN</button>
         </div>
 
         <div id="controls">
@@ -277,7 +294,10 @@
             <div id="btn-right" class="ctrl-btn">▶</div>
         </div>
 
-        <div class="credits">Created using AI tools by Yadykar Ibraimov</div>
+        <div class="credits">
+            Created using AI tools by 
+            <a href="https://www.instagram.com/yangisar/" target="_blank">Yadykar Ibraimov</a>
+        </div>
     </div>
 
     <script>
@@ -527,7 +547,6 @@ Next point: “And new, and still” - let’s go!
 
         function update() {
             // Calculate Difficulty with Slow Down Offset
-            // speedOffset subtracts from the difficulty ramp-up
             let rawDiff = 1 + (score / 50);
             difficulty = Math.max(1, rawDiff - speedOffset);
             
@@ -603,8 +622,6 @@ Next point: “And new, and still” - let’s go!
                             AudioSys.playTone(600, 'square', 0.15);
                             triggerPopup('gorilla-popup');
                         } else if(e.type === 'slow') {
-                            // RESET SPEED LOGIC
-                            // We set speedOffset to cancel out the current score multiplier
                             speedOffset = (score / 50); 
                             AudioSys.playTone(200, 'sine', 0.3);
                             triggerPopup('slow-popup');
@@ -657,10 +674,10 @@ Next point: “And new, and still” - let’s go!
                 entities.push({ x:x, y:roadY-60, w:w, h:h, type:'obs', color:c, active:true, off: offset });
 
             } else if (r < 0.96) {
-                // HEALTH FLASK
+                // HEALTH
                 entities.push({x:x, y:roadY-60, w:30, h:40, type:'flask', active:true});
             } else {
-                // SLOW DOWN FLASK (Rare: 4%)
+                // SLOW DOWN (4%)
                 entities.push({x:x, y:roadY-60, w:30, h:40, type:'slow', active:true});
             }
         }
