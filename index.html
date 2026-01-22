@@ -53,7 +53,7 @@
                 linear-gradient(90deg, rgba(0, 255, 0, 0.2) 1px, transparent 1px);
             background-size: 40px 40px;
             display: flex; flex-direction: column;
-            justify-content: center; align-items: center; /* CENTERED */
+            justify-content: center; align-items: center;
             z-index: 100; color: #fff; text-align: center;
             font-family: 'Montserrat', sans-serif;
             padding: 20px; box-sizing: border-box;
@@ -64,9 +64,14 @@
             font-family: 'Press Start 2P', cursive;
             font-size: 1.8rem; color: #FFF;
             text-shadow: 4px 4px 0px #FF0000, -2px -2px 0px #0000FF;
-            margin-bottom: 20px; line-height: 1.4;
+            margin-bottom: 5px; line-height: 1.4;
             text-align: center;
         }
+        
+        .credits-sub {
+            font-size: 0.6rem; color: #888; margin-bottom: 20px; font-family: sans-serif;
+        }
+        .credits-sub a { color: #AAA; text-decoration: underline; pointer-events: auto; }
 
         #intro-section {
             display: flex; flex-direction: column; align-items: center;
@@ -181,13 +186,6 @@
         #btn-right { bottom: 0px; right: 10px; width: 70px; height: 70px; font-size: 2rem; }
         #btn-down { bottom: 85px; right: 25px; width: 45px; height: 45px; }
 
-        /* --- CREDITS --- */
-        .credits {
-            margin-top: auto; padding-bottom: 10px;
-            font-size: 0.6rem; color: #888; text-align: center;
-        }
-        .credits a { color: #AAA; text-decoration: underline; pointer-events: auto; }
-
         /* Hall of Fame */
         .hof-container {
             margin-top: 10px; background: rgba(255,255,255,0.08);
@@ -227,6 +225,9 @@
 
         <div id="screen-start" class="screen-overlay">
             <div class="pixel-title-main">DAIYNBALL: JBRLA</div>
+            <div class="credits-sub">
+                Created using AI tools by Yadykar Ibraimov <a href="https://www.instagram.com/yangisar/" target="_blank">@yangisar</a>
+            </div>
             
             <div id="intro-section">
                 <div class="instructions">
@@ -242,10 +243,6 @@
 
                 <input type="text" id="nickname" class="pixel-input" placeholder="NICKNAME" maxlength="12">
                 <button class="pixel-btn-go" onclick="showDifficulty()">Let's Go! / Кеттік!</button>
-                
-                <div class="credits">
-                    Created using AI tools by Yadykar Ibraimov <a href="https://www.instagram.com/yangisar/" target="_blank">@yangisar</a>
-                </div>
             </div>
 
             <div id="difficulty-section">
@@ -274,10 +271,6 @@
             </div>
             
             <button class="pixel-btn-go" style="margin-top:15px; font-size:0.8rem;" onclick="resetGame()">RIDE AGAIN</button>
-
-            <div class="credits">
-                Created using AI tools by Yadykar Ibraimov <a href="https://www.instagram.com/yangisar/" target="_blank">@yangisar</a>
-            </div>
         </div>
 
         <div id="controls">
@@ -312,25 +305,26 @@
             stopUltra: function() { this.ultraSound.pause(); }
         };
 
-        /** ☁️ LEADERBOARD (HTTPS Fixed) **/
+        /** ☁️ LEADERBOARD (Secure & Fixed) **/
         const StorageSys = {
             privateCode: "TbEgYk4m1k6AiaZ5bguZqwNWpZbGt8hkSJBVFdEavkTw", 
             publicCode:  "6971059b8f40bb1184ba9e1e",  
             url: "https://www.dreamlo.com/lb/",
             save: async function(name, score) {
                 let safeName = encodeURIComponent(name || "RIDER");
-                try { await fetch(`${this.url}${this.privateCode}/add/${safeName}/${score}`); } catch (e) {}
+                // Timestamp to prevent caching
+                try { await fetch(`${this.url}${this.privateCode}/add/${safeName}/${score}?t=${Date.now()}`); } catch (e) {}
             },
             getTop: async function() {
                 try {
-                    const res = await fetch(`${this.url}${this.publicCode}/json`);
+                    const res = await fetch(`${this.url}${this.publicCode}/json?t=${Date.now()}`);
                     const data = await res.json();
                     if (!data?.dreamlo?.leaderboard) return [];
                     let entries = data.dreamlo.leaderboard.entry;
                     if (!entries) return [];
                     if (!Array.isArray(entries)) entries = [entries];
                     return entries.slice(0, 5).map(e => ({ name: decodeURIComponent(e.name).replace(/\+/g, ' '), score: parseInt(e.score) }));
-                } catch (e) { return []; }
+                } catch (e) { return null; }
             }
         };
 
@@ -446,7 +440,7 @@ Next point: “And new, and still” - let’s go!
         let roadY, roadH, bgCache = { mountains: [], buildings: [], stars: [] }, gameState = 'START';
         let nickname = "", currentDiff = 'medium', damageDealt = 25, spawnMultiplier = 1.0, speedOffset = 0;
         let spawnIndex = 0, score = 0, totalLetters = 0, baseSpeed = 7, difficulty = 1, roadOffset = 0;
-        let entities = [], particles = [], spikeEndTime = 0, savageEndTime = 0, nextLetterTime = 0;
+        let entities = [], particles = [], spikeEndTime = 0, savageEndTime = 0, nextLetterTime = 0, lastUltraSpawnTime = 0;
         let consecutiveFlasks = 0;
         const car = { x:0, y:0, w:42, h:75, health:100 };
         const keys = {u:false, d:false, l:false, r:false};
@@ -494,20 +488,19 @@ Next point: “And new, and still” - let’s go!
         }
 
         function update() {
-            // Calculate Total Letters Count for Victory
+            // Calculate Total Letters
             if(totalLetters === 0) {
                  for(let i=0; i<fullLyrics.length; i++) {
                      if(fullLyrics[i] !== ' ' && fullLyrics[i] !== '\n') totalLetters++;
                  }
             }
 
-            // Savage Mode Logic
             const isSavage = Date.now() < savageEndTime;
             const isSpiked = Date.now() < spikeEndTime;
             
-            // Difficulty Ramping
+            // Difficulty & Speed
             let rawDiff = (1 + (score/50));
-            if(isSavage) rawDiff = 2.5; // Drastic speed increase in Savage Mode
+            if(isSavage) rawDiff = 20; // HYPERSPEED
             else rawDiff -= speedOffset;
 
             difficulty = Math.max(1, rawDiff);
@@ -530,9 +523,8 @@ Next point: “And new, and still” - let’s go!
                 if(spawnIndex < fullLyrics.length) {
                     entities.push({x:Math.random()*(canvas.width-40), y:roadY-60, w:40, h:40, type:'letter', char:fullLyrics[spawnIndex], active:true});
                     spawnIndex++; 
-                    nextLetterTime = Date.now() + (200 / (isSavage ? 2 : 1)) + Math.random()*600;
+                    nextLetterTime = Date.now() + (200 / (isSavage ? 2.5 : 1)) + Math.random()*600;
                 } else {
-                    // Song finished spawning
                     if(entities.filter(e=>e.type==='letter').length === 0) endGame();
                 }
             }
@@ -582,13 +574,15 @@ Next point: “And new, and still” - let’s go!
             });
             entities = entities.filter(e => e.y < canvas.height && e.active);
             
-            // Particles Update
-            particles.forEach((p,i) => { p.x += p.vx; p.y += p.vy; p.vy += 0.5; p.l -= 0.05; if(p.l<=0) particles.splice(i,1); });
-
-            // Savage Trail
+            // Particles Update (Straight Trail during Savage)
             if(isSavage) {
-                if(Math.random()>0.5) spawnParticles(car.x+car.w/2, car.y+car.h, '#9400D3', 1);
+                // Three straight purple lines
+                spawnTrail(car.x + 5, car.y + car.h, '#9400D3');
+                spawnTrail(car.x + car.w/2, car.y + car.h, '#BA55D3');
+                spawnTrail(car.x + car.w - 5, car.y + car.h, '#4B0082');
             }
+            
+            particles.forEach((p,i) => { p.x += p.vx; p.y += p.vy; p.vy += 0.5; p.l -= 0.05; if(p.l<=0) particles.splice(i,1); });
 
             if(car.health <= 0) endGame();
             
@@ -605,6 +599,20 @@ Next point: “And new, and still” - let’s go!
 
         function spawnOther() {
             let x = Math.random()*(canvas.width-40), now = Date.now(), r = Math.random();
+            
+            // Ultra Guarantee check
+            if (now - lastUltraSpawnTime > 15000) {
+                 entities.push({x:x, y:roadY-60, w:35, h:45, type:'ultra', active:true});
+                 lastUltraSpawnTime = now;
+                 return;
+            }
+
+            if(r < 0.05 && now - lastUltraSpawnTime > 8000) {
+                 entities.push({x:x, y:roadY-60, w:35, h:45, type:'ultra', active:true});
+                 lastUltraSpawnTime = now;
+                 return;
+            }
+
             if(r < 0.8) {
                 let s = Math.random(); let w = 40+(s*35); let h=30+(s*25);
                 const colors = ['#8B5A2B', '#6F4E37', '#5C4033', '#966F33', '#4E3629']; 
@@ -618,8 +626,14 @@ Next point: “And new, and still” - let’s go!
              for(let i=0;i<count;i++) particles.push({x:x, y:y, vx:(Math.random()-0.5)*15, vy:(Math.random()-1)*15, l:1, color:c});
         }
 
+        function spawnTrail(x,y,c) {
+             particles.push({x:x, y:y, vx:0, vy:5, l:0.5, color:c}); // Straight down
+        }
+
         function draw() {
             if(gameState !== 'PLAYING') return;
+            const isSavage = Date.now() < savageEndTime;
+            
             ctx.clearRect(0,0,canvas.width,canvas.height);
             // Sky
             let grad = ctx.createLinearGradient(0,0,0,roadY); grad.addColorStop(0,'#000022'); grad.addColorStop(1,'#000055');
@@ -653,21 +667,29 @@ Next point: “And new, and still” - let’s go!
             ctx.fillStyle = '#111'; ctx.fillRect(0, roadY-2, canvas.width, 4);
 
             // Markings
-            ctx.fillStyle = '#888888'; 
-            const laneCount = 4; const laneW = canvas.width / laneCount;
-            const dashH = 60; const dashGap = 150; const pattern = dashH + dashGap;
-            for(let l=1; l<laneCount; l++) {
-                let lx = l * laneW;
-                for(let y = roadY - pattern; y < canvas.height; y += pattern) {
-                    let dy = y + (roadOffset % pattern);
-                    if(dy > roadY - dashH && dy < canvas.height) ctx.fillRect(lx - 2, dy, 4, dashH);
+            if(isSavage) {
+                // SOLID LINES FOR HYPERSPEED
+                ctx.fillStyle = '#888888'; 
+                const laneCount = 4; const laneW = canvas.width / laneCount;
+                for(let l=1; l<laneCount; l++) {
+                    ctx.fillRect((l * laneW) - 2, roadY, 4, roadH);
+                }
+            } else {
+                ctx.fillStyle = '#888888'; 
+                const laneCount = 4; const laneW = canvas.width / laneCount;
+                const dashH = 60; const dashGap = 150; const pattern = dashH + dashGap;
+                for(let l=1; l<laneCount; l++) {
+                    let lx = l * laneW;
+                    for(let y = roadY - pattern; y < canvas.height; y += pattern) {
+                        let dy = y + (roadOffset % pattern);
+                        if(dy > roadY - dashH && dy < canvas.height) ctx.fillRect(lx - 2, dy, 4, dashH);
+                    }
                 }
             }
             
             // Entities
             entities.forEach(e => {
                 if(e.type === 'obs') {
-                    // Natural Boulder
                     ctx.fillStyle = e.color; 
                     ctx.beginPath();
                     let off = e.off || 0;
@@ -678,7 +700,6 @@ Next point: “And new, and still” - let’s go!
                     ctx.lineTo(e.x + e.w*0.2 + off, e.y + e.h*0.9); 
                     ctx.lineTo(e.x - off, e.y + e.h*0.4); 
                     ctx.fill();
-                    // White outline
                     ctx.strokeStyle = '#FFF'; ctx.lineWidth = 2; ctx.stroke();
                     ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.fillRect(e.x+10, e.y+10, 10, 10);
                 } 
@@ -688,7 +709,6 @@ Next point: “And new, and still” - let’s go!
                     ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(e.x+e.w/2, e.y+e.h/2, e.w/2-2, 0, Math.PI*2); ctx.stroke();
                 } 
                 else if(e.type === 'flask') {
-                    // TIN CAN (Light Blue with Red G)
                     ctx.fillStyle = '#00BFFF'; ctx.fillRect(e.x, e.y, e.w, e.h); // Body
                     ctx.fillStyle = '#009ACD'; ctx.fillRect(e.x, e.y, e.w, 4); ctx.fillRect(e.x, e.y+e.h-4, e.w, 4); // Rims
                     ctx.fillStyle = '#FFF'; ctx.fillRect(e.x+5, e.y+20, e.w-10, 5); // Shine
@@ -696,7 +716,6 @@ Next point: “And new, and still” - let’s go!
                     ctx.save(); ctx.translate(e.x+e.w/2, e.y+e.h/2); ctx.scale(0.8, 1.5); ctx.fillText('G', 0, 8); ctx.restore();
                 }
                 else if(e.type === 'slow') {
-                    // Slow Down (Car Brakes)
                     ctx.fillStyle = '#CCCCCC'; ctx.beginPath(); ctx.arc(e.x + e.w/2, e.y + e.h/2, e.w/2 - 2, 0, Math.PI*2); ctx.fill();
                     ctx.fillStyle = '#555'; ctx.beginPath(); ctx.arc(e.x + e.w/2, e.y + e.h/2, 5, 0, Math.PI*2); ctx.fill();
                     ctx.fillStyle = '#FF0000'; ctx.fillRect(e.x + e.w - 12, e.y + 8, 10, 24);
@@ -739,7 +758,7 @@ Next point: “And new, and still” - let’s go!
             ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(x+6, y+6, w, h);
             
             // CAR BODY
-            ctx.fillStyle = isSavage ? '#9400D3' : '#2979FF'; // Purple if savage, Blue normal
+            ctx.fillStyle = isSavage ? '#9400D3' : '#2979FF'; 
             ctx.beginPath(); ctx.roundRect(x, y, w, h, 4); ctx.fill();
             
             // Windshield
@@ -815,7 +834,11 @@ Next point: “And new, and still” - let’s go!
             document.getElementById('hof-list').innerHTML = "<li style='color:#888'>Loading...</li>";
             await StorageSys.save(nickname, score);
             const top = await StorageSys.getTop();
-            document.getElementById('hof-list').innerHTML = top.length ? top.map(e => `<li class='hof-item'><span>${e.name}</span><span>${e.score}</span></li>`).join('') : "<li>No scores yet</li>";
+            if(top) {
+                document.getElementById('hof-list').innerHTML = top.length ? top.map(e => `<li class='hof-item'><span>${e.name}</span><span>${e.score}</span></li>`).join('') : "<li>No scores yet</li>";
+            } else {
+                document.getElementById('hof-list').innerHTML = "<li style='color:#F00'>Scoreboard Offline</li>";
+            }
         }
 
         function resetGame() { location.reload(); }
