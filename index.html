@@ -266,7 +266,7 @@
             </a>
 
             <div class="hof-container">
-                <div style="color:#FFD700; font-family:'Permanent Marker'; margin-bottom:5px;">HALL OF FAME</div>
+                <div style="color:#FFD700; font-family:'Permanent Marker'; margin-bottom:5px;">LEADERBOARD</div>
                 <ul id="hof-list" class="hof-list"></ul>
             </div>
             
@@ -281,8 +281,27 @@
         </div>
     </div>
 
-    <script>
-        /** 🎵 AUDIO **/
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+        import { getDatabase, ref, push, query, orderByChild, limitToLast, get } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-database.js";
+
+        // FIREBASE CONFIG
+        const firebaseConfig = {
+            apiKey: "AIzaSyDdE_h-97aNDw7KjtSpyOjotGVHhkq-lxg",
+            authDomain: "scoreboardracinggame.firebaseapp.com",
+            projectId: "scoreboardracinggame",
+            storageBucket: "scoreboardracinggame.firebasestorage.app",
+            messagingSenderId: "845302518217",
+            appId: "1:845302518217:web:abac825a32f845920b9818",
+            databaseURL: "https://scoreboardracinggame-default-rtdb.asia-southeast1.firebasedatabase.app/"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // --- GAME LOGIC STARTS HERE ---
+
         const AudioSys = {
             ctx: null, bgMusic: document.getElementById('bgMusic'), ultraSound: document.getElementById('ultraSound'),
             init: function() { 
@@ -305,26 +324,33 @@
             stopUltra: function() { this.ultraSound.pause(); }
         };
 
-        /** ☁️ LEADERBOARD (Secure & Fixed) **/
         const StorageSys = {
-            privateCode: "TbEgYk4m1k6AiaZ5bguZqwNWpZbGt8hkSJBVFdEavkTw", 
-            publicCode:  "6971059b8f40bb1184ba9e1e",  
-            url: "https://www.dreamlo.com/lb/",
             save: async function(name, score) {
-                let safeName = encodeURIComponent(name || "RIDER");
-                // Timestamp to prevent caching
-                try { await fetch(`${this.url}${this.privateCode}/add/${safeName}/${score}?t=${Date.now()}`); } catch (e) {}
+                const scoresRef = ref(db, 'scores');
+                try {
+                    await push(scoresRef, {
+                        name: name || "RIDER",
+                        score: parseInt(score),
+                        timestamp: Date.now()
+                    });
+                } catch(e) { console.error("Firebase Save Error:", e); }
             },
             getTop: async function() {
+                const scoresRef = ref(db, 'scores');
+                const topScoresQuery = query(scoresRef, orderByChild('score'), limitToLast(5));
                 try {
-                    const res = await fetch(`${this.url}${this.publicCode}/json?t=${Date.now()}`);
-                    const data = await res.json();
-                    if (!data?.dreamlo?.leaderboard) return [];
-                    let entries = data.dreamlo.leaderboard.entry;
-                    if (!entries) return [];
-                    if (!Array.isArray(entries)) entries = [entries];
-                    return entries.slice(0, 5).map(e => ({ name: decodeURIComponent(e.name).replace(/\+/g, ' '), score: parseInt(e.score) }));
-                } catch (e) { return null; }
+                    const snapshot = await get(topScoresQuery);
+                    if (snapshot.exists()) {
+                        const data = [];
+                        snapshot.forEach((childSnapshot) => { data.push(childSnapshot.val()); });
+                        return data.reverse(); // Reverse for descending order
+                    } else {
+                        return [];
+                    }
+                } catch (error) {
+                    console.error("Firebase Get Error:", error);
+                    return null;
+                }
             }
         };
 
@@ -668,7 +694,7 @@ Next point: “And new, and still” - let’s go!
 
             // Markings
             if(isSavage) {
-                // SOLID LINES FOR HYPERSPEED
+                // SOLID LINES FOR HYPERSPEED (Motion Blur Effect)
                 ctx.fillStyle = '#888888'; 
                 const laneCount = 4; const laneW = canvas.width / laneCount;
                 for(let l=1; l<laneCount; l++) {
@@ -825,7 +851,6 @@ Next point: “And new, and still” - let’s go!
                  tempIndex++;
             }
             if(!isVictory && score < totalLetters) {
-                // If failed, show red "MISSED" text at end of lyrics
                 collected += " ... [MISSED " + (totalLetters - score) + " LETTERS]";
             }
             document.getElementById('lyrics-result').innerText = collected;
@@ -837,11 +862,17 @@ Next point: “And new, and still” - let’s go!
             if(top) {
                 document.getElementById('hof-list').innerHTML = top.length ? top.map(e => `<li class='hof-item'><span>${e.name}</span><span>${e.score}</span></li>`).join('') : "<li>No scores yet</li>";
             } else {
-                document.getElementById('hof-list').innerHTML = "<li style='color:#F00'>Scoreboard Offline</li>";
+                document.getElementById('hof-list').innerHTML = "<li style='color:#F00'>Leaderboard Error</li>";
             }
         }
 
         function resetGame() { location.reload(); }
+
+        // EXPOSE GLOBAL FUNCTIONS because module scope is private
+        window.initGame = initGame;
+        window.showDifficulty = showDifficulty;
+        window.resetGame = resetGame;
+
         resize();
     </script>
 </body>
