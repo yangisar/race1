@@ -392,7 +392,7 @@
             const isSpiked = Date.now() < spikeEndTime;
             
             let rawDiff = (1 + (score/50));
-            if(isSavage) rawDiff = 4.0; // Moderate increase to keep playable
+            if(isSavage) rawDiff = 4.0; 
             else rawDiff -= speedOffset;
 
             difficulty = Math.max(1, rawDiff);
@@ -416,7 +416,14 @@
             }
 
             if(spawnIndex >= fullLyrics.length && entities.length === 0) endGame();
-            if(Math.random() < (0.02 * spawnMultiplier + (difficulty * 0.004))) spawnOther();
+            
+            // SPAWN LOGIC - INCREASE DURING SAVAGE
+            let spawnRate = (0.02 * spawnMultiplier) + (difficulty * 0.004);
+            if (isSavage && (savageEndTime - Date.now() > 500)) { // 90% of duration
+                 spawnRate = 0.2; // HIGH SPAWN RATE
+            }
+            if(Math.random() < spawnRate) spawnOther();
+            
             if(!isSpiked && !isSavage) AudioSys.stopUltra();
 
             entities.forEach(e => {
@@ -440,6 +447,7 @@
                 }
             });
             entities = entities.filter(e => e.y < canvas.height && e.active);
+            
             if(isSavage) {
                 spawnTrail(car.x + 5, car.y + car.h, '#9400D3');
                 spawnTrail(car.x + car.w/2, car.y + car.h, '#BA55D3');
@@ -470,20 +478,22 @@
                  return;
             }
 
-            // 2. Extra Stones in Savage Mode (Independent Check)
-            if(isSavage && Math.random() < 0.3) {
-                 entities.push({x:Math.random()*(canvas.width-40), y:roadY-60, w:40, h:30, type:'obs', color:'#5C4033', active:true, off:2});
+            // 2. SAVAGE MODE: ONLY ROCKS (Mostly)
+            if(isSavage && (savageEndTime - Date.now() > 500)) {
+                 // Spawning mostly rocks for smashing
+                 entities.push({x:x, y:roadY-60, w:40+Math.random()*20, h:30+Math.random()*20, type:'obs', color:colors[Math.floor(Math.random()*colors.length)], active:true, off:Math.random()*5});
+                 return; 
             }
 
-            // 3. Normal Spawn Distribution
-            if(r < 0.7) { // 70% chance for stone
+            // 3. Normal Distribution
+            if(r < 0.75) { 
                 let w = 40 + Math.random()*30; let h = 30 + Math.random()*20;
                 entities.push({x, y:roadY-60, w:w, h:h, type:'obs', color:colors[Math.floor(Math.random()*colors.length)], active:true, off:Math.random()*5});
             }
-            else if(r < 0.90) { // 20% chance for Flask (Heart)
+            else if(r < 0.90) { 
                 entities.push({x, y:roadY-60, w:35, h:35, type:'flask', active:true});
             }
-            else { // 10% chance for Slow
+            else { 
                 entities.push({x, y:roadY-60, w:35, h:35, type:'slow', active:true});
             }
         }
@@ -495,10 +505,12 @@
             if(gameState !== 'PLAYING') return;
             const isSavage = Date.now() < savageEndTime;
             ctx.clearRect(0,0,canvas.width,canvas.height);
+            // SKY
             let grad = ctx.createLinearGradient(0,0,0,roadY); grad.addColorStop(0,'#000022'); grad.addColorStop(1,'#000055');
             ctx.fillStyle = grad; ctx.fillRect(0,0,canvas.width, roadY);
             ctx.fillStyle = '#FFF'; bgCache.stars.forEach(s => { ctx.globalAlpha=s.alpha; ctx.fillRect(s.x, s.y, s.s, s.s); }); ctx.globalAlpha=1;
             
+            // BG
             ctx.fillStyle = '#000033'; ctx.beginPath(); ctx.moveTo(0, roadY);
             bgCache.mountains.forEach(p => ctx.lineTo(p.x, roadY - p.y)); ctx.lineTo(canvas.width, roadY); ctx.fill();
             ctx.fillStyle = '#FFF';
@@ -509,7 +521,13 @@
             });
             drawLandmarks();
             
+            // ROAD
             ctx.fillStyle = '#222'; ctx.fillRect(0, roadY, canvas.width, roadH);
+            
+            // ADD NOISE TO ROAD
+            ctx.fillStyle = 'rgba(0,0,0,0.2)'; 
+            for(let i=0; i<20; i++) ctx.fillRect(Math.random()*canvas.width, roadY+Math.random()*roadH, 2, 2);
+
             ctx.fillStyle = '#1e1a15'; ctx.fillRect(0, roadY, 15, roadH); ctx.fillRect(canvas.width-15, roadY, 15, roadH);
             ctx.fillStyle = '#111'; ctx.fillRect(0, roadY-2, canvas.width, 4);
 
@@ -531,48 +549,58 @@
             
             entities.forEach(e => {
                 if(e.type === 'obs') {
-                    ctx.fillStyle = e.color; 
-                    // Draw Simple Stone (Trapezoid)
+                    // 3D ROCK GRADIENT
+                    let rGrad = ctx.createLinearGradient(e.x, e.y, e.x, e.y+e.h);
+                    rGrad.addColorStop(0, '#755'); rGrad.addColorStop(1, '#322');
+                    ctx.fillStyle = rGrad;
+                    
+                    // POLYGON SHAPE
                     ctx.beginPath();
                     ctx.moveTo(e.x + 5, e.y + e.h); 
                     ctx.lineTo(e.x + e.w - 5, e.y + e.h);
                     ctx.lineTo(e.x + e.w, e.y + 10);
-                    ctx.lineTo(e.x + e.w/2, e.y);
+                    ctx.lineTo(e.x + e.w*0.6, e.y - 5); // Peak
+                    ctx.lineTo(e.x + e.w*0.3, e.y);
                     ctx.lineTo(e.x, e.y + 10);
+                    ctx.closePath();
                     ctx.fill();
-                    // Detail
-                    ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.moveTo(e.x+e.w/2, e.y); ctx.lineTo(e.x+e.w, e.y+10); ctx.lineTo(e.x+e.w-5, e.y+e.h); ctx.lineTo(e.x+e.w/2, e.y+e.h); ctx.fill();
+                    
+                    // REQUESTED GREY STROKE
+                    ctx.strokeStyle = '#999'; ctx.lineWidth = 2; ctx.stroke();
+
+                    // CRACKS
+                    ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.moveTo(e.x+e.w/2, e.y); ctx.lineTo(e.x+e.w, e.y+10); ctx.stroke();
                 } 
                 else if(e.type === 'letter') {
                     ctx.fillStyle = '#FFD700'; ctx.beginPath(); ctx.arc(e.x+e.w/2, e.y+e.h/2, e.w/2, 0, Math.PI*2); ctx.fill();
                     ctx.fillStyle = '#000'; ctx.font='bold 20px Arial'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(e.char, e.x+e.w/2, e.y+e.h/2);
-                    ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(e.x+e.w/2, e.y+e.h/2, e.w/2-2, 0, Math.PI*2); ctx.stroke();
+                    ctx.strokeStyle = '#FFF'; ctx.lineWidth=2; ctx.stroke();
                 } 
                 else if(e.type === 'flask') {
                     // BLUE HEART
                     ctx.fillStyle = '#00BFFF';
                     const hx = e.x + e.w/2, hy = e.y + e.h/2, size = e.w/2;
                     ctx.beginPath();
-                    ctx.moveTo(hx, hy + size*0.8);
+                    ctx.moveTo(hx, hy + size*0.7);
                     ctx.bezierCurveTo(hx + size, hy, hx + size, hy - size, hx, hy - size*0.4);
-                    ctx.bezierCurveTo(hx - size, hy - size, hx - size, hy, hx, hy + size*0.8);
+                    ctx.bezierCurveTo(hx - size, hy - size, hx - size, hy, hx, hy + size*0.7);
                     ctx.fill();
+                    ctx.strokeStyle='#009ACD'; ctx.lineWidth=1; ctx.stroke();
                     
                     // WRENCH X
                     ctx.strokeStyle = '#EEE'; ctx.lineWidth = 3; ctx.lineCap = 'round';
                     ctx.beginPath();
-                    ctx.moveTo(hx - 8, hy - 8); ctx.lineTo(hx + 8, hy + 8);
-                    ctx.moveTo(hx + 8, hy - 8); ctx.lineTo(hx - 8, hy + 8);
+                    ctx.moveTo(hx - 6, hy - 6); ctx.lineTo(hx + 6, hy + 6);
+                    ctx.moveTo(hx + 6, hy - 6); ctx.lineTo(hx - 6, hy + 6);
                     ctx.stroke();
                 }
                 else if(e.type === 'slow') {
-                    ctx.fillStyle = '#CCCCCC'; ctx.beginPath(); ctx.arc(e.x + e.w/2, e.y + e.h/2, e.w/2 - 2, 0, Math.PI*2); ctx.fill();
-                    ctx.fillStyle = '#555'; ctx.beginPath(); ctx.arc(e.x + e.w/2, e.y + e.h/2, 5, 0, Math.PI*2); ctx.fill();
-                    ctx.fillStyle = '#FF0000'; ctx.fillRect(e.x + e.w - 12, e.y + 8, 10, 24); ctx.fillStyle = '#FFF'; ctx.fillRect(e.x + 10, e.y + 10, 4, 4);
+                    ctx.fillStyle = '#CCC'; ctx.beginPath(); ctx.arc(e.x+e.w/2, e.y+e.h/2, e.w/2-2, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = '#F00'; ctx.fillRect(e.x+e.w-12, e.y+8, 10, 24);
                 }
                 else if(e.type === 'ultra') {
                     ctx.shadowBlur = 15; ctx.shadowColor = '#9400D3'; ctx.fillStyle = '#9400D3'; ctx.fillRect(e.x, e.y+5, e.w, e.h-5); ctx.shadowBlur = 0;
-                    ctx.fillStyle = '#333'; ctx.fillRect(e.x+e.w*0.3, e.y, e.w*0.4, 5); ctx.fillStyle = '#FFF'; ctx.font='bold 22px Arial'; ctx.fillText('⚡', e.x+e.w/2, e.y+e.h/2+5);
+                    ctx.fillStyle = '#FFF'; ctx.font='bold 22px Arial'; ctx.fillText('⚡', e.x+e.w/2, e.y+e.h/2+5);
                 }
             });
 
@@ -594,18 +622,36 @@
             const {x, y, w, h} = car;
             const isSavage = Date.now() < savageEndTime;
             const isSpiked = Date.now() < spikeEndTime;
+            
+            // Ghost effect if Spiked
             if(isSpiked) {
-                ctx.fillStyle = '#AAA'; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x+10, y-25); ctx.lineTo(x+15, y);
-                ctx.moveTo(x+12, y); ctx.lineTo(x+21, y-30); ctx.lineTo(x+30, y); ctx.moveTo(x+27, y); ctx.lineTo(x+32, y-25); ctx.lineTo(x+w, y); ctx.fill();
+                ctx.globalAlpha = 0.5;
             }
+            
             ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(x+6, y+6, w, h);
-            ctx.fillStyle = isSavage ? '#9400D3' : '#2979FF'; 
+            
+            // CAR BODY GRADIENT
+            let cGrad = ctx.createLinearGradient(x,y,x+w,y);
+            if(isSavage) { cGrad.addColorStop(0,'#9400D3'); cGrad.addColorStop(0.5,'#DDA0DD'); cGrad.addColorStop(1,'#9400D3'); }
+            else { cGrad.addColorStop(0,'#0055AA'); cGrad.addColorStop(0.5,'#44AAFF'); cGrad.addColorStop(1,'#0055AA'); }
+            
+            ctx.fillStyle = cGrad;
             ctx.beginPath(); ctx.roundRect(x, y, w, h, 4); ctx.fill();
-            ctx.fillStyle = '#222'; ctx.fillRect(x+2, y+18, w-4, h-30);
+            
+            // Windshield (Glassy)
+            let wGrad = ctx.createLinearGradient(x,y+18,x+w,y+40);
+            wGrad.addColorStop(0, '#111'); wGrad.addColorStop(0.5, '#444'); wGrad.addColorStop(1, '#111');
+            ctx.fillStyle = wGrad; ctx.fillRect(x+2, y+18, w-4, h-30);
+            
+            // Text
             ctx.save(); ctx.translate(x+w/2, y+h/2); ctx.rotate(-Math.PI/2); ctx.scale(1, 1.8); 
             ctx.fillStyle = '#FFFFFF'; ctx.font='bold 9px Arial'; ctx.textAlign='center'; ctx.fillText("DAIYNBALL", 0, 4); ctx.restore();
-            ctx.shadowBlur = 15; ctx.shadowColor = '#FF0'; ctx.fillStyle = '#FFEB3B'; ctx.fillRect(x+2, y, 8, 6); ctx.fillRect(x+w-10, y, 8, 6);
-            ctx.shadowBlur = 10; ctx.shadowColor = '#F00'; ctx.fillStyle = '#D32F2F'; ctx.fillRect(x+2, y+h-6, 8, 6); ctx.fillRect(x+w-10, y+h-6, 8, 6); ctx.shadowBlur = 0;
+            
+            // Lights
+            ctx.shadowBlur = 10; ctx.shadowColor = '#FF0'; ctx.fillStyle = '#FFEB3B'; ctx.fillRect(x+2, y, 8, 6); ctx.fillRect(x+w-10, y, 8, 6);
+            ctx.shadowColor = '#F00'; ctx.fillStyle = '#D32F2F'; ctx.fillRect(x+2, y+h-6, 8, 6); ctx.fillRect(x+w-10, y+h-6, 8, 6);
+            ctx.shadowBlur = 0;
+            ctx.globalAlpha = 1.0;
         }
 
         function initGame(diff) {
@@ -626,12 +672,10 @@
             gameState = 'OVER';
             AudioSys.stopUltra();
             document.getElementById('screen-end').style.display = 'flex';
-            
             let isVictory = (car.health > 0) && (score >= totalLetters);
             const titleEl = document.getElementById('end-title');
             if(isVictory) { titleEl.innerText = "VICTORY!"; titleEl.style.color = "#FFD700"; triggerPopup('victory-popup'); } 
             else { titleEl.innerText = "GAME OVER"; titleEl.style.color = "#FF0000"; }
-
             let collected = ""; let tempIndex = 0; let lettersFound = 0;
             while(lettersFound < score && tempIndex < fullLyrics.length) {
                  if(fullLyrics[tempIndex] !== ' ' && fullLyrics[tempIndex] !== '\n') lettersFound++;
@@ -639,13 +683,10 @@
             }
             if(!isVictory && score < totalLetters) collected += " ... [MISSED " + (totalLetters - score) + " LETTERS]";
             document.getElementById('lyrics-result').innerText = collected;
-
             StorageSys.save(nickname, score, currentDiff);
             const top = StorageSys.getTop();
             if(top.length > 0) {
-                document.getElementById('hof-list').innerHTML = top.map(e => 
-                    `<li class='hof-item'><span>${e.name} <span class="mode-tag">${e.mode}</span></span><span>${e.score}</span></li>`
-                ).join('');
+                document.getElementById('hof-list').innerHTML = top.map(e => `<li class='hof-item'><span>${e.name} <span class="mode-tag">${e.mode}</span></span><span>${e.score}</span></li>`).join('');
             } else { document.getElementById('hof-list').innerHTML = "<li style='color:#AAA'>Be the first legend!</li>"; }
         }
 
