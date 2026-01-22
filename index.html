@@ -69,7 +69,7 @@
         }
         
         .credits-sub {
-            font-size: 0.6rem; color: #888; margin-bottom: 20px; font-family: sans-serif;
+            font-size: 0.7rem; color: #888; margin-bottom: 30px; font-family: 'Montserrat', sans-serif;
         }
         .credits-sub a { color: #AAA; text-decoration: underline; pointer-events: auto; }
 
@@ -285,7 +285,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
         import { getDatabase, ref, push, query, orderByChild, limitToLast, get } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-database.js";
 
-        // FIREBASE CONFIG
+        // CONFIG
         const firebaseConfig = {
             apiKey: "AIzaSyDdE_h-97aNDw7KjtSpyOjotGVHhkq-lxg",
             authDomain: "scoreboardracinggame.firebaseapp.com",
@@ -296,11 +296,10 @@
             databaseURL: "https://scoreboardracinggame-default-rtdb.asia-southeast1.firebasedatabase.app/"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // --- GAME LOGIC STARTS HERE ---
+        // --- GAME LOGIC ---
 
         const AudioSys = {
             ctx: null, bgMusic: document.getElementById('bgMusic'), ultraSound: document.getElementById('ultraSound'),
@@ -316,14 +315,12 @@
                 g.gain.exponentialRampToValueAtTime(0.01,this.ctx.currentTime+d);
                 o.connect(g); g.connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime+d);
             },
-            playSmash: function() { 
-                this.playTone(60,'sawtooth',0.2,0.4); 
-                this.playTone(100,'square',0.1,0.3); 
-            },
+            playSmash: function() { this.playTone(60,'sawtooth',0.2,0.4); this.playTone(100,'square',0.1,0.3); },
             playUltra: function() { this.ultraSound.currentTime = 0; this.ultraSound.play().catch(e=>{}); },
             stopUltra: function() { this.ultraSound.pause(); }
         };
 
+        // Firebase Storage
         const StorageSys = {
             save: async function(name, score) {
                 const scoresRef = ref(db, 'scores');
@@ -333,24 +330,21 @@
                         score: parseInt(score),
                         timestamp: Date.now()
                     });
-                } catch(e) { console.error("Firebase Save Error:", e); }
+                } catch(e) { console.error("Firebase Save:", e); }
             },
             getTop: async function() {
                 const scoresRef = ref(db, 'scores');
+                // Order by score, get last 5 (highest)
                 const topScoresQuery = query(scoresRef, orderByChild('score'), limitToLast(5));
                 try {
                     const snapshot = await get(topScoresQuery);
                     if (snapshot.exists()) {
                         const data = [];
-                        snapshot.forEach((childSnapshot) => { data.push(childSnapshot.val()); });
-                        return data.reverse(); // Reverse for descending order
-                    } else {
-                        return [];
+                        snapshot.forEach((child) => { data.push(child.val()); });
+                        return data.reverse(); // Highest first
                     }
-                } catch (error) {
-                    console.error("Firebase Get Error:", error);
-                    return null;
-                }
+                    return [];
+                } catch (error) { console.error("Firebase Get:", error); return null; }
             }
         };
 
@@ -514,36 +508,27 @@ Next point: “And new, and still” - let’s go!
         }
 
         function update() {
-            // Calculate Total Letters
-            if(totalLetters === 0) {
-                 for(let i=0; i<fullLyrics.length; i++) {
-                     if(fullLyrics[i] !== ' ' && fullLyrics[i] !== '\n') totalLetters++;
-                 }
-            }
+            if(totalLetters === 0) { for(let i=0; i<fullLyrics.length; i++) if(fullLyrics[i]!==' ' && fullLyrics[i]!=='\n') totalLetters++; }
 
             const isSavage = Date.now() < savageEndTime;
             const isSpiked = Date.now() < spikeEndTime;
             
-            // Difficulty & Speed
+            // Savage Speed
             let rawDiff = (1 + (score/50));
-            if(isSavage) rawDiff = 20; // HYPERSPEED
+            if(isSavage) rawDiff = 4.0; // Extreme speed
             else rawDiff -= speedOffset;
 
             difficulty = Math.max(1, rawDiff);
             let currentSpeed = baseSpeed * difficulty; 
             roadOffset += currentSpeed;
-            
             const moveSpd = (baseSpeed * 1.2) + (difficulty * 0.6);
 
-            // Car Move
             if(keys.u) car.y -= moveSpd; if(keys.d) car.y += moveSpd;
             if(keys.l) car.x -= moveSpd; if(keys.r) car.x += moveSpd;
             
-            // Constrain Car
             if(car.x < 0) car.x = 0; if(car.x > canvas.width - car.w) car.x = canvas.width - car.w;
             if(car.y < roadY) car.y = roadY; if(car.y > canvas.height - car.h) car.y = canvas.height - car.h;
 
-            // SPAWN LETTERS
             if(Date.now() > nextLetterTime && spawnIndex < fullLyrics.length) {
                 while(spawnIndex < fullLyrics.length && (fullLyrics[spawnIndex] === ' ' || fullLyrics[spawnIndex] === '\n')) spawnIndex++;
                 if(spawnIndex < fullLyrics.length) {
@@ -555,30 +540,21 @@ Next point: “And new, and still” - let’s go!
                 }
             }
 
-            // Check if song done
-            if(spawnIndex >= fullLyrics.length && entities.length === 0) {
-                 endGame();
-            }
+            if(spawnIndex >= fullLyrics.length && entities.length === 0) endGame();
 
-            // SPAWN OBSTACLES
             if(Math.random() < (0.02 * spawnMultiplier + (difficulty * 0.003))) spawnOther();
-
             if(!isSpiked && !isSavage) AudioSys.stopUltra();
 
-            // ENTITY LOGIC
             entities.forEach(e => {
                 e.y += currentSpeed;
                 if (car.x < e.x+e.w && car.x+car.w > e.x && car.y < e.y+e.h && car.y+car.h > e.y && e.active) {
                     e.active = false;
                     if(e.type==='obs') {
-                        consecutiveFlasks = 0; // Reset streak
+                        consecutiveFlasks = 0; 
                         if(!isSpiked && !isSavage) { 
-                             car.health -= damageDealt; 
-                             AudioSys.playTone(100,'sawtooth',0.2); 
-                             spawnParticles(e.x+e.w/2, e.y+e.h/2, e.color, 10);
+                             car.health -= damageDealt; AudioSys.playTone(100,'sawtooth',0.2); spawnParticles(e.x+e.w/2, e.y+e.h/2, e.color, 10);
                         } else {
-                             AudioSys.playSmash(); 
-                             spawnParticles(e.x+e.w/2, e.y+e.h/2, '#777', 15);
+                             AudioSys.playSmash(); spawnParticles(e.x+e.w/2, e.y+e.h/2, '#777', 15);
                         }
                     }
                     else if(e.type==='letter') { score++; AudioSys.playTone(1000,'sine',0.1); }
@@ -586,13 +562,8 @@ Next point: “And new, and still” - let’s go!
                         car.health = Math.min(100, car.health+20); 
                         consecutiveFlasks++;
                         if(consecutiveFlasks >= 2) {
-                            savageEndTime = Date.now() + 5000;
-                            consecutiveFlasks = 0;
-                            AudioSys.playUltra();
-                            triggerPopup('savage-popup');
-                        } else {
-                            triggerPopup('gorilla-popup'); 
-                        }
+                            savageEndTime = Date.now() + 5000; consecutiveFlasks = 0; AudioSys.playUltra(); triggerPopup('savage-popup');
+                        } else { triggerPopup('gorilla-popup'); }
                     }
                     else if(e.type==='slow') { speedOffset = (score/50); triggerPopup('slow-popup'); }
                     else if(e.type==='ultra') { spikeEndTime = Date.now()+10000; AudioSys.playUltra(); triggerPopup('jbrla-popup'); }
@@ -600,9 +571,8 @@ Next point: “And new, and still” - let’s go!
             });
             entities = entities.filter(e => e.y < canvas.height && e.active);
             
-            // Particles Update (Straight Trail during Savage)
+            // Savage Trail (3 lines)
             if(isSavage) {
-                // Three straight purple lines
                 spawnTrail(car.x + 5, car.y + car.h, '#9400D3');
                 spawnTrail(car.x + car.w/2, car.y + car.h, '#BA55D3');
                 spawnTrail(car.x + car.w - 5, car.y + car.h, '#4B0082');
@@ -612,7 +582,6 @@ Next point: “And new, and still” - let’s go!
 
             if(car.health <= 0) endGame();
             
-            // HUD Update
             document.getElementById('hpBar').style.width = Math.max(0, car.health) + '%';
             document.getElementById('scoreVal').innerText = score + " / " + totalLetters;
             
@@ -625,61 +594,33 @@ Next point: “And new, and still” - let’s go!
 
         function spawnOther() {
             let x = Math.random()*(canvas.width-40), now = Date.now(), r = Math.random();
+            // Ultra Fix
+            if (now - lastUltraSpawnTime > 15000) { entities.push({x:x, y:roadY-60, w:35, h:45, type:'ultra', active:true}); lastUltraSpawnTime = now; return; }
             
-            // Ultra Guarantee check
-            if (now - lastUltraSpawnTime > 15000) {
-                 entities.push({x:x, y:roadY-60, w:35, h:45, type:'ultra', active:true});
-                 lastUltraSpawnTime = now;
-                 return;
-            }
-
-            if(r < 0.05 && now - lastUltraSpawnTime > 8000) {
-                 entities.push({x:x, y:roadY-60, w:35, h:45, type:'ultra', active:true});
-                 lastUltraSpawnTime = now;
-                 return;
-            }
-
             if(r < 0.8) {
-                let s = Math.random(); let w = 40+(s*35); let h=30+(s*25);
                 const colors = ['#8B5A2B', '#6F4E37', '#5C4033', '#966F33', '#4E3629']; 
-                entities.push({x, y:roadY-60, w:w, h:h, type:'obs', color:colors[Math.floor(Math.random()*colors.length)], active:true, off:Math.random()*10});
+                entities.push({x, y:roadY-60, w:40+Math.random()*35, h:30+Math.random()*25, type:'obs', color:colors[Math.floor(Math.random()*colors.length)], active:true, off:Math.random()*10});
             }
             else if(r < 0.95) entities.push({x, y:roadY-60, w:30, h:45, type:'flask', active:true});
             else entities.push({x, y:roadY-60, w:35, h:35, type:'slow', active:true});
         }
 
-        function spawnParticles(x,y,c,count) {
-             for(let i=0;i<count;i++) particles.push({x:x, y:y, vx:(Math.random()-0.5)*15, vy:(Math.random()-1)*15, l:1, color:c});
-        }
-
-        function spawnTrail(x,y,c) {
-             particles.push({x:x, y:y, vx:0, vy:5, l:0.5, color:c}); // Straight down
-        }
+        function spawnParticles(x,y,c,count) { for(let i=0;i<count;i++) particles.push({x:x, y:y, vx:(Math.random()-0.5)*15, vy:(Math.random()-1)*15, l:1, color:c}); }
+        function spawnTrail(x,y,c) { particles.push({x:x, y:y, vx:0, vy:5, l:0.5, color:c}); }
 
         function draw() {
             if(gameState !== 'PLAYING') return;
             const isSavage = Date.now() < savageEndTime;
-            
             ctx.clearRect(0,0,canvas.width,canvas.height);
-            // Sky
             let grad = ctx.createLinearGradient(0,0,0,roadY); grad.addColorStop(0,'#000022'); grad.addColorStop(1,'#000055');
             ctx.fillStyle = grad; ctx.fillRect(0,0,canvas.width, roadY);
             ctx.fillStyle = '#FFF'; bgCache.stars.forEach(s => { ctx.globalAlpha=s.alpha; ctx.fillRect(s.x, s.y, s.s, s.s); }); ctx.globalAlpha=1;
             
-            // Mountains
             ctx.fillStyle = '#000033'; ctx.beginPath(); ctx.moveTo(0, roadY);
             bgCache.mountains.forEach(p => ctx.lineTo(p.x, roadY - p.y)); ctx.lineTo(canvas.width, roadY); ctx.fill();
-            // Snow Caps
             ctx.fillStyle = '#FFF';
-            bgCache.mountains.forEach((p, i) => {
-                if(i === 0 || i === bgCache.mountains.length-1) return;
-                if(p.y > 110) { 
-                    ctx.beginPath(); ctx.moveTo(p.x, roadY - p.y); 
-                    ctx.lineTo(p.x - 12, roadY - p.y + 18); ctx.lineTo(p.x + 12, roadY - p.y + 18); ctx.fill(); 
-                }
-            });
+            bgCache.mountains.forEach((p, i) => { if(i!==0 && i!==bgCache.mountains.length-1 && p.y>110) { ctx.beginPath(); ctx.moveTo(p.x, roadY-p.y); ctx.lineTo(p.x-12, roadY-p.y+18); ctx.lineTo(p.x+12, roadY-p.y+18); ctx.fill(); }});
 
-            // Buildings
             bgCache.buildings.forEach(b => {
                 ctx.fillStyle = '#0a0a2a'; ctx.fillRect(b.x, roadY - b.h, b.w, b.h);
                 ctx.fillStyle = '#FFFF00'; b.wins.forEach(w => { if(Math.random()>0.05) ctx.fillRect(b.x + w.x, roadY - b.h + w.y, 4, 5); });
@@ -687,46 +628,34 @@ Next point: “And new, and still” - let’s go!
 
             drawLandmarks();
 
-            // Road
             ctx.fillStyle = '#222'; ctx.fillRect(0, roadY, canvas.width, roadH);
             ctx.fillStyle = '#1e1a15'; ctx.fillRect(0, roadY, 15, roadH); ctx.fillRect(canvas.width-15, roadY, 15, roadH);
             ctx.fillStyle = '#111'; ctx.fillRect(0, roadY-2, canvas.width, 4);
 
-            // Markings
             if(isSavage) {
-                // SOLID LINES FOR HYPERSPEED (Motion Blur Effect)
+                // SOLID LINES
                 ctx.fillStyle = '#888888'; 
                 const laneCount = 4; const laneW = canvas.width / laneCount;
-                for(let l=1; l<laneCount; l++) {
-                    ctx.fillRect((l * laneW) - 2, roadY, 4, roadH);
-                }
+                for(let l=1; l<laneCount; l++) ctx.fillRect((l * laneW) - 2, roadY, 4, roadH);
             } else {
                 ctx.fillStyle = '#888888'; 
                 const laneCount = 4; const laneW = canvas.width / laneCount;
-                const dashH = 60; const dashGap = 150; const pattern = dashH + dashGap;
+                const pattern = 210;
                 for(let l=1; l<laneCount; l++) {
                     let lx = l * laneW;
                     for(let y = roadY - pattern; y < canvas.height; y += pattern) {
                         let dy = y + (roadOffset % pattern);
-                        if(dy > roadY - dashH && dy < canvas.height) ctx.fillRect(lx - 2, dy, 4, dashH);
+                        if(dy > roadY - 60 && dy < canvas.height) ctx.fillRect(lx - 2, dy, 4, 60);
                     }
                 }
             }
             
-            // Entities
             entities.forEach(e => {
                 if(e.type === 'obs') {
-                    ctx.fillStyle = e.color; 
-                    ctx.beginPath();
-                    let off = e.off || 0;
-                    ctx.moveTo(e.x + e.w*0.2 - off, e.y + off); 
-                    ctx.lineTo(e.x + e.w*0.8 + off, e.y); 
-                    ctx.lineTo(e.x + e.w, e.y + e.h*0.5 + off); 
-                    ctx.lineTo(e.x + e.w*0.7 - off, e.y + e.h);
-                    ctx.lineTo(e.x + e.w*0.2 + off, e.y + e.h*0.9); 
-                    ctx.lineTo(e.x - off, e.y + e.h*0.4); 
-                    ctx.fill();
-                    ctx.strokeStyle = '#FFF'; ctx.lineWidth = 2; ctx.stroke();
+                    ctx.fillStyle = e.color; ctx.beginPath(); let off = e.off || 0;
+                    ctx.moveTo(e.x + e.w*0.2 - off, e.y + off); ctx.lineTo(e.x + e.w*0.8 + off, e.y); ctx.lineTo(e.x + e.w, e.y + e.h*0.5 + off); 
+                    ctx.lineTo(e.x + e.w*0.7 - off, e.y + e.h); ctx.lineTo(e.x + e.w*0.2 + off, e.y + e.h*0.9); ctx.lineTo(e.x - off, e.y + e.h*0.4); 
+                    ctx.fill(); ctx.strokeStyle = '#FFF'; ctx.lineWidth = 2; ctx.stroke();
                     ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.fillRect(e.x+10, e.y+10, 10, 10);
                 } 
                 else if(e.type === 'letter') {
@@ -735,23 +664,18 @@ Next point: “And new, and still” - let’s go!
                     ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(e.x+e.w/2, e.y+e.h/2, e.w/2-2, 0, Math.PI*2); ctx.stroke();
                 } 
                 else if(e.type === 'flask') {
-                    ctx.fillStyle = '#00BFFF'; ctx.fillRect(e.x, e.y, e.w, e.h); // Body
-                    ctx.fillStyle = '#009ACD'; ctx.fillRect(e.x, e.y, e.w, 4); ctx.fillRect(e.x, e.y+e.h-4, e.w, 4); // Rims
-                    ctx.fillStyle = '#FFF'; ctx.fillRect(e.x+5, e.y+20, e.w-10, 5); // Shine
-                    ctx.fillStyle = '#F00'; ctx.font='bold 24px Arial'; ctx.textAlign='center'; 
+                    ctx.fillStyle = '#00BFFF'; ctx.fillRect(e.x, e.y, e.w, e.h); ctx.fillStyle = '#009ACD'; ctx.fillRect(e.x, e.y, e.w, 4); ctx.fillRect(e.x, e.y+e.h-4, e.w, 4); 
+                    ctx.fillStyle = '#FFF'; ctx.fillRect(e.x+5, e.y+20, e.w-10, 5); ctx.fillStyle = '#F00'; ctx.font='bold 24px Arial'; ctx.textAlign='center'; 
                     ctx.save(); ctx.translate(e.x+e.w/2, e.y+e.h/2); ctx.scale(0.8, 1.5); ctx.fillText('G', 0, 8); ctx.restore();
                 }
                 else if(e.type === 'slow') {
                     ctx.fillStyle = '#CCCCCC'; ctx.beginPath(); ctx.arc(e.x + e.w/2, e.y + e.h/2, e.w/2 - 2, 0, Math.PI*2); ctx.fill();
                     ctx.fillStyle = '#555'; ctx.beginPath(); ctx.arc(e.x + e.w/2, e.y + e.h/2, 5, 0, Math.PI*2); ctx.fill();
-                    ctx.fillStyle = '#FF0000'; ctx.fillRect(e.x + e.w - 12, e.y + 8, 10, 24);
-                    ctx.fillStyle = '#FFF'; ctx.fillRect(e.x + 10, e.y + 10, 4, 4);
+                    ctx.fillStyle = '#FF0000'; ctx.fillRect(e.x + e.w - 12, e.y + 8, 10, 24); ctx.fillStyle = '#FFF'; ctx.fillRect(e.x + 10, e.y + 10, 4, 4);
                 }
                 else if(e.type === 'ultra') {
-                    ctx.shadowBlur = 15; ctx.shadowColor = '#9400D3';
-                    ctx.fillStyle = '#9400D3'; ctx.fillRect(e.x, e.y+5, e.w, e.h-5); ctx.shadowBlur = 0;
-                    ctx.fillStyle = '#333'; ctx.fillRect(e.x+e.w*0.3, e.y, e.w*0.4, 5);
-                    ctx.fillStyle = '#FFF'; ctx.font='bold 22px Arial'; ctx.fillText('⚡', e.x+e.w/2, e.y+e.h/2+5);
+                    ctx.shadowBlur = 15; ctx.shadowColor = '#9400D3'; ctx.fillStyle = '#9400D3'; ctx.fillRect(e.x, e.y+5, e.w, e.h-5); ctx.shadowBlur = 0;
+                    ctx.fillStyle = '#333'; ctx.fillRect(e.x+e.w*0.3, e.y, e.w*0.4, 5); ctx.fillStyle = '#FFF'; ctx.font='bold 22px Arial'; ctx.fillText('⚡', e.x+e.w/2, e.y+e.h/2+5);
                 }
             });
 
@@ -762,11 +686,9 @@ Next point: “And new, and still” - let’s go!
 
         function drawLandmarks() {
              let hx = canvas.width * 0.15; let hy = roadY;
-             ctx.fillStyle = '#444'; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx, hy-80); 
-             ctx.quadraticCurveTo(hx+30, hy-100, hx+60, hy-80); ctx.lineTo(hx+60, hy); ctx.fill();
+             ctx.fillStyle = '#444'; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx, hy-80); ctx.quadraticCurveTo(hx+30, hy-100, hx+60, hy-80); ctx.lineTo(hx+60, hy); ctx.fill();
              ctx.fillStyle = '#FFD700'; ctx.beginPath(); ctx.arc(hx+30, hy-85, 4, 0, Math.PI*2); ctx.fill();
-             let tx = canvas.width * 0.85;
-             ctx.strokeStyle = '#555'; ctx.lineWidth = 3;
+             let tx = canvas.width * 0.85; ctx.strokeStyle = '#555'; ctx.lineWidth = 3;
              ctx.beginPath(); ctx.moveTo(tx, roadY-20); ctx.lineTo(tx, roadY-120); ctx.stroke();
              ctx.fillStyle = '#D00'; ctx.beginPath(); ctx.arc(tx, roadY-100, 5, 0, Math.PI*2); ctx.fill();
         }
@@ -776,35 +698,17 @@ Next point: “And new, and still” - let’s go!
             const isSavage = Date.now() < savageEndTime;
             const isSpiked = Date.now() < spikeEndTime;
             if(isSpiked) {
-                ctx.fillStyle = '#AAA'; ctx.beginPath();
-                ctx.moveTo(x, y); ctx.lineTo(x+10, y-25); ctx.lineTo(x+15, y);
-                ctx.moveTo(x+12, y); ctx.lineTo(x+21, y-30); ctx.lineTo(x+30, y);
-                ctx.moveTo(x+27, y); ctx.lineTo(x+32, y-25); ctx.lineTo(x+w, y); ctx.fill();
+                ctx.fillStyle = '#AAA'; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x+10, y-25); ctx.lineTo(x+15, y);
+                ctx.moveTo(x+12, y); ctx.lineTo(x+21, y-30); ctx.lineTo(x+30, y); ctx.moveTo(x+27, y); ctx.lineTo(x+32, y-25); ctx.lineTo(x+w, y); ctx.fill();
             }
             ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(x+6, y+6, w, h);
-            
-            // CAR BODY
             ctx.fillStyle = isSavage ? '#9400D3' : '#2979FF'; 
             ctx.beginPath(); ctx.roundRect(x, y, w, h, 4); ctx.fill();
-            
-            // Windshield
             ctx.fillStyle = '#222'; ctx.fillRect(x+2, y+18, w-4, h-30);
-            
-            // Text - WHITE/STRETCHED
-            ctx.save(); 
-            ctx.translate(x+w/2, y+h/2); 
-            ctx.rotate(-Math.PI/2);
-            ctx.scale(1, 1.8); 
-            ctx.fillStyle = '#FFFFFF'; 
-            ctx.font='bold 9px Arial'; ctx.textAlign='center'; ctx.fillText("DAIYNBALL", 0, 4);
-            ctx.restore();
-
-            // Lights
-            ctx.shadowBlur = 15; ctx.shadowColor = '#FF0';
-            ctx.fillStyle = '#FFEB3B'; ctx.fillRect(x+2, y, 8, 6); ctx.fillRect(x+w-10, y, 8, 6);
-            ctx.shadowBlur = 10; ctx.shadowColor = '#F00';
-            ctx.fillStyle = '#D32F2F'; ctx.fillRect(x+2, y+h-6, 8, 6); ctx.fillRect(x+w-10, y+h-6, 8, 6);
-            ctx.shadowBlur = 0;
+            ctx.save(); ctx.translate(x+w/2, y+h/2); ctx.rotate(-Math.PI/2); ctx.scale(1, 1.8); 
+            ctx.fillStyle = '#FFFFFF'; ctx.font='bold 9px Arial'; ctx.textAlign='center'; ctx.fillText("DAIYNBALL", 0, 4); ctx.restore();
+            ctx.shadowBlur = 15; ctx.shadowColor = '#FF0'; ctx.fillStyle = '#FFEB3B'; ctx.fillRect(x+2, y, 8, 6); ctx.fillRect(x+w-10, y, 8, 6);
+            ctx.shadowBlur = 10; ctx.shadowColor = '#F00'; ctx.fillStyle = '#D32F2F'; ctx.fillRect(x+2, y+h-6, 8, 6); ctx.fillRect(x+w-10, y+h-6, 8, 6); ctx.shadowBlur = 0;
         }
 
         function initGame(diff) {
@@ -815,8 +719,6 @@ Next point: “And new, and still” - let’s go!
             AudioSys.init();
             document.getElementById('screen-start').style.display = 'none';
             document.getElementById('screen-end').style.display = 'none';
-            
-            // Reset
             lyricIndex = 0; spawnIndex = 0; score = 0; speedOffset = 0; car.health = 100;
             entities = []; spikeEndTime = 0; savageEndTime = 0; particles = []; consecutiveFlasks = 0;
             gameState = 'PLAYING'; gameStartTime = Date.now(); nextLetterTime = Date.now() + 1000;
@@ -828,47 +730,29 @@ Next point: “And new, and still” - let’s go!
             AudioSys.stopUltra();
             document.getElementById('screen-end').style.display = 'flex';
             
-            // Victory Condition: Score must equal Total Letters
             let isVictory = (car.health > 0) && (score >= totalLetters);
-
             const titleEl = document.getElementById('end-title');
-            if(isVictory) {
-                titleEl.innerText = "VICTORY!";
-                titleEl.style.color = "#FFD700";
-                triggerPopup('victory-popup');
-            } else {
-                titleEl.innerText = "GAME OVER";
-                titleEl.style.color = "#FF0000";
-            }
+            if(isVictory) { titleEl.innerText = "VICTORY!"; titleEl.style.color = "#FFD700"; triggerPopup('victory-popup'); } 
+            else { titleEl.innerText = "GAME OVER"; titleEl.style.color = "#FF0000"; }
 
-            // Show lyrics collected
-            let collected = "";
-            let tempIndex = 0;
-            let lettersFound = 0;
+            let collected = ""; let tempIndex = 0; let lettersFound = 0;
             while(lettersFound < score && tempIndex < fullLyrics.length) {
                  if(fullLyrics[tempIndex] !== ' ' && fullLyrics[tempIndex] !== '\n') lettersFound++;
-                 collected += fullLyrics[tempIndex];
-                 tempIndex++;
+                 collected += fullLyrics[tempIndex]; tempIndex++;
             }
-            if(!isVictory && score < totalLetters) {
-                collected += " ... [MISSED " + (totalLetters - score) + " LETTERS]";
-            }
+            if(!isVictory && score < totalLetters) collected += " ... [MISSED " + (totalLetters - score) + " LETTERS]";
             document.getElementById('lyrics-result').innerText = collected;
 
-            // Leaderboard
             document.getElementById('hof-list').innerHTML = "<li style='color:#888'>Loading...</li>";
             await StorageSys.save(nickname, score);
             const top = await StorageSys.getTop();
-            if(top) {
-                document.getElementById('hof-list').innerHTML = top.length ? top.map(e => `<li class='hof-item'><span>${e.name}</span><span>${e.score}</span></li>`).join('') : "<li>No scores yet</li>";
-            } else {
-                document.getElementById('hof-list').innerHTML = "<li style='color:#F00'>Leaderboard Error</li>";
-            }
+            if(top) document.getElementById('hof-list').innerHTML = top.length ? top.map(e => `<li class='hof-item'><span>${e.name}</span><span>${e.score}</span></li>`).join('') : "<li>No scores yet</li>";
+            else document.getElementById('hof-list').innerHTML = "<li style='color:#F00'>Leaderboard Error</li>";
         }
 
         function resetGame() { location.reload(); }
 
-        // EXPOSE GLOBAL FUNCTIONS because module scope is private
+        // Attach to global window because type="module" isolates scope
         window.initGame = initGame;
         window.showDifficulty = showDifficulty;
         window.resetGame = resetGame;
