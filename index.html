@@ -152,7 +152,6 @@
         }
         #jbrla-popup { font-family: 'Rubik Glitch'; font-size: 3.5rem; color: #fff; text-shadow: 0 0 10px #9400D3; }
         #savage-popup { font-family: 'Rubik Glitch'; font-size: 4rem; color: #9400D3; text-shadow: 0 0 20px #FFF; }
-        #gorilla-popup { font-family: 'Permanent Marker'; font-size: 3rem; color: #00FFFF; text-shadow: 0 0 10px #00FF00; }
         #slow-popup { font-family: 'Permanent Marker'; font-size: 3rem; color: #FFF; text-shadow: 0 0 10px #00FFFF; }
         #victory-popup { 
             position: absolute; top: 30%; width: 100%; text-align: center; 
@@ -160,6 +159,21 @@
             text-shadow: 4px 4px 0 #000; opacity: 0; pointer-events: none; z-index: 45;
         }
         
+        /* Wrench Bolt Anim */
+        #wrench-anim {
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+            display: flex; align-items: center; gap: 5px;
+            opacity: 0; pointer-events: none; z-index: 50;
+            transition: opacity 0.3s;
+        }
+        .wrench-icon { font-size: 4rem; text-shadow: 0 0 10px #00FFFF; }
+        .anim-screw { animation: screwIn 0.8s ease-in-out; }
+        @keyframes screwIn {
+            0% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(-45deg) scale(1.2); }
+            100% { transform: rotate(0deg) scale(1); }
+        }
+
         .anim-pop { animation: popIn 1.5s forwards; }
         @keyframes popIn {
             0% { transform: translateX(-50%) scale(0.5); opacity: 0; }
@@ -169,7 +183,7 @@
 
         /* --- CONTROLS --- */
         #controls {
-            position: absolute; bottom: 60px; /* Moved up for Android */
+            position: absolute; bottom: 60px;
             left: 5px; right: 5px;
             height: 150px; z-index: 20; pointer-events: none;
         }
@@ -180,7 +194,6 @@
             color: rgba(255, 255, 255, 0.5); pointer-events: auto;
             backdrop-filter: blur(2px);
         }
-
         #btn-left { bottom: 0px; left: 10px; width: 70px; height: 70px; font-size: 2rem; }
         #btn-up { bottom: 85px; left: 25px; width: 45px; height: 45px; }
         #btn-right { bottom: 0px; right: 10px; width: 70px; height: 70px; font-size: 2rem; }
@@ -195,6 +208,7 @@
         .hof-list { list-style: none; padding: 0; margin: 0; font-size: 0.8rem; text-align: left; }
         .hof-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
         .hof-item:first-child { color: #FFD700; font-weight: bold; }
+        .mode-tag { font-size: 0.6rem; padding: 2px 4px; border-radius: 3px; background: #333; margin-left:5px; }
 
     </style>
 </head>
@@ -217,9 +231,13 @@
             </div>
         </div>
 
+        <div id="wrench-anim">
+            <div style="font-size:3rem;">🔩</div>
+            <div id="wrench-icon-inner" class="wrench-icon">🔧</div>
+        </div>
+
         <div id="jbrla-popup" class="popup-text">JBRLA!</div>
         <div id="savage-popup" class="popup-text">SAVAGE MODE!</div>
-        <div id="gorilla-popup" class="popup-text">GORILLA!</div>
         <div id="slow-popup" class="popup-text">SLOW DOWN!</div>
         <div id="victory-popup" class="popup-text">VICTORY!<br><span style="font-size:1rem; color:#FFF;">ЖЕҢІС!</span></div>
 
@@ -236,7 +254,7 @@
                         Collect <span style="color:#FF0000">ALL</span> letters to win!<br>
                         Жеңіске жету үшін <span style="color:#FF0000">БАРЛЫҚ</span> әріптерді жина!
                     </p>
-                    <div class="item-row">🥫 <span style="color:#00BFFF">2x Blue Tins = SAVAGE MODE</span></div>
+                    <div class="item-row">💙🔧 <span style="color:#00BFFF">2x Repair = SAVAGE MODE</span></div>
                     <div class="item-row">⚡ <span>Lightning = Invincible</span></div>
                     <div class="item-row">❄ <span>Brakes = Slow Down</span></div>
                 </div>
@@ -266,7 +284,7 @@
             </a>
 
             <div class="hof-container">
-                <div style="color:#FFD700; font-family:'Permanent Marker'; margin-bottom:5px;">HALL OF FAME</div>
+                <div style="color:#FFD700; font-family:'Permanent Marker'; margin-bottom:5px;">LOCAL LEGENDS</div>
                 <ul id="hof-list" class="hof-list"></ul>
             </div>
             
@@ -305,26 +323,25 @@
             stopUltra: function() { this.ultraSound.pause(); }
         };
 
-        /** ☁️ LEADERBOARD (Secure & Fixed) **/
+        /** 🏆 LOCAL HALL OF FAME **/
         const StorageSys = {
-            privateCode: "TbEgYk4m1k6AiaZ5bguZqwNWpZbGt8hkSJBVFdEavkTw", 
-            publicCode:  "6971059b8f40bb1184ba9e1e",  
-            url: "https://www.dreamlo.com/lb/",
-            save: async function(name, score) {
-                let safeName = encodeURIComponent(name || "RIDER");
-                // Timestamp to prevent caching
-                try { await fetch(`${this.url}${this.privateCode}/add/${safeName}/${score}?t=${Date.now()}`); } catch (e) {}
+            KEY: 'jbrla_hof_v1',
+            save: function(name, score, mode) {
+                let data = JSON.parse(localStorage.getItem(this.KEY) || '[]');
+                data.push({
+                    name: name || "RIDER",
+                    score: parseInt(score),
+                    mode: mode.toUpperCase(),
+                    timestamp: Date.now()
+                });
+                // Sort descending by score
+                data.sort((a,b) => b.score - a.score);
+                // Keep top 5
+                data = data.slice(0, 5);
+                localStorage.setItem(this.KEY, JSON.stringify(data));
             },
-            getTop: async function() {
-                try {
-                    const res = await fetch(`${this.url}${this.publicCode}/json?t=${Date.now()}`);
-                    const data = await res.json();
-                    if (!data?.dreamlo?.leaderboard) return [];
-                    let entries = data.dreamlo.leaderboard.entry;
-                    if (!entries) return [];
-                    if (!Array.isArray(entries)) entries = [entries];
-                    return entries.slice(0, 5).map(e => ({ name: decodeURIComponent(e.name).replace(/\+/g, ' '), score: parseInt(e.score) }));
-                } catch (e) { return null; }
+            getTop: function() {
+                return JSON.parse(localStorage.getItem(this.KEY) || '[]');
             }
         };
 
@@ -440,7 +457,7 @@ Next point: “And new, and still” - let’s go!
         let roadY, roadH, bgCache = { mountains: [], buildings: [], stars: [] }, gameState = 'START';
         let nickname = "", currentDiff = 'medium', damageDealt = 25, spawnMultiplier = 1.0, speedOffset = 0;
         let spawnIndex = 0, score = 0, totalLetters = 0, baseSpeed = 7, difficulty = 1, roadOffset = 0;
-        let entities = [], particles = [], spikeEndTime = 0, savageEndTime = 0, nextLetterTime = 0, lastUltraSpawnTime = 0;
+        let entities = [], particles = [], spikeEndTime = 0, savageEndTime = 0, nextLetterTime = 0;
         let consecutiveFlasks = 0;
         const car = { x:0, y:0, w:42, h:75, health:100 };
         const keys = {u:false, d:false, l:false, r:false};
@@ -485,6 +502,14 @@ Next point: “And new, and still” - let’s go!
 
         function triggerPopup(id) {
             const el = document.getElementById(id); el.classList.remove('anim-pop'); void el.offsetWidth; el.classList.add('anim-pop');
+        }
+
+        function triggerWrenchAnim() {
+            const el = document.getElementById('wrench-anim');
+            const icon = document.getElementById('wrench-icon-inner');
+            el.style.opacity = '1';
+            icon.classList.remove('anim-screw'); void icon.offsetWidth; icon.classList.add('anim-screw');
+            setTimeout(() => { el.style.opacity = '0'; }, 1200);
         }
 
         function update() {
@@ -565,7 +590,7 @@ Next point: “And new, and still” - let’s go!
                             AudioSys.playUltra();
                             triggerPopup('savage-popup');
                         } else {
-                            triggerPopup('gorilla-popup'); 
+                            triggerWrenchAnim(); // NEW: Trigger wrench animation instead of Gorilla text
                         }
                     }
                     else if(e.type==='slow') { speedOffset = (score/50); triggerPopup('slow-popup'); }
@@ -576,7 +601,6 @@ Next point: “And new, and still” - let’s go!
             
             // Particles Update (Straight Trail during Savage)
             if(isSavage) {
-                // Three straight purple lines
                 spawnTrail(car.x + 5, car.y + car.h, '#9400D3');
                 spawnTrail(car.x + car.w/2, car.y + car.h, '#BA55D3');
                 spawnTrail(car.x + car.w - 5, car.y + car.h, '#4B0082');
@@ -598,18 +622,20 @@ Next point: “And new, and still” - let’s go!
         }
 
         function spawnOther() {
+            const isSavage = Date.now() < savageEndTime;
             let x = Math.random()*(canvas.width-40), now = Date.now(), r = Math.random();
             
-            // Ultra Guarantee check
+            // Ultra Guarantee check (Bolt)
             if (now - lastUltraSpawnTime > 15000) {
                  entities.push({x:x, y:roadY-60, w:35, h:45, type:'ultra', active:true});
                  lastUltraSpawnTime = now;
                  return;
             }
 
-            if(r < 0.05 && now - lastUltraSpawnTime > 8000) {
-                 entities.push({x:x, y:roadY-60, w:35, h:45, type:'ultra', active:true});
-                 lastUltraSpawnTime = now;
+            // SAVAGE MODE: INCREASED STONES
+            if(isSavage && r < 0.6) {
+                 const colors = ['#8B5A2B', '#6F4E37', '#5C4033', '#966F33', '#4E3629']; 
+                 entities.push({x, y:roadY-60, w:40+Math.random()*20, h:30+Math.random()*20, type:'obs', color:colors[0], active:true, off:Math.random()*10});
                  return;
             }
 
@@ -618,7 +644,7 @@ Next point: “And new, and still” - let’s go!
                 const colors = ['#8B5A2B', '#6F4E37', '#5C4033', '#966F33', '#4E3629']; 
                 entities.push({x, y:roadY-60, w:w, h:h, type:'obs', color:colors[Math.floor(Math.random()*colors.length)], active:true, off:Math.random()*10});
             }
-            else if(r < 0.95) entities.push({x, y:roadY-60, w:30, h:45, type:'flask', active:true});
+            else if(r < 0.95) entities.push({x, y:roadY-60, w:35, h:35, type:'flask', active:true});
             else entities.push({x, y:roadY-60, w:35, h:35, type:'slow', active:true});
         }
 
@@ -627,7 +653,7 @@ Next point: “And new, and still” - let’s go!
         }
 
         function spawnTrail(x,y,c) {
-             particles.push({x:x, y:y, vx:0, vy:5, l:0.5, color:c}); // Straight down
+             particles.push({x:x, y:y, vx:0, vy:5, l:0.5, color:c}); 
         }
 
         function draw() {
@@ -666,10 +692,10 @@ Next point: “And new, and still” - let’s go!
             ctx.fillStyle = '#1e1a15'; ctx.fillRect(0, roadY, 15, roadH); ctx.fillRect(canvas.width-15, roadY, 15, roadH);
             ctx.fillStyle = '#111'; ctx.fillRect(0, roadY-2, canvas.width, 4);
 
-            // Markings
+            // Markings (SAVAGE MODE COLORS)
             if(isSavage) {
-                // SOLID LINES FOR HYPERSPEED
-                ctx.fillStyle = '#888888'; 
+                // SOLID LINES FOR HYPERSPEED (Cyan/Purple)
+                ctx.fillStyle = '#00FFFF'; // NEON CYAN FOR SAVAGE
                 const laneCount = 4; const laneW = canvas.width / laneCount;
                 for(let l=1; l<laneCount; l++) {
                     ctx.fillRect((l * laneW) - 2, roadY, 4, roadH);
@@ -709,11 +735,22 @@ Next point: “And new, and still” - let’s go!
                     ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(e.x+e.w/2, e.y+e.h/2, e.w/2-2, 0, Math.PI*2); ctx.stroke();
                 } 
                 else if(e.type === 'flask') {
-                    ctx.fillStyle = '#00BFFF'; ctx.fillRect(e.x, e.y, e.w, e.h); // Body
-                    ctx.fillStyle = '#009ACD'; ctx.fillRect(e.x, e.y, e.w, 4); ctx.fillRect(e.x, e.y+e.h-4, e.w, 4); // Rims
-                    ctx.fillStyle = '#FFF'; ctx.fillRect(e.x+5, e.y+20, e.w-10, 5); // Shine
-                    ctx.fillStyle = '#F00'; ctx.font='bold 24px Arial'; ctx.textAlign='center'; 
-                    ctx.save(); ctx.translate(e.x+e.w/2, e.y+e.h/2); ctx.scale(0.8, 1.5); ctx.fillText('G', 0, 8); ctx.restore();
+                    // NEW: Blue Heart with Crossed Wrenches
+                    // Heart
+                    ctx.fillStyle = '#00BFFF'; 
+                    ctx.beginPath();
+                    let hx = e.x + e.w/2; let hy = e.y + e.h/2; let r = e.w/2;
+                    ctx.arc(hx - r/2, hy - r/2, r/2, Math.PI, 0); 
+                    ctx.arc(hx + r/2, hy - r/2, r/2, Math.PI, 0); 
+                    ctx.lineTo(hx, hy + r);
+                    ctx.fill();
+
+                    // Wrench X
+                    ctx.strokeStyle = '#DDD'; ctx.lineWidth = 4;
+                    ctx.beginPath();
+                    ctx.moveTo(e.x + 8, e.y + 8); ctx.lineTo(e.x + e.w - 8, e.y + e.h - 8);
+                    ctx.moveTo(e.x + e.w - 8, e.y + 8); ctx.lineTo(e.x + 8, e.y + e.h - 8);
+                    ctx.stroke();
                 }
                 else if(e.type === 'slow') {
                     ctx.fillStyle = '#CCCCCC'; ctx.beginPath(); ctx.arc(e.x + e.w/2, e.y + e.h/2, e.w/2 - 2, 0, Math.PI*2); ctx.fill();
@@ -830,14 +867,18 @@ Next point: “And new, and still” - let’s go!
             }
             document.getElementById('lyrics-result').innerText = collected;
 
-            // Leaderboard
-            document.getElementById('hof-list').innerHTML = "<li style='color:#888'>Loading...</li>";
-            await StorageSys.save(nickname, score);
-            const top = await StorageSys.getTop();
-            if(top) {
-                document.getElementById('hof-list').innerHTML = top.length ? top.map(e => `<li class='hof-item'><span>${e.name}</span><span>${e.score}</span></li>`).join('') : "<li>No scores yet</li>";
+            // Leaderboard - LOCAL STORAGE
+            StorageSys.save(nickname, score, currentDiff);
+            const top = StorageSys.getTop();
+            if(top.length > 0) {
+                document.getElementById('hof-list').innerHTML = top.map(e => 
+                    `<li class='hof-item'>
+                        <span>${e.name} <span class="mode-tag">${e.mode}</span></span>
+                        <span>${e.score}</span>
+                    </li>`
+                ).join('');
             } else {
-                document.getElementById('hof-list').innerHTML = "<li style='color:#F00'>Scoreboard Offline</li>";
+                document.getElementById('hof-list').innerHTML = "<li style='color:#AAA'>Be the first legend!</li>";
             }
         }
 
