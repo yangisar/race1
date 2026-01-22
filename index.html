@@ -215,7 +215,7 @@
                 <div id="savageBarContainer"><div id="savageBarWrap"><div id="savageBarFill"></div></div></div>
             </div>
             <div style="text-align: right;">
-                <span id="scoreVal" style="font-size: 1.5rem; color: #FFD700;">0 / 0</span><br><span class="bar-label">LETTERS</span>
+                <span id="scoreVal" style="font-size: 1.5rem; color: #00FF00;">0 / 0</span><br><span class="bar-label">LETTERS</span>
             </div>
         </div>
 
@@ -243,7 +243,7 @@
                         Жеңіске жету үшін <span style="color:#FF0000">БАРЛЫҚ</span> әріптерді жина!
                     </p>
                     <div class="item-row">💙🔧 <span style="color:#00BFFF">2x Repair = SAVAGE MODE</span></div>
-                    <div class="item-row">⚡ <span>Lightning = Invincible</span></div>
+                    <div class="item-row">⚡ <span>Lightning = Invincible + Spikes</span></div>
                     <div class="item-row">❄ <span>Brakes = Slow Down</span></div>
                 </div>
 
@@ -332,6 +332,9 @@
         let consecutiveFlasks = 0;
         const car = { x:0, y:0, w:42, h:75, health:100 };
         const keys = {u:false, d:false, l:false, r:false};
+        
+        // NATURAL STONE PALETTE
+        const rockColors = ['#8B8B83', '#696969', '#556B2F', '#8B4513', '#708090'];
 
         function resize() {
             canvas.width = window.innerWidth; canvas.height = window.innerHeight;
@@ -469,7 +472,6 @@
         function spawnOther() {
             const isSavage = Date.now() < savageEndTime;
             let x = Math.random()*(canvas.width-40), now = Date.now(), r = Math.random();
-            const colors = ['#8B5A2B', '#6F4E37', '#5C4033', '#966F33', '#4E3629'];
 
             // 1. Ultra Bolt Guarantee
             if (now - lastUltraSpawnTime > 15000) {
@@ -480,15 +482,19 @@
 
             // 2. SAVAGE MODE: ONLY ROCKS (Mostly)
             if(isSavage && (savageEndTime - Date.now() > 500)) {
-                 // Spawning mostly rocks for smashing
-                 entities.push({x:x, y:roadY-60, w:40+Math.random()*20, h:30+Math.random()*20, type:'obs', color:colors[Math.floor(Math.random()*colors.length)], active:true, off:Math.random()*5});
+                 // Spawning varied rocks for smashing
+                 let sub = Math.floor(Math.random()*3);
+                 let col = rockColors[Math.floor(Math.random()*rockColors.length)];
+                 entities.push({x:x, y:roadY-60, w:40+Math.random()*20, h:30+Math.random()*20, type:'obs', subtype:sub, color:col, active:true, off:Math.random()*5});
                  return; 
             }
 
             // 3. Normal Distribution
             if(r < 0.75) { 
                 let w = 40 + Math.random()*30; let h = 30 + Math.random()*20;
-                entities.push({x, y:roadY-60, w:w, h:h, type:'obs', color:colors[Math.floor(Math.random()*colors.length)], active:true, off:Math.random()*5});
+                let sub = Math.floor(Math.random()*3); // 0=Block, 1=Round, 2=Jagged
+                let col = rockColors[Math.floor(Math.random()*rockColors.length)];
+                entities.push({x, y:roadY-60, w:w, h:h, type:'obs', subtype:sub, color:col, active:true, off:Math.random()*5});
             }
             else if(r < 0.90) { 
                 entities.push({x, y:roadY-60, w:35, h:35, type:'flask', active:true});
@@ -504,6 +510,8 @@
         function draw() {
             if(gameState !== 'PLAYING') return;
             const isSavage = Date.now() < savageEndTime;
+            const isSpiked = Date.now() < spikeEndTime; // This determines the SPIKES on car
+            
             ctx.clearRect(0,0,canvas.width,canvas.height);
             // SKY
             let grad = ctx.createLinearGradient(0,0,0,roadY); grad.addColorStop(0,'#000022'); grad.addColorStop(1,'#000055');
@@ -523,11 +531,7 @@
             
             // ROAD
             ctx.fillStyle = '#222'; ctx.fillRect(0, roadY, canvas.width, roadH);
-            
-            // ADD NOISE TO ROAD
-            ctx.fillStyle = 'rgba(0,0,0,0.2)'; 
-            for(let i=0; i<20; i++) ctx.fillRect(Math.random()*canvas.width, roadY+Math.random()*roadH, 2, 2);
-
+            ctx.fillStyle = 'rgba(0,0,0,0.2)'; for(let i=0; i<20; i++) ctx.fillRect(Math.random()*canvas.width, roadY+Math.random()*roadH, 2, 2);
             ctx.fillStyle = '#1e1a15'; ctx.fillRect(0, roadY, 15, roadH); ctx.fillRect(canvas.width-15, roadY, 15, roadH);
             ctx.fillStyle = '#111'; ctx.fillRect(0, roadY-2, canvas.width, 4);
 
@@ -549,27 +553,22 @@
             
             entities.forEach(e => {
                 if(e.type === 'obs') {
-                    // 3D ROCK GRADIENT
-                    let rGrad = ctx.createLinearGradient(e.x, e.y, e.x, e.y+e.h);
-                    rGrad.addColorStop(0, '#755'); rGrad.addColorStop(1, '#322');
-                    ctx.fillStyle = rGrad;
-                    
-                    // POLYGON SHAPE
+                    // Natural Rocks Logic
+                    ctx.fillStyle = e.color;
+                    ctx.strokeStyle = '#999'; ctx.lineWidth = 1.5;
                     ctx.beginPath();
-                    ctx.moveTo(e.x + 5, e.y + e.h); 
-                    ctx.lineTo(e.x + e.w - 5, e.y + e.h);
-                    ctx.lineTo(e.x + e.w, e.y + 10);
-                    ctx.lineTo(e.x + e.w*0.6, e.y - 5); // Peak
-                    ctx.lineTo(e.x + e.w*0.3, e.y);
-                    ctx.lineTo(e.x, e.y + 10);
-                    ctx.closePath();
-                    ctx.fill();
                     
-                    // REQUESTED GREY STROKE
-                    ctx.strokeStyle = '#999'; ctx.lineWidth = 2; ctx.stroke();
-
-                    // CRACKS
-                    ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.moveTo(e.x+e.w/2, e.y); ctx.lineTo(e.x+e.w, e.y+10); ctx.stroke();
+                    if(e.subtype === 0) { // TRAPEZOID/BLOCK
+                        ctx.moveTo(e.x+5, e.y+e.h); ctx.lineTo(e.x+e.w-5, e.y+e.h);
+                        ctx.lineTo(e.x+e.w, e.y+10); ctx.lineTo(e.x+e.w/2, e.y); ctx.lineTo(e.x, e.y+10);
+                    } else if(e.subtype === 1) { // ROUND BOULDER
+                        ctx.ellipse(e.x+e.w/2, e.y+e.h/2, e.w/2, e.h/2, 0, 0, Math.PI*2);
+                    } else { // JAGGED SPIKE ROCK
+                        ctx.moveTo(e.x, e.y+e.h); ctx.lineTo(e.x+e.w/2, e.y); ctx.lineTo(e.x+e.w, e.y+e.h);
+                        ctx.lineTo(e.x+e.w*0.7, e.y+e.h*0.5); ctx.lineTo(e.x+e.w*0.3, e.y+e.h*0.8);
+                    }
+                    ctx.closePath();
+                    ctx.fill(); ctx.stroke();
                 } 
                 else if(e.type === 'letter') {
                     ctx.fillStyle = '#FFD700'; ctx.beginPath(); ctx.arc(e.x+e.w/2, e.y+e.h/2, e.w/2, 0, Math.PI*2); ctx.fill();
@@ -621,11 +620,11 @@
         function drawCar() {
             const {x, y, w, h} = car;
             const isSavage = Date.now() < savageEndTime;
-            const isSpiked = Date.now() < spikeEndTime;
+            const isSpiked = Date.now() < spikeEndTime; // This determines the SPIKES on car
             
-            // Ghost effect if Spiked
-            if(isSpiked) {
-                ctx.globalAlpha = 0.5;
+            // Ghost effect if Spiked (Invincible) but not Savage
+            if(isSpiked && !isSavage) {
+                ctx.globalAlpha = 0.8;
             }
             
             ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(x+6, y+6, w, h);
@@ -637,6 +636,18 @@
             
             ctx.fillStyle = cGrad;
             ctx.beginPath(); ctx.roundRect(x, y, w, h, 4); ctx.fill();
+
+            // SPIKES (If Ultra Mode)
+            if(isSpiked) {
+                ctx.fillStyle = '#C0C0C0'; // Silver
+                ctx.strokeStyle = '#555'; ctx.lineWidth = 1;
+                // Left Spike
+                ctx.beginPath(); ctx.moveTo(x+2, y); ctx.lineTo(x+8, y-15); ctx.lineTo(x+14, y); ctx.fill(); ctx.stroke();
+                // Center Spike (Larger)
+                ctx.beginPath(); ctx.moveTo(x+w/2-6, y); ctx.lineTo(x+w/2, y-20); ctx.lineTo(x+w/2+6, y); ctx.fill(); ctx.stroke();
+                // Right Spike
+                ctx.beginPath(); ctx.moveTo(x+w-14, y); ctx.lineTo(x+w-8, y-15); ctx.lineTo(x+w-2, y); ctx.fill(); ctx.stroke();
+            }
             
             // Windshield (Glassy)
             let wGrad = ctx.createLinearGradient(x,y+18,x+w,y+40);
