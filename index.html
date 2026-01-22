@@ -330,7 +330,7 @@
         let spawnIndex = 0, score = 0, totalLetters = 0, baseSpeed = 7, difficulty = 1, roadOffset = 0;
         let entities = [], particles = [], spikeEndTime = 0, savageEndTime = 0, nextLetterTime = 0, lastUltraSpawnTime = 0;
         let consecutiveFlasks = 0;
-        const car = { x:0, y:0, w:42, h:75, health:100 };
+        const car = { x:0, y:0, w:44, h:80, health:100 }; // Adjusted for new graphics
         const keys = {u:false, d:false, l:false, r:false};
         
         // NATURAL STONE PALETTE
@@ -483,18 +483,43 @@
             // 2. SAVAGE MODE: ONLY ROCKS (Mostly)
             if(isSavage && (savageEndTime - Date.now() > 500)) {
                  // Spawning varied rocks for smashing
-                 let sub = Math.floor(Math.random()*3);
+                 // Generate random rock properties
+                 let sub = Math.floor(Math.random()*3); // 0, 1, or 2
                  let col = rockColors[Math.floor(Math.random()*rockColors.length)];
-                 entities.push({x:x, y:roadY-60, w:40+Math.random()*20, h:30+Math.random()*20, type:'obs', subtype:sub, color:col, active:true, off:Math.random()*5});
+                 let w = 35 + Math.random()*25;
+                 let h = 30 + Math.random()*25;
+                 
+                 // Generate vertices for rock uniqueness
+                 let points = [];
+                 for(let i=0; i<6; i++) {
+                     let angle = (Math.PI*2/6)*i;
+                     let rad = (w/2) * (0.6 + Math.random()*0.4);
+                     points.push({x: Math.cos(angle)*rad, y: Math.sin(angle)*rad});
+                 }
+
+                 entities.push({
+                     x:x, y:roadY-60, w:w, h:h, type:'obs', 
+                     subtype:sub, color:col, active:true, off:Math.random()*5,
+                     points: points
+                 });
                  return; 
             }
 
             // 3. Normal Distribution
             if(r < 0.75) { 
-                let w = 40 + Math.random()*30; let h = 30 + Math.random()*20;
-                let sub = Math.floor(Math.random()*3); // 0=Block, 1=Round, 2=Jagged
+                let sub = Math.floor(Math.random()*3); 
                 let col = rockColors[Math.floor(Math.random()*rockColors.length)];
-                entities.push({x, y:roadY-60, w:w, h:h, type:'obs', subtype:sub, color:col, active:true, off:Math.random()*5});
+                let w = 35 + Math.random()*25;
+                let h = 30 + Math.random()*25;
+                
+                let points = [];
+                for(let i=0; i<6; i++) {
+                     let angle = (Math.PI*2/6)*i;
+                     let rad = (w/2) * (0.6 + Math.random()*0.4);
+                     points.push({x: Math.cos(angle)*rad, y: Math.sin(angle)*rad});
+                }
+
+                entities.push({x, y:roadY-60, w:w, h:h, type:'obs', subtype:sub, color:col, active:true, off:Math.random()*5, points:points});
             }
             else if(r < 0.90) { 
                 entities.push({x, y:roadY-60, w:35, h:35, type:'flask', active:true});
@@ -553,22 +578,36 @@
             
             entities.forEach(e => {
                 if(e.type === 'obs') {
-                    // Natural Rocks Logic
-                    ctx.fillStyle = e.color;
-                    ctx.strokeStyle = '#999'; ctx.lineWidth = 1.5;
-                    ctx.beginPath();
+                    // NEW: 3D ROCK RENDERING WITH VARIETY
+                    // Gradient shading for 3D effect
+                    let rGrad = ctx.createRadialGradient(e.x+e.w*0.3, e.y+e.h*0.3, e.w*0.1, e.x+e.w/2, e.y+e.h/2, e.w);
+                    rGrad.addColorStop(0, '#AAA'); // Highlight
+                    rGrad.addColorStop(1, e.color); // Base color
+                    ctx.fillStyle = rGrad;
                     
-                    if(e.subtype === 0) { // TRAPEZOID/BLOCK
-                        ctx.moveTo(e.x+5, e.y+e.h); ctx.lineTo(e.x+e.w-5, e.y+e.h);
-                        ctx.lineTo(e.x+e.w, e.y+10); ctx.lineTo(e.x+e.w/2, e.y); ctx.lineTo(e.x, e.y+10);
-                    } else if(e.subtype === 1) { // ROUND BOULDER
-                        ctx.ellipse(e.x+e.w/2, e.y+e.h/2, e.w/2, e.h/2, 0, 0, Math.PI*2);
-                    } else { // JAGGED SPIKE ROCK
-                        ctx.moveTo(e.x, e.y+e.h); ctx.lineTo(e.x+e.w/2, e.y); ctx.lineTo(e.x+e.w, e.y+e.h);
-                        ctx.lineTo(e.x+e.w*0.7, e.y+e.h*0.5); ctx.lineTo(e.x+e.w*0.3, e.y+e.h*0.8);
+                    ctx.save();
+                    ctx.translate(e.x + e.w/2, e.y + e.h/2);
+                    
+                    ctx.beginPath();
+                    if (e.points) {
+                        ctx.moveTo(e.points[0].x, e.points[0].y);
+                        for(let i=1; i<e.points.length; i++) ctx.lineTo(e.points[i].x, e.points[i].y);
+                    } else {
+                        // Fallback shape if points missing
+                        ctx.rect(-e.w/2, -e.h/2, e.w, e.h);
                     }
                     ctx.closePath();
-                    ctx.fill(); ctx.stroke();
+                    ctx.fill();
+                    
+                    // Stroke for visibility
+                    ctx.strokeStyle = '#666'; ctx.lineWidth = 1.5; ctx.stroke();
+                    
+                    // Detail: Cracks
+                    ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); 
+                    ctx.moveTo(-e.w*0.2, -e.h*0.2); ctx.lineTo(e.w*0.3, e.h*0.1); 
+                    ctx.lineTo(0, e.h*0.4); ctx.stroke();
+                    
+                    ctx.restore();
                 } 
                 else if(e.type === 'letter') {
                     ctx.fillStyle = '#FFD700'; ctx.beginPath(); ctx.arc(e.x+e.w/2, e.y+e.h/2, e.w/2, 0, Math.PI*2); ctx.fill();
@@ -627,41 +666,78 @@
                 ctx.globalAlpha = 0.8;
             }
             
+            // Shadow
             ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(x+6, y+6, w, h);
-            
-            // CAR BODY GRADIENT
+
+            // NEW: CAR CHASSIS SHAPE (Curved Sport Car)
             let cGrad = ctx.createLinearGradient(x,y,x+w,y);
             if(isSavage) { cGrad.addColorStop(0,'#9400D3'); cGrad.addColorStop(0.5,'#DDA0DD'); cGrad.addColorStop(1,'#9400D3'); }
             else { cGrad.addColorStop(0,'#0055AA'); cGrad.addColorStop(0.5,'#44AAFF'); cGrad.addColorStop(1,'#0055AA'); }
             
             ctx.fillStyle = cGrad;
-            ctx.beginPath(); ctx.roundRect(x, y, w, h, 4); ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(x+4, y);
+            ctx.quadraticCurveTo(x-2, y+h*0.3, x+2, y+h*0.8); // Left curve
+            ctx.lineTo(x+2, y+h);
+            ctx.lineTo(x+w-2, y+h);
+            ctx.lineTo(x+w-2, y+h*0.8);
+            ctx.quadraticCurveTo(x+w+2, y+h*0.3, x+w-4, y); // Right curve
+            ctx.closePath();
+            ctx.fill();
+
+            // CABIN
+            ctx.fillStyle = '#111';
+            ctx.beginPath();
+            ctx.moveTo(x+10, y+h*0.3);
+            ctx.lineTo(x+w-10, y+h*0.3);
+            ctx.lineTo(x+w-8, y+h*0.65);
+            ctx.lineTo(x+8, y+h*0.65);
+            ctx.fill();
+
+            // REAR WINDOW
+            ctx.fillStyle = '#222';
+            ctx.fillRect(x+10, y+h*0.66, w-20, 4);
 
             // SPIKES (If Ultra Mode)
             if(isSpiked) {
-                ctx.fillStyle = '#C0C0C0'; // Silver
-                ctx.strokeStyle = '#555'; ctx.lineWidth = 1;
-                // Left Spike
-                ctx.beginPath(); ctx.moveTo(x+2, y); ctx.lineTo(x+8, y-15); ctx.lineTo(x+14, y); ctx.fill(); ctx.stroke();
-                // Center Spike (Larger)
-                ctx.beginPath(); ctx.moveTo(x+w/2-6, y); ctx.lineTo(x+w/2, y-20); ctx.lineTo(x+w/2+6, y); ctx.fill(); ctx.stroke();
-                // Right Spike
-                ctx.beginPath(); ctx.moveTo(x+w-14, y); ctx.lineTo(x+w-8, y-15); ctx.lineTo(x+w-2, y); ctx.fill(); ctx.stroke();
+                // Metal Bar
+                ctx.fillStyle = '#444';
+                ctx.fillRect(x-4, y-5, w+8, 8);
+                
+                // SPIKES (Gradient Silver)
+                let sGrad = ctx.createLinearGradient(x, y-15, x, y);
+                sGrad.addColorStop(0, '#FFF'); sGrad.addColorStop(1, '#555');
+                ctx.fillStyle = sGrad;
+                ctx.strokeStyle = '#222'; ctx.lineWidth = 1;
+                
+                // Left
+                ctx.beginPath(); ctx.moveTo(x, y-2); ctx.lineTo(x+6, y-20); ctx.lineTo(x+12, y-2); ctx.fill(); ctx.stroke();
+                // Center
+                ctx.beginPath(); ctx.moveTo(x+w/2-6, y-2); ctx.lineTo(x+w/2, y-28); ctx.lineTo(x+w/2+6, y-2); ctx.fill(); ctx.stroke();
+                // Right
+                ctx.beginPath(); ctx.moveTo(x+w-12, y-2); ctx.lineTo(x+w-6, y-20); ctx.lineTo(x+w, y-2); ctx.fill(); ctx.stroke();
             }
-            
-            // Windshield (Glassy)
-            let wGrad = ctx.createLinearGradient(x,y+18,x+w,y+40);
-            wGrad.addColorStop(0, '#111'); wGrad.addColorStop(0.5, '#444'); wGrad.addColorStop(1, '#111');
-            ctx.fillStyle = wGrad; ctx.fillRect(x+2, y+18, w-4, h-30);
             
             // Text
             ctx.save(); ctx.translate(x+w/2, y+h/2); ctx.rotate(-Math.PI/2); ctx.scale(1, 1.8); 
             ctx.fillStyle = '#FFFFFF'; ctx.font='bold 9px Arial'; ctx.textAlign='center'; ctx.fillText("DAIYNBALL", 0, 4); ctx.restore();
             
-            // Lights
-            ctx.shadowBlur = 10; ctx.shadowColor = '#FF0'; ctx.fillStyle = '#FFEB3B'; ctx.fillRect(x+2, y, 8, 6); ctx.fillRect(x+w-10, y, 8, 6);
-            ctx.shadowColor = '#F00'; ctx.fillStyle = '#D32F2F'; ctx.fillRect(x+2, y+h-6, 8, 6); ctx.fillRect(x+w-10, y+h-6, 8, 6);
+            // Rear Lights
+            ctx.shadowBlur = 10; ctx.shadowColor = '#F00'; ctx.fillStyle = '#D32F2F'; ctx.fillRect(x+4, y+h-4, 8, 4); ctx.fillRect(x+w-12, y+h-4, 8, 4);
             ctx.shadowBlur = 0;
+            
+            // Headlights
+            ctx.fillStyle = '#FFEB3B'; ctx.fillRect(x+4, y+2, 6, 6); ctx.fillRect(x+w-10, y+2, 6, 6);
+
+            // Mirrors
+            ctx.fillStyle = cGrad;
+            ctx.fillRect(x-3, y+h*0.35, 3, 6); ctx.fillRect(x+w, y+h*0.35, 3, 6);
+
+            // Wheels
+            ctx.fillStyle = '#111';
+            ctx.fillRect(x-2, y+h*0.15, 2, 10); ctx.fillRect(x+w, y+h*0.15, 2, 10); // Front
+            ctx.fillRect(x-2, y+h*0.7, 2, 10); ctx.fillRect(x+w, y+h*0.7, 2, 10); // Rear
+
             ctx.globalAlpha = 1.0;
         }
 
