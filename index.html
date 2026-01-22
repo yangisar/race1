@@ -14,6 +14,13 @@
             touch-action: none; user-select: none; -webkit-user-select: none;
         }
 
+        #loading-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 9999;
+            display: flex; justify-content: center; align-items: center;
+            color: #00FF00; font-family: 'Press Start 2P', monospace;
+        }
+
         #gameContainer { position: relative; width: 100vw; height: 100vh; background: #000; }
         canvas { display: block; width: 100%; height: 100%; }
 
@@ -200,6 +207,8 @@
 </head>
 <body>
 
+    <div id="loading-screen">LOADING ASSETS...</div>
+
     <audio id="bgMusic" loop><source src="soundtrack.mp3" type="audio/mpeg"></audio>
     <audio id="ultraSound"><source src="ultra.mp3" type="audio/mpeg"></audio>
 
@@ -282,8 +291,9 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, push, query, orderByChild, limitToLast, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        // Using ESM.sh for better standalone browser support
+        import { initializeApp } from "https://esm.sh/firebase@10.8.0/app";
+        import { getDatabase, ref, push, query, orderByChild, limitToLast, get } from "https://esm.sh/firebase@10.8.0/database";
 
         // CONFIG
         const firebaseConfig = {
@@ -296,13 +306,17 @@
             databaseURL: "https://scoreboardracinggame-default-rtdb.asia-southeast1.firebasedatabase.app/"
         };
 
-        let db;
+        let db = null;
+        let firebaseReady = false;
+
+        // Initialize Firebase with Safety Check
         try {
             const app = initializeApp(firebaseConfig);
             db = getDatabase(app);
-            console.log("Firebase Initialized");
+            firebaseReady = true;
+            console.log("Firebase Connected");
         } catch(e) {
-            console.error("Firebase Init Error", e);
+            console.warn("Firebase failed to load (Offline Mode Active):", e);
         }
 
         // --- GAME LOGIC ---
@@ -312,7 +326,7 @@
             init: function() { 
                 if(!this.ctx) this.ctx = new (window.AudioContext||window.webkitAudioContext)();
                 this.bgMusic.volume = 0.6; 
-                this.bgMusic.play().catch(e=>console.log("Audio play blocked", e));
+                this.bgMusic.play().catch(e=>{});
             },
             playTone: function(f,t,d,v=0.1) {
                 if(!this.ctx) return;
@@ -329,10 +343,10 @@
             stopUltra: function() { this.ultraSound.pause(); }
         };
 
-        // Firebase Storage
+        // Firebase Storage Safe Wrapper
         const StorageSys = {
             save: async function(name, score) {
-                if(!db) return;
+                if(!firebaseReady || !db) return;
                 const scoresRef = ref(db, 'scores');
                 try {
                     await push(scoresRef, {
@@ -340,26 +354,24 @@
                         score: parseInt(score),
                         timestamp: Date.now()
                     });
-                } catch(e) { console.error("Firebase Save:", e); }
+                } catch(e) { console.warn("Save Error:", e); }
             },
             getTop: async function() {
-                if(!db) return [];
+                if(!firebaseReady || !db) return null;
                 const scoresRef = ref(db, 'scores');
-                // Order by score, get last 5 (highest)
                 const topScoresQuery = query(scoresRef, orderByChild('score'), limitToLast(5));
                 try {
                     const snapshot = await get(topScoresQuery);
                     if (snapshot.exists()) {
                         const data = [];
                         snapshot.forEach((child) => { data.push(child.val()); });
-                        return data.reverse(); // Highest first
+                        return data.reverse(); 
                     }
                     return [];
-                } catch (error) { console.error("Firebase Get:", error); return null; }
+                } catch (error) { console.warn("Get Error:", error); return null; }
             }
         };
 
-        /** 📝 TEXT DATA **/
         const fullLyrics = `Жыбырла, көтті көтер
 Жыбырла каждый день
 Жыбырла асықпай тез-тез-тез әкел бесті
@@ -499,10 +511,12 @@ Next point: “And new, and still” - let’s go!
 
         const bindKey = (id, key) => {
             const el = document.getElementById(id);
-            el.addEventListener('touchstart', (e)=>{e.preventDefault(); keys[key]=true;});
-            el.addEventListener('touchend', (e)=>{e.preventDefault(); keys[key]=false;});
-            el.addEventListener('mousedown', ()=>{keys[key]=true;});
-            el.addEventListener('mouseup', ()=>{keys[key]=false;});
+            if(el) {
+                el.addEventListener('touchstart', (e)=>{e.preventDefault(); keys[key]=true;});
+                el.addEventListener('touchend', (e)=>{e.preventDefault(); keys[key]=false;});
+                el.addEventListener('mousedown', ()=>{keys[key]=true;});
+                el.addEventListener('mouseup', ()=>{keys[key]=false;});
+            }
         };
         bindKey('btn-up','u'); bindKey('btn-down','d'); bindKey('btn-left','l'); bindKey('btn-right','r');
 
@@ -515,7 +529,8 @@ Next point: “And new, and still” - let’s go!
         }
 
         function triggerPopup(id) {
-            const el = document.getElementById(id); el.classList.remove('anim-pop'); void el.offsetWidth; el.classList.add('anim-pop');
+            const el = document.getElementById(id); 
+            if(el) { el.classList.remove('anim-pop'); void el.offsetWidth; el.classList.add('anim-pop'); }
         }
 
         function update() {
@@ -758,17 +773,21 @@ Next point: “And new, and still” - let’s go!
             await StorageSys.save(nickname, score);
             const top = await StorageSys.getTop();
             if(top) document.getElementById('hof-list').innerHTML = top.length ? top.map(e => `<li class='hof-item'><span>${e.name}</span><span>${e.score}</span></li>`).join('') : "<li>No scores yet</li>";
-            else document.getElementById('hof-list').innerHTML = "<li style='color:#F00'>Leaderboard Error</li>";
+            else document.getElementById('hof-list').innerHTML = "<li style='color:#F00'>Leaderboard Unavailable</li>";
         }
 
         function resetGame() { location.reload(); }
 
-        // ATTACH TO WINDOW SO HTML BUTTONS CAN SEE THESE FUNCTIONS
+        // Attach to global window because type="module" isolates scope
         window.initGame = initGame;
         window.showDifficulty = showDifficulty;
         window.resetGame = resetGame;
 
-        resize();
+        // Start initialization sequence
+        window.onload = function() {
+            document.getElementById('loading-screen').style.display = 'none';
+            resize();
+        };
     </script>
 </body>
 </html>
