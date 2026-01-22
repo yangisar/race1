@@ -39,15 +39,9 @@
             transition: width 0.2s;
         }
 
-        #spikeTimerContainer { margin-top: 8px; opacity: 0; transition: opacity 0.3s; }
-        #spikeTimerWrap {
-            width: 140px; height: 8px;
-            background: #333; border: 1px solid #888; transform: skewX(-15deg);
-        }
-        #spikeTimerFill {
-            width: 100%; height: 100%; background: #9400D3;
-            box-shadow: 0 0 10px #9400D3;
-        }
+        #savageBarContainer { margin-top: 8px; opacity: 0; transition: opacity 0.3s; }
+        #savageBarWrap { width: 140px; height: 8px; background: #333; border: 1px solid #888; transform: skewX(-15deg); }
+        #savageBarFill { width: 100%; height: 100%; background: #9400D3; box-shadow: 0 0 10px #9400D3; }
 
         /* --- SCREENS --- */
         .screen-overlay {
@@ -59,7 +53,7 @@
                 linear-gradient(90deg, rgba(0, 255, 0, 0.2) 1px, transparent 1px);
             background-size: 40px 40px;
             display: flex; flex-direction: column;
-            justify-content: center; align-items: center;
+            justify-content: center; align-items: center; /* CENTERED */
             z-index: 100; color: #fff; text-align: center;
             font-family: 'Montserrat', sans-serif;
             padding: 20px; box-sizing: border-box;
@@ -70,35 +64,33 @@
             font-family: 'Press Start 2P', cursive;
             font-size: 1.8rem; color: #FFF;
             text-shadow: 4px 4px 0px #FF0000, -2px -2px 0px #0000FF;
-            margin-bottom: 10px; line-height: 1.2;
+            margin-bottom: 20px; line-height: 1.4;
             text-align: center;
         }
 
-        /* INSTRUCTIONS */
         #intro-section {
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            width: 100%; max-width: 500px;
+            display: flex; flex-direction: column; align-items: center;
+            width: 100%; max-width: 400px;
         }
 
         .instructions {
             background: rgba(0,0,0,0.8); border: 1px solid #555;
-            padding: 15px; margin-bottom: 15px; border-radius: 8px;
-            font-size: 0.75rem; color: #DDD; width: 100%; line-height: 1.5;
-            text-align: center;
+            padding: 15px; margin-bottom: 20px; border-radius: 8px;
+            font-size: 0.75rem; color: #DDD; width: 100%; line-height: 1.6;
         }
         .highlight { color: #FFD700; font-weight: bold; }
-        .item-row { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 4px 0; }
+        .item-row { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 5px 0; }
         
         .pixel-input {
-            padding: 12px; font-size: 1rem; font-family: 'Press Start 2P', cursive;
+            padding: 15px; font-size: 1rem; font-family: 'Press Start 2P', cursive;
             border: 4px solid #FFF; background: #000; color: #0F0;
-            text-align: center; text-transform: uppercase; width: 80%; max-width: 300px; margin-bottom: 15px;
+            text-align: center; text-transform: uppercase; width: 80%; margin-bottom: 20px;
             border-radius: 0; outline: none; box-shadow: 5px 5px 0px #333;
             pointer-events: auto;
         }
 
         .pixel-btn-go {
-            padding: 15px 30px; font-size: 1rem; font-family: 'Press Start 2P', cursive;
+            padding: 15px 40px; font-size: 1rem; font-family: 'Press Start 2P', cursive;
             background: #FF0000; color: #FFF; border: 4px solid #FFF;
             cursor: pointer; box-shadow: 6px 6px 0px #8B0000; pointer-events: auto;
             text-transform: uppercase; margin-bottom: 20px;
@@ -109,8 +101,8 @@
         #difficulty-section { display: none; flex-direction: column; align-items: center; width: 100%; }
         .diff-btn {
             display: block; width: 280px; max-width: 100%;
-            padding: 12px; margin: 8px 0;
-            font-size: 0.7rem; font-family: 'Press Start 2P', cursive;
+            padding: 15px; margin: 10px 0;
+            font-size: 0.8rem; font-family: 'Press Start 2P', cursive;
             background: #000; border: 3px solid #FFF;
             cursor: pointer; text-transform: uppercase;
             box-shadow: 4px 4px 0px #222; transition: transform 0.1s;
@@ -154,6 +146,7 @@
             pointer-events: none; z-index: 40; opacity: 0;
         }
         #jbrla-popup { font-family: 'Rubik Glitch'; font-size: 3.5rem; color: #fff; text-shadow: 0 0 10px #9400D3; }
+        #savage-popup { font-family: 'Rubik Glitch'; font-size: 4rem; color: #9400D3; text-shadow: 0 0 20px #FFF; }
         #gorilla-popup { font-family: 'Permanent Marker'; font-size: 3rem; color: #00FFFF; text-shadow: 0 0 10px #00FF00; }
         #slow-popup { font-family: 'Permanent Marker'; font-size: 3rem; color: #FFF; text-shadow: 0 0 10px #00FFFF; }
         #victory-popup { 
@@ -169,9 +162,9 @@
             100% { transform: translateX(-50%) scale(2); opacity: 0; }
         }
 
-        /* --- CONTROLS (Android Optimized) --- */
+        /* --- CONTROLS --- */
         #controls {
-            position: absolute; bottom: 60px; /* Moved up to avoid Android home bar */
+            position: absolute; bottom: 60px; /* Moved up for Android */
             left: 5px; right: 5px;
             height: 150px; z-index: 20; pointer-events: none;
         }
@@ -191,7 +184,7 @@
         /* --- CREDITS --- */
         .credits {
             margin-top: auto; padding-bottom: 10px;
-            font-size: 0.6rem; color: #888; text-align: center; width: 100%;
+            font-size: 0.6rem; color: #888; text-align: center;
         }
         .credits a { color: #AAA; text-decoration: underline; pointer-events: auto; }
 
@@ -219,14 +212,15 @@
             <div>
                 <div class="bar-label">ARMOR</div>
                 <div class="bar-wrap"><div id="hpBar" class="bar-fill"></div></div>
-                <div id="spikeTimerContainer"><div id="spikeTimerWrap"><div id="spikeTimerFill"></div></div></div>
+                <div id="savageBarContainer"><div id="savageBarWrap"><div id="savageBarFill"></div></div></div>
             </div>
             <div style="text-align: right;">
-                <span id="scoreVal" style="font-size: 2rem; color: #FFD700;">0</span><br><span class="bar-label">LYRICS</span>
+                <span id="scoreVal" style="font-size: 1.5rem; color: #FFD700;">0 / 0</span><br><span class="bar-label">LETTERS</span>
             </div>
         </div>
 
         <div id="jbrla-popup" class="popup-text">JBRLA!</div>
+        <div id="savage-popup" class="popup-text">SAVAGE MODE!</div>
         <div id="gorilla-popup" class="popup-text">GORILLA!</div>
         <div id="slow-popup" class="popup-text">SLOW DOWN!</div>
         <div id="victory-popup" class="popup-text">VICTORY!<br><span style="font-size:1rem; color:#FFF;">ЖЕҢІС!</span></div>
@@ -238,16 +232,20 @@
                 <div class="instructions">
                     <p style="margin:0 0 10px 0; border-bottom:1px solid #555; padding-bottom:5px;">
                         <span class="highlight">GOAL / МАҚСАТ:</span><br>
-                        Gather letters and put the whole song JBRLA together!<br>
-                        Әріптерді жинап, JBRLA әнін құрастыр!
+                        Collect <span style="color:#FF0000">ALL</span> letters to win!<br>
+                        Жеңіске жету үшін <span style="color:#FF0000">БАРЛЫҚ</span> әріптерді жина!
                     </p>
-                    <div class="item-row">🥫 <span style="color:#00BFFF">Light Blue Tin = Armor</span></div>
+                    <div class="item-row">🥫 <span style="color:#00BFFF">2x Blue Tins = SAVAGE MODE</span></div>
                     <div class="item-row">⚡ <span>Lightning = Invincible</span></div>
                     <div class="item-row">❄ <span>Brakes = Slow Down</span></div>
                 </div>
 
                 <input type="text" id="nickname" class="pixel-input" placeholder="NICKNAME" maxlength="12">
                 <button class="pixel-btn-go" onclick="showDifficulty()">Let's Go! / Кеттік!</button>
+                
+                <div class="credits">
+                    Created using AI tools by Yadykar Ibraimov <a href="https://www.instagram.com/yangisar/" target="_blank">@yangisar</a>
+                </div>
             </div>
 
             <div id="difficulty-section">
@@ -255,10 +253,6 @@
                 <button class="diff-btn btn-easy" onclick="initGame('easy')">Балапан - Lil homie</button>
                 <button class="diff-btn btn-med" onclick="initGame('medium')">Джига - Ma boy</button>
                 <button class="diff-btn btn-hard" onclick="initGame('hard')">Жабай - Savage</button>
-            </div>
-
-            <div class="credits">
-                Created using AI tools by Yadykar Ibraimov <a href="https://www.instagram.com/yangisar/" target="_blank">@yangisar</a>
             </div>
         </div>
 
@@ -312,13 +306,13 @@
             },
             playSmash: function() { 
                 this.playTone(60,'sawtooth',0.2,0.4); 
-                this.playTone(100,'square',0.1,0.3); // Added crunch
+                this.playTone(100,'square',0.1,0.3); 
             },
             playUltra: function() { this.ultraSound.currentTime = 0; this.ultraSound.play().catch(e=>{}); },
             stopUltra: function() { this.ultraSound.pause(); }
         };
 
-        /** ☁️ LEADERBOARD (Updated Codes) **/
+        /** ☁️ LEADERBOARD (HTTPS Fixed) **/
         const StorageSys = {
             privateCode: "TbEgYk4m1k6AiaZ5bguZqwNWpZbGt8hkSJBVFdEavkTw", 
             publicCode:  "6971059b8f40bb1184ba9e1e",  
@@ -451,8 +445,9 @@ Next point: “And new, and still” - let’s go!
         const ctx = canvas.getContext('2d');
         let roadY, roadH, bgCache = { mountains: [], buildings: [], stars: [] }, gameState = 'START';
         let nickname = "", currentDiff = 'medium', damageDealt = 25, spawnMultiplier = 1.0, speedOffset = 0;
-        let spawnIndex = 0, score = 0, baseSpeed = 7, difficulty = 1, roadOffset = 0;
-        let entities = [], particles = [], spikeEndTime = 0, gameStartTime = 0, lastUltraSpawnTime = 0, nextLetterTime = 0;
+        let spawnIndex = 0, score = 0, totalLetters = 0, baseSpeed = 7, difficulty = 1, roadOffset = 0;
+        let entities = [], particles = [], spikeEndTime = 0, savageEndTime = 0, nextLetterTime = 0;
+        let consecutiveFlasks = 0;
         const car = { x:0, y:0, w:42, h:75, health:100 };
         const keys = {u:false, d:false, l:false, r:false};
 
@@ -499,9 +494,26 @@ Next point: “And new, and still” - let’s go!
         }
 
         function update() {
+            // Calculate Total Letters Count for Victory
+            if(totalLetters === 0) {
+                 for(let i=0; i<fullLyrics.length; i++) {
+                     if(fullLyrics[i] !== ' ' && fullLyrics[i] !== '\n') totalLetters++;
+                 }
+            }
+
+            // Savage Mode Logic
+            const isSavage = Date.now() < savageEndTime;
+            const isSpiked = Date.now() < spikeEndTime;
+            
             // Difficulty Ramping
-            difficulty = Math.max(1, (1 + (score/50)) - speedOffset);
-            let currentSpeed = baseSpeed * difficulty; roadOffset += currentSpeed;
+            let rawDiff = (1 + (score/50));
+            if(isSavage) rawDiff = 2.5; // Drastic speed increase in Savage Mode
+            else rawDiff -= speedOffset;
+
+            difficulty = Math.max(1, rawDiff);
+            let currentSpeed = baseSpeed * difficulty; 
+            roadOffset += currentSpeed;
+            
             const moveSpd = (baseSpeed * 1.2) + (difficulty * 0.6);
 
             // Car Move
@@ -518,23 +530,22 @@ Next point: “And new, and still” - let’s go!
                 if(spawnIndex < fullLyrics.length) {
                     entities.push({x:Math.random()*(canvas.width-40), y:roadY-60, w:40, h:40, type:'letter', char:fullLyrics[spawnIndex], active:true});
                     spawnIndex++; 
-                    nextLetterTime = Date.now() + 200 + Math.random()*600;
+                    nextLetterTime = Date.now() + (200 / (isSavage ? 2 : 1)) + Math.random()*600;
                 } else {
                     // Song finished spawning
-                    if(entities.filter(e=>e.type==='letter').length === 0) endGame(true);
+                    if(entities.filter(e=>e.type==='letter').length === 0) endGame();
                 }
             }
 
-            // VICTORY CHECK: If spawnIndex finished and screens clear
+            // Check if song done
             if(spawnIndex >= fullLyrics.length && entities.length === 0) {
-                 endGame(true);
+                 endGame();
             }
 
             // SPAWN OBSTACLES
             if(Math.random() < (0.02 * spawnMultiplier + (difficulty * 0.003))) spawnOther();
 
-            const isSpiked = Date.now() < spikeEndTime;
-            if(!isSpiked) AudioSys.stopUltra();
+            if(!isSpiked && !isSavage) AudioSys.stopUltra();
 
             // ENTITY LOGIC
             entities.forEach(e => {
@@ -542,7 +553,8 @@ Next point: “And new, and still” - let’s go!
                 if (car.x < e.x+e.w && car.x+car.w > e.x && car.y < e.y+e.h && car.y+car.h > e.y && e.active) {
                     e.active = false;
                     if(e.type==='obs') {
-                        if(!isSpiked) { 
+                        consecutiveFlasks = 0; // Reset streak
+                        if(!isSpiked && !isSavage) { 
                              car.health -= damageDealt; 
                              AudioSys.playTone(100,'sawtooth',0.2); 
                              spawnParticles(e.x+e.w/2, e.y+e.h/2, e.color, 10);
@@ -552,7 +564,18 @@ Next point: “And new, and still” - let’s go!
                         }
                     }
                     else if(e.type==='letter') { score++; AudioSys.playTone(1000,'sine',0.1); }
-                    else if(e.type==='flask') { car.health = Math.min(100, car.health+20); triggerPopup('gorilla-popup'); }
+                    else if(e.type==='flask') { 
+                        car.health = Math.min(100, car.health+20); 
+                        consecutiveFlasks++;
+                        if(consecutiveFlasks >= 2) {
+                            savageEndTime = Date.now() + 5000;
+                            consecutiveFlasks = 0;
+                            AudioSys.playUltra();
+                            triggerPopup('savage-popup');
+                        } else {
+                            triggerPopup('gorilla-popup'); 
+                        }
+                    }
                     else if(e.type==='slow') { speedOffset = (score/50); triggerPopup('slow-popup'); }
                     else if(e.type==='ultra') { spikeEndTime = Date.now()+10000; AudioSys.playUltra(); triggerPopup('jbrla-popup'); }
                 }
@@ -562,22 +585,27 @@ Next point: “And new, and still” - let’s go!
             // Particles Update
             particles.forEach((p,i) => { p.x += p.vx; p.y += p.vy; p.vy += 0.5; p.l -= 0.05; if(p.l<=0) particles.splice(i,1); });
 
-            if(car.health <= 0) endGame(false);
+            // Savage Trail
+            if(isSavage) {
+                if(Math.random()>0.5) spawnParticles(car.x+car.w/2, car.y+car.h, '#9400D3', 1);
+            }
+
+            if(car.health <= 0) endGame();
             
             // HUD Update
             document.getElementById('hpBar').style.width = Math.max(0, car.health) + '%';
-            document.getElementById('scoreVal').innerText = score;
-            const timerEl = document.getElementById('spikeTimerContainer');
-            if(isSpiked) {
-                timerEl.style.opacity = '1';
-                document.getElementById('spikeTimerFill').style.width = ((Math.max(0, spikeEndTime - Date.now()) / 10000) * 100) + '%';
-            } else { timerEl.style.opacity = '0'; }
+            document.getElementById('scoreVal').innerText = score + " / " + totalLetters;
+            
+            const savageEl = document.getElementById('savageBarContainer');
+            if(isSavage) {
+                savageEl.style.opacity = '1';
+                document.getElementById('savageBarFill').style.width = ((Math.max(0, savageEndTime - Date.now()) / 5000) * 100) + '%';
+            } else { savageEl.style.opacity = '0'; }
         }
 
         function spawnOther() {
             let x = Math.random()*(canvas.width-40), now = Date.now(), r = Math.random();
-            if(now - lastUltraSpawnTime > 9000 && r < 0.1) { entities.push({x, y:roadY-60, w:35, h:45, type:'ultra', active:true}); lastUltraSpawnTime = now; }
-            else if(r < 0.8) {
+            if(r < 0.8) {
                 let s = Math.random(); let w = 40+(s*35); let h=30+(s*25);
                 const colors = ['#8B5A2B', '#6F4E37', '#5C4033', '#966F33', '#4E3629']; 
                 entities.push({x, y:roadY-60, w:w, h:h, type:'obs', color:colors[Math.floor(Math.random()*colors.length)], active:true, off:Math.random()*10});
@@ -700,6 +728,7 @@ Next point: “And new, and still” - let’s go!
 
         function drawCar() {
             const {x, y, w, h} = car;
+            const isSavage = Date.now() < savageEndTime;
             const isSpiked = Date.now() < spikeEndTime;
             if(isSpiked) {
                 ctx.fillStyle = '#AAA'; ctx.beginPath();
@@ -709,8 +738,8 @@ Next point: “And new, and still” - let’s go!
             }
             ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(x+6, y+6, w, h);
             
-            // CAR BODY - ELECTRIC BLUE
-            ctx.fillStyle = '#2979FF'; 
+            // CAR BODY
+            ctx.fillStyle = isSavage ? '#9400D3' : '#2979FF'; // Purple if savage, Blue normal
             ctx.beginPath(); ctx.roundRect(x, y, w, h, 4); ctx.fill();
             
             // Windshield
@@ -744,16 +773,19 @@ Next point: “And new, and still” - let’s go!
             
             // Reset
             lyricIndex = 0; spawnIndex = 0; score = 0; speedOffset = 0; car.health = 100;
-            entities = []; spikeEndTime = 0; particles = [];
+            entities = []; spikeEndTime = 0; savageEndTime = 0; particles = []; consecutiveFlasks = 0;
             gameState = 'PLAYING'; gameStartTime = Date.now(); nextLetterTime = Date.now() + 1000;
             resize(); draw();
         }
 
-        async function endGame(isVictory) {
+        async function endGame() {
             gameState = 'OVER';
             AudioSys.stopUltra();
             document.getElementById('screen-end').style.display = 'flex';
             
+            // Victory Condition: Score must equal Total Letters
+            let isVictory = (car.health > 0) && (score >= totalLetters);
+
             const titleEl = document.getElementById('end-title');
             if(isVictory) {
                 titleEl.innerText = "VICTORY!";
@@ -773,7 +805,11 @@ Next point: “And new, and still” - let’s go!
                  collected += fullLyrics[tempIndex];
                  tempIndex++;
             }
-            document.getElementById('lyrics-result').innerText = collected + (isVictory ? "..." : "");
+            if(!isVictory && score < totalLetters) {
+                // If failed, show red "MISSED" text at end of lyrics
+                collected += " ... [MISSED " + (totalLetters - score) + " LETTERS]";
+            }
+            document.getElementById('lyrics-result').innerText = collected;
 
             // Leaderboard
             document.getElementById('hof-list').innerHTML = "<li style='color:#888'>Loading...</li>";
