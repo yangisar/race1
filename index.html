@@ -52,6 +52,7 @@
         #jbrla-popup { font-family: 'Rubik Glitch'; font-size: 3.5rem; color: #fff; text-shadow: 0 0 10px #9400D3; }
         #savage-popup { font-family: 'Rubik Glitch'; font-size: 4rem; color: #9400D3; text-shadow: 0 0 20px #FFF; }
         #slow-popup { font-family: 'Permanent Marker'; font-size: 3rem; color: #FFF; text-shadow: 0 0 10px #00FFFF; }
+        #boost-popup { font-family: 'Rubik Glitch'; font-size: 3rem; color: #00FF00; text-shadow: 0 0 10px #FFF; }
         #victory-popup { 
             position: absolute; top: 30%; width: 100%; text-align: center; 
             font-family: 'Press Start 2P'; font-size: 2rem; color: #FFD700; 
@@ -227,6 +228,7 @@
         <div id="jbrla-popup" class="popup-text">JBRLA!</div>
         <div id="savage-popup" class="popup-text">SAVAGE MODE!</div>
         <div id="slow-popup" class="popup-text">SLOW DOWN!</div>
+        <div id="boost-popup" class="popup-text">SPEED UP!</div>
         <div id="victory-popup" class="popup-text">VICTORY!<br><span style="font-size:1rem; color:#FFF;">ЖЕҢІС!</span></div>
 
         <div id="screen-start" class="screen-overlay">
@@ -244,7 +246,7 @@
                     </p>
                     <div class="item-row">💙🔧 <span style="color:#00BFFF">2x Repair = SAVAGE MODE</span></div>
                     <div class="item-row">⚡ <span>Lightning = Invincible + Spikes</span></div>
-                    <div class="item-row">❄ <span>Brakes = Slow Down</span></div>
+                    <div class="item-row">❄ <span>Brakes = Slow, </span><span style="color:#0F0"> >>> </span><span>= Fast</span></div>
                 </div>
 
                 <input type="text" id="nickname" class="pixel-input" placeholder="NICKNAME" maxlength="12">
@@ -329,8 +331,8 @@
         let nickname = "", currentDiff = 'medium', damageDealt = 25, spawnMultiplier = 1.0, speedOffset = 0;
         let spawnIndex = 0, score = 0, totalLetters = 0, baseSpeed = 7, difficulty = 1, roadOffset = 0;
         let entities = [], particles = [], spikeEndTime = 0, savageEndTime = 0, nextLetterTime = 0, lastUltraSpawnTime = 0;
-        let consecutiveFlasks = 0;
-        const car = { x:0, y:0, w:44, h:80, health:100 }; // Adjusted for new graphics
+        let consecutiveFlasks = 0, currentSavageDuration = 5000;
+        const car = { x:0, y:0, w:44, h:80, health:100 }; 
         const keys = {u:false, d:false, l:false, r:false};
         
         // NATURAL STONE PALETTE
@@ -387,6 +389,10 @@
             icon.classList.remove('anim-screw'); void icon.offsetWidth; icon.classList.add('anim-screw');
             setTimeout(() => { el.style.opacity = '0'; }, 1200);
         }
+        
+        function triggerHaptics(pattern) {
+             if(navigator.vibrate) navigator.vibrate(pattern);
+        }
 
         function update() {
             if(totalLetters === 0) { for(let i=0; i<fullLyrics.length; i++) if(fullLyrics[i] !== ' ' && fullLyrics[i] !== '\n') totalLetters++; }
@@ -420,11 +426,15 @@
 
             if(spawnIndex >= fullLyrics.length && entities.length === 0) endGame();
             
-            // SPAWN LOGIC - INCREASE DURING SAVAGE
+            // SPAWN LOGIC 
             let spawnRate = (0.02 * spawnMultiplier) + (difficulty * 0.004);
-            if (isSavage && (savageEndTime - Date.now() > 500)) { // 90% of duration
-                 spawnRate = 0.2; // HIGH SPAWN RATE
-            }
+            
+            // INCREASE SPAWN RATE LOGIC
+            // 1. Savage Mode (Rocks to smash)
+            if (isSavage && (savageEndTime - Date.now() > 500)) spawnRate = 0.2; 
+            // 2. ULTRA MODE (Spikes) - 90% duration flood
+            if (isSpiked && (spikeEndTime - Date.now() > 1000)) spawnRate = 0.25;
+
             if(Math.random() < spawnRate) spawnOther();
             
             if(!isSpiked && !isSavage) AudioSys.stopUltra();
@@ -436,17 +446,34 @@
                     if(e.type==='obs') {
                         consecutiveFlasks = 0;
                         if(!isSpiked && !isSavage) { car.health -= damageDealt; AudioSys.playTone(100,'sawtooth',0.2); spawnParticles(e.x+e.w/2, e.y+e.h/2, e.color, 10); }
-                        else { AudioSys.playSmash(); spawnParticles(e.x+e.w/2, e.y+e.h/2, '#777', 15); }
+                        else { 
+                            // Smash effect
+                            AudioSys.playSmash(); 
+                            spawnParticles(e.x+e.w/2, e.y+e.h/2, '#777', 15); 
+                            triggerHaptics(50); // Small bump on smash
+                        }
                     }
                     else if(e.type==='letter') { score++; AudioSys.playTone(1000,'sine',0.1); }
                     else if(e.type==='flask') { 
                         car.health = Math.min(100, car.health+20); consecutiveFlasks++;
                         if(consecutiveFlasks >= 2) {
-                            savageEndTime = Date.now() + 5000; consecutiveFlasks = 0; AudioSys.playUltra(); triggerPopup('savage-popup');
+                            // ENTER SAVAGE MODE
+                            currentSavageDuration += 2000; // Increase duration by 2s each time
+                            savageEndTime = Date.now() + currentSavageDuration; 
+                            consecutiveFlasks = 0; AudioSys.playUltra(); 
+                            triggerPopup('savage-popup');
+                            triggerHaptics([200, 100, 200]); // Strong haptic
                         } else { triggerWrenchAnim(); }
                     }
                     else if(e.type==='slow') { speedOffset = (score/50); triggerPopup('slow-popup'); }
-                    else if(e.type==='ultra') { spikeEndTime = Date.now()+10000; AudioSys.playUltra(); triggerPopup('jbrla-popup'); }
+                    else if(e.type==='boost') { speedOffset = -2.0; triggerPopup('boost-popup'); triggerHaptics(100); }
+                    else if(e.type==='ultra') { 
+                        // ENTER ULTRA MODE
+                        spikeEndTime = Date.now()+10000; 
+                        AudioSys.playUltra(); 
+                        triggerPopup('jbrla-popup'); 
+                        triggerHaptics([100, 50, 100, 50, 100]); // Pulse haptic
+                    }
                 }
             });
             entities = entities.filter(e => e.y < canvas.height && e.active);
@@ -465,12 +492,13 @@
             const savageEl = document.getElementById('savageBarContainer');
             if(isSavage) {
                 savageEl.style.opacity = '1';
-                document.getElementById('savageBarFill').style.width = ((Math.max(0, savageEndTime - Date.now()) / 5000) * 100) + '%';
+                document.getElementById('savageBarFill').style.width = ((Math.max(0, savageEndTime - Date.now()) / currentSavageDuration) * 100) + '%';
             } else { savageEl.style.opacity = '0'; }
         }
 
         function spawnOther() {
             const isSavage = Date.now() < savageEndTime;
+            const isSpiked = Date.now() < spikeEndTime;
             let x = Math.random()*(canvas.width-40), now = Date.now(), r = Math.random();
 
             // 1. Ultra Bolt Guarantee
@@ -480,25 +508,29 @@
                  return;
             }
 
-            // 2. SAVAGE MODE: ONLY ROCKS (Mostly)
-            if(isSavage && (savageEndTime - Date.now() > 500)) {
+            // 2. MASSIVE ROCK SPAWN (Savage OR Ultra Spiked Mode)
+            if((isSavage && (savageEndTime - Date.now() > 500)) || (isSpiked && (spikeEndTime - Date.now() > 1000))) {
                  const colors = ['#8B5A2B', '#6F4E37', '#5C4033', '#966F33', '#4E3629'];
                  let w = 40+(Math.random()*35); let h=30+(Math.random()*25);
                  entities.push({x:x, y:roadY-60, w:w, h:h, type:'obs', color:colors[Math.floor(Math.random()*colors.length)], active:true, off:Math.random()*10});
                  return; 
             }
 
-            // 3. Normal Distribution (USING ORIGINAL SIMPLE SPAWN LOGIC FOR THIS STYLE)
-            if(r < 0.75) { 
+            // 3. Normal Distribution
+            if(r < 0.70) { 
                 const colors = ['#8B5A2B', '#6F4E37', '#5C4033', '#966F33', '#4E3629'];
                 let w = 40+(Math.random()*35); let h=30+(Math.random()*25);
                 entities.push({x, y:roadY-60, w:w, h:h, type:'obs', color:colors[Math.floor(Math.random()*colors.length)], active:true, off:Math.random()*10});
             }
-            else if(r < 0.90) { 
+            else if(r < 0.85) { 
                 entities.push({x, y:roadY-60, w:35, h:35, type:'flask', active:true});
             }
-            else { 
+            else if(r < 0.93) { 
                 entities.push({x, y:roadY-60, w:35, h:35, type:'slow', active:true});
+            }
+            else {
+                // NEW: SPEED BOOSTER
+                entities.push({x, y:roadY-60, w:35, h:35, type:'boost', active:true});
             }
         }
 
@@ -551,7 +583,7 @@
             
             entities.forEach(e => {
                 if(e.type === 'obs') {
-                    // --- EXTRACTED STYLE FROM PROVIDED CODE ---
+                    // --- STYLE FROM PROVIDED CODE ---
                     ctx.fillStyle = e.color;
                     ctx.beginPath();
                     let off = e.off || 0;
@@ -564,7 +596,6 @@
                     ctx.fill();
                     ctx.strokeStyle = '#FFF'; ctx.lineWidth = 2; ctx.stroke();
                     ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.fillRect(e.x+10, e.y+10, 10, 10);
-                    // -------------------------------------------
                 } 
                 else if(e.type === 'letter') {
                     ctx.fillStyle = '#FFD700'; ctx.beginPath(); ctx.arc(e.x+e.w/2, e.y+e.h/2, e.w/2, 0, Math.PI*2); ctx.fill();
@@ -592,6 +623,14 @@
                 else if(e.type === 'slow') {
                     ctx.fillStyle = '#CCC'; ctx.beginPath(); ctx.arc(e.x+e.w/2, e.y+e.h/2, e.w/2-2, 0, Math.PI*2); ctx.fill();
                     ctx.fillStyle = '#F00'; ctx.fillRect(e.x+e.w-12, e.y+8, 10, 24);
+                }
+                else if(e.type === 'boost') {
+                    // Green Arrow
+                    ctx.fillStyle = '#00FF00'; ctx.shadowColor = '#0F0'; ctx.shadowBlur=10;
+                    ctx.beginPath();
+                    ctx.moveTo(e.x, e.y); ctx.lineTo(e.x+e.w/2, e.y+e.h/2); ctx.lineTo(e.x, e.y+e.h);
+                    ctx.moveTo(e.x+10, e.y); ctx.lineTo(e.x+10+e.w/2, e.y+e.h/2); ctx.lineTo(e.x+10, e.y+e.h);
+                    ctx.fill(); ctx.shadowBlur=0;
                 }
                 else if(e.type === 'ultra') {
                     ctx.shadowBlur = 15; ctx.shadowColor = '#9400D3'; ctx.fillStyle = '#9400D3'; ctx.fillRect(e.x, e.y+5, e.w, e.h-5); ctx.shadowBlur = 0;
@@ -708,6 +747,8 @@
             document.getElementById('screen-end').style.display = 'none';
             lyricIndex = 0; spawnIndex = 0; score = 0; speedOffset = 0; car.health = 100;
             entities = []; spikeEndTime = 0; savageEndTime = 0; particles = []; consecutiveFlasks = 0;
+            // Reset Savage duration base
+            currentSavageDuration = 5000; 
             gameState = 'PLAYING'; gameStartTime = Date.now(); nextLetterTime = Date.now() + 1000;
             resize(); draw();
         }
