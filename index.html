@@ -482,44 +482,17 @@
 
             // 2. SAVAGE MODE: ONLY ROCKS (Mostly)
             if(isSavage && (savageEndTime - Date.now() > 500)) {
-                 // Spawning varied rocks for smashing
-                 // Generate random rock properties
-                 let sub = Math.floor(Math.random()*3); // 0, 1, or 2
-                 let col = rockColors[Math.floor(Math.random()*rockColors.length)];
-                 let w = 35 + Math.random()*25;
-                 let h = 30 + Math.random()*25;
-                 
-                 // Generate vertices for rock uniqueness
-                 let points = [];
-                 for(let i=0; i<6; i++) {
-                     let angle = (Math.PI*2/6)*i;
-                     let rad = (w/2) * (0.6 + Math.random()*0.4);
-                     points.push({x: Math.cos(angle)*rad, y: Math.sin(angle)*rad});
-                 }
-
-                 entities.push({
-                     x:x, y:roadY-60, w:w, h:h, type:'obs', 
-                     subtype:sub, color:col, active:true, off:Math.random()*5,
-                     points: points
-                 });
+                 const colors = ['#8B5A2B', '#6F4E37', '#5C4033', '#966F33', '#4E3629'];
+                 let w = 40+(Math.random()*35); let h=30+(Math.random()*25);
+                 entities.push({x:x, y:roadY-60, w:w, h:h, type:'obs', color:colors[Math.floor(Math.random()*colors.length)], active:true, off:Math.random()*10});
                  return; 
             }
 
-            // 3. Normal Distribution
+            // 3. Normal Distribution (USING ORIGINAL SIMPLE SPAWN LOGIC FOR THIS STYLE)
             if(r < 0.75) { 
-                let sub = Math.floor(Math.random()*3); 
-                let col = rockColors[Math.floor(Math.random()*rockColors.length)];
-                let w = 35 + Math.random()*25;
-                let h = 30 + Math.random()*25;
-                
-                let points = [];
-                for(let i=0; i<6; i++) {
-                     let angle = (Math.PI*2/6)*i;
-                     let rad = (w/2) * (0.6 + Math.random()*0.4);
-                     points.push({x: Math.cos(angle)*rad, y: Math.sin(angle)*rad});
-                }
-
-                entities.push({x, y:roadY-60, w:w, h:h, type:'obs', subtype:sub, color:col, active:true, off:Math.random()*5, points:points});
+                const colors = ['#8B5A2B', '#6F4E37', '#5C4033', '#966F33', '#4E3629'];
+                let w = 40+(Math.random()*35); let h=30+(Math.random()*25);
+                entities.push({x, y:roadY-60, w:w, h:h, type:'obs', color:colors[Math.floor(Math.random()*colors.length)], active:true, off:Math.random()*10});
             }
             else if(r < 0.90) { 
                 entities.push({x, y:roadY-60, w:35, h:35, type:'flask', active:true});
@@ -578,36 +551,20 @@
             
             entities.forEach(e => {
                 if(e.type === 'obs') {
-                    // NEW: 3D ROCK RENDERING WITH VARIETY
-                    // Gradient shading for 3D effect
-                    let rGrad = ctx.createRadialGradient(e.x+e.w*0.3, e.y+e.h*0.3, e.w*0.1, e.x+e.w/2, e.y+e.h/2, e.w);
-                    rGrad.addColorStop(0, '#AAA'); // Highlight
-                    rGrad.addColorStop(1, e.color); // Base color
-                    ctx.fillStyle = rGrad;
-                    
-                    ctx.save();
-                    ctx.translate(e.x + e.w/2, e.y + e.h/2);
-                    
+                    // --- EXTRACTED STYLE FROM PROVIDED CODE ---
+                    ctx.fillStyle = e.color;
                     ctx.beginPath();
-                    if (e.points) {
-                        ctx.moveTo(e.points[0].x, e.points[0].y);
-                        for(let i=1; i<e.points.length; i++) ctx.lineTo(e.points[i].x, e.points[i].y);
-                    } else {
-                        // Fallback shape if points missing
-                        ctx.rect(-e.w/2, -e.h/2, e.w, e.h);
-                    }
-                    ctx.closePath();
+                    let off = e.off || 0;
+                    ctx.moveTo(e.x + e.w*0.2 - off, e.y + off);
+                    ctx.lineTo(e.x + e.w*0.8 + off, e.y);
+                    ctx.lineTo(e.x + e.w, e.y + e.h*0.5 + off);
+                    ctx.lineTo(e.x + e.w*0.7 - off, e.y + e.h);
+                    ctx.lineTo(e.x + e.w*0.2 + off, e.y + e.h*0.9);
+                    ctx.lineTo(e.x - off, e.y + e.h*0.4);
                     ctx.fill();
-                    
-                    // Stroke for visibility
-                    ctx.strokeStyle = '#666'; ctx.lineWidth = 1.5; ctx.stroke();
-                    
-                    // Detail: Cracks
-                    ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); 
-                    ctx.moveTo(-e.w*0.2, -e.h*0.2); ctx.lineTo(e.w*0.3, e.h*0.1); 
-                    ctx.lineTo(0, e.h*0.4); ctx.stroke();
-                    
-                    ctx.restore();
+                    ctx.strokeStyle = '#FFF'; ctx.lineWidth = 2; ctx.stroke();
+                    ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.fillRect(e.x+10, e.y+10, 10, 10);
+                    // -------------------------------------------
                 } 
                 else if(e.type === 'letter') {
                     ctx.fillStyle = '#FFD700'; ctx.beginPath(); ctx.arc(e.x+e.w/2, e.y+e.h/2, e.w/2, 0, Math.PI*2); ctx.fill();
