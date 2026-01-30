@@ -274,6 +274,10 @@
                 This game will not be able to show your records to everybody, so you have to make a screenshot and share it! Tag 
                 <a href="https://www.instagram.com/yangisar/" target="_blank" style="color:#FFF; text-decoration:underline; pointer-events:auto;">@yangisar</a> and 
                 <a href="https://www.instagram.com/daiynball/" target="_blank" style="color:#FFF; text-decoration:underline; pointer-events:auto;">@daiynball</a>
+                <br><br>
+                Бұл ойын нәтижеңізді барлығына көрсете алмайды, сондықтан скриншот жасап, бөлісіңіз! 
+                <a href="https://www.instagram.com/yangisar/" target="_blank" style="color:#FFF; text-decoration:underline; pointer-events:auto;">@yangisar</a> және 
+                <a href="https://www.instagram.com/daiynball/" target="_blank" style="color:#FFF; text-decoration:underline; pointer-events:auto;">@daiynball</a> белгілеңіз.
             </div>
 
             <div class="results-box" id="lyrics-result"></div>
@@ -421,7 +425,8 @@
             difficulty = Math.max(1, rawDiff);
             let currentSpeed = baseSpeed * difficulty; 
             roadOffset += currentSpeed;
-            const moveSpd = (baseSpeed * 1.2) + (difficulty * 0.6);
+            // INCREASED SENSITIVITY HERE: 1.2 -> 1.6 and 0.6 -> 0.8
+            const moveSpd = (baseSpeed * 1.6) + (difficulty * 0.8);
 
             if(keys.u) car.y -= moveSpd; if(keys.d) car.y += moveSpd;
             if(keys.l) car.x -= moveSpd; if(keys.r) car.x += moveSpd;
@@ -446,8 +451,8 @@
             // INCREASE SPAWN RATE LOGIC
             // 1. Savage Mode (Rocks to smash)
             if (isSavage && (savageEndTime - Date.now() > 500)) spawnRate = 0.2; 
-            // 2. ULTRA MODE (Spikes) - 90% duration flood
-            if (isSpiked && (spikeEndTime - Date.now() > 1000)) spawnRate = 0.25;
+            // 2. ULTRA MODE (Spikes) - Decreased from 0.25 to 0.20 (20% reduction)
+            if (isSpiked && (spikeEndTime - Date.now() > 1000)) spawnRate = 0.20;
 
             if(Math.random() < spawnRate) spawnOther();
             
