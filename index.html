@@ -284,7 +284,7 @@
             </a>
 
             <div class="hof-container">
-                <div style="color:#FFD700; font-family:'Permanent Marker'; margin-bottom:5px;">LOCAL LEGENDS</div>
+                <div style="color:#FFD700; font-family:'Permanent Marker'; margin-bottom:5px;">LEGENDS</div>
                 <ul id="hof-list" class="hof-list"></ul>
             </div>
             
@@ -407,8 +407,31 @@
         function triggerHaptics(pattern) {
              if(navigator.vibrate) navigator.vibrate(pattern);
         }
+        
+        // --- NEW CRASH PARTICLES LOGIC ---
+        function createExplosion(cx, cy) {
+            const carColors = ['#9400D3', '#0055AA', '#111', '#222', '#FFEB3B'];
+            for(let i=0; i<100; i++) {
+                particles.push({
+                    x: cx + (Math.random()-0.5)*40,
+                    y: cy + (Math.random()-0.5)*70,
+                    vx: (Math.random()-0.5)*20,
+                    vy: (Math.random()-0.5)*20,
+                    l: 1.0,
+                    color: carColors[Math.floor(Math.random()*carColors.length)]
+                });
+            }
+        }
 
         function update() {
+            if(gameState === 'CRASHING') {
+                particles.forEach((p,i) => { 
+                    p.x += p.vx; p.y += p.vy; p.vy += 0.5; p.l -= 0.02; 
+                    if(p.l<=0) particles.splice(i,1); 
+                });
+                return;
+            }
+
             if(totalLetters === 0) { for(let i=0; i<fullLyrics.length; i++) if(fullLyrics[i] !== ' ' && fullLyrics[i] !== '\n') totalLetters++; }
             
             const isSavage = Date.now() < savageEndTime;
@@ -460,12 +483,16 @@
                     e.active = false;
                     if(e.type==='obs') {
                         consecutiveFlasks = 0;
-                        if(!isSpiked && !isSavage) { car.health -= damageDealt; AudioSys.playTone(100,'sawtooth',0.2); spawnParticles(e.x+e.w/2, e.y+e.h/2, e.color, 10); }
+                        if(!isSpiked && !isSavage) { 
+                            car.health -= damageDealt; 
+                            AudioSys.playTone(100,'sawtooth',0.2); 
+                            spawnParticles(e.x+e.w/2, e.y+e.h/2, e.color, 10); 
+                        }
                         else { 
                             // Smash effect
                             AudioSys.playSmash(); 
                             spawnParticles(e.x+e.w/2, e.y+e.h/2, '#777', 15); 
-                            triggerHaptics(50); // Small bump on smash
+                            triggerHaptics(50); 
                         }
                     }
                     else if(e.type==='letter') { score++; AudioSys.playTone(1000,'sine',0.1); }
@@ -477,7 +504,7 @@
                             savageEndTime = Date.now() + currentSavageDuration; 
                             consecutiveFlasks = 0; AudioSys.playUltra(); 
                             triggerPopup('savage-popup');
-                            triggerHaptics([200, 100, 200]); // Strong haptic
+                            triggerHaptics([200, 100, 200]); 
                         } else { triggerWrenchAnim(); }
                     }
                     else if(e.type==='slow') { speedOffset = (score/50); triggerPopup('slow-popup'); }
@@ -487,7 +514,7 @@
                         spikeEndTime = Date.now()+10000; 
                         AudioSys.playUltra(); 
                         triggerPopup('jbrla-popup'); 
-                        triggerHaptics([100, 50, 100, 50, 100]); // Pulse haptic
+                        triggerHaptics([100, 50, 100, 50, 100]); 
                     }
                 }
             });
@@ -500,7 +527,13 @@
             }
             particles.forEach((p,i) => { p.x += p.vx; p.y += p.vy; p.vy += 0.5; p.l -= 0.05; if(p.l<=0) particles.splice(i,1); });
 
-            if(car.health <= 0) endGame();
+            // CRASH CHECK
+            if(car.health <= 0 && gameState === 'PLAYING') {
+                gameState = 'CRASHING';
+                createExplosion(car.x + car.w/2, car.y + car.h/2);
+                AudioSys.playSmash();
+                setTimeout(endGame, 1500);
+            }
             
             document.getElementById('hpBar').style.width = Math.max(0, car.health) + '%';
             document.getElementById('scoreVal').innerText = score + " / " + totalLetters;
@@ -553,7 +586,7 @@
         function spawnTrail(x,y,c) { particles.push({x:x, y:y, vx:0, vy:5, l:0.5, color:c}); }
 
         function draw() {
-            if(gameState !== 'PLAYING') return;
+            if(gameState !== 'PLAYING' && gameState !== 'CRASHING') return;
             const isSavage = Date.now() < savageEndTime;
             const isSpiked = Date.now() < spikeEndTime; // This determines the SPIKES on car
             
@@ -653,8 +686,15 @@
                 }
             });
 
-            drawCar();
-            particles.forEach(p => { ctx.fillStyle=p.color; ctx.fillRect(p.x, p.y, 4, 4); });
+            // If crashing, don't draw car, draw particles
+            if(gameState === 'PLAYING') drawCar();
+            
+            particles.forEach(p => { 
+                ctx.fillStyle=p.color; 
+                if(p.l < 0.5) ctx.globalAlpha = p.l * 2;
+                ctx.fillRect(p.x, p.y, 4, 4); 
+                ctx.globalAlpha = 1.0;
+            });
             requestAnimationFrame(draw); update();
         }
 
@@ -790,7 +830,16 @@
             } else { document.getElementById('hof-list').innerHTML = "<li style='color:#AAA'>Be the first legend!</li>"; }
         }
 
-        function resetGame() { location.reload(); }
+        function resetGame() {
+            // Hide end screen
+            document.getElementById('screen-end').style.display = 'none';
+            // Show start screen container
+            document.getElementById('screen-start').style.display = 'flex';
+            // Hide nickname input section
+            document.getElementById('intro-section').style.display = 'none';
+            // Show difficulty selection immediately
+            document.getElementById('difficulty-section').style.display = 'flex';
+        }
         window.initGame = initGame; window.showDifficulty = showDifficulty; window.resetGame = resetGame;
         resize();
     </script>
