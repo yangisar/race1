@@ -53,6 +53,8 @@
         #savage-popup { font-family: 'Rubik Glitch'; font-size: 4rem; color: #9400D3; text-shadow: 0 0 20px #FFF; }
         #slow-popup { font-family: 'Permanent Marker'; font-size: 3rem; color: #FFF; text-shadow: 0 0 10px #00FFFF; }
         #boost-popup { font-family: 'Rubik Glitch'; font-size: 3rem; color: #00FF00; text-shadow: 0 0 10px #FFF; }
+        #cheat-popup { font-family: 'Rubik Glitch'; font-size: 3.5rem; color: #FFD700; text-shadow: 0 0 20px #FF0000; }
+
         #victory-popup { 
             position: absolute; top: 30%; width: 100%; text-align: center; 
             font-family: 'Press Start 2P'; font-size: 2rem; color: #FFD700; 
@@ -233,6 +235,7 @@
         <div id="savage-popup" class="popup-text">SAVAGE MODE!</div>
         <div id="slow-popup" class="popup-text">SLOW DOWN!</div>
         <div id="boost-popup" class="popup-text">SPEED UP!</div>
+        <div id="cheat-popup" class="popup-text">INVINCIBLE!</div>
         <div id="victory-popup" class="popup-text">VICTORY!<br><span style="font-size:1rem; color:#FFF;">ЖЕҢІС!</span></div>
 
         <div id="screen-start" class="screen-overlay">
@@ -353,6 +356,11 @@
         const car = { x:0, y:0, w:44, h:80, health:100 }; 
         const keys = {u:false, d:false, l:false, r:false};
         
+        // --- CHEAT CODE VARIABLES ---
+        const cheatCode = ['u','u','d','d','u','u','u','l','r'];
+        let userCheatBuffer = [];
+        let cheatEndTime = 0;
+
         // NATURAL STONE PALETTE
         const rockColors = ['#8B8B83', '#696969', '#556B2F', '#8B4513', '#708090'];
 
@@ -375,13 +383,43 @@
             }
             bgCache.stars = []; for(let i=0; i<40; i++) bgCache.stars.push({x: Math.random()*canvas.width, y: Math.random()*roadY*0.9, s: Math.random()*2, alpha: Math.random()});
         }
+        
+        // --- CHEAT INPUT HANDLER ---
+        function registerInput(k) {
+            userCheatBuffer.push(k);
+            if(userCheatBuffer.length > cheatCode.length) userCheatBuffer.shift();
+            
+            // Check match
+            if(userCheatBuffer.length === cheatCode.length) {
+                let match = true;
+                for(let i=0; i<cheatCode.length; i++) {
+                    if(userCheatBuffer[i] !== cheatCode[i]) { match = false; break; }
+                }
+                if(match) activateCheat();
+            }
+        }
+        
+        function activateCheat() {
+            cheatEndTime = Date.now() + 120000; // 2 minutes
+            triggerPopup('cheat-popup');
+            triggerHaptics([50,50,50,50,50,50,100,200]); // Long vibration
+            userCheatBuffer = []; // Reset buffer
+            AudioSys.playUltra(); // Play ultra sound for effect
+        }
 
         const bindKey = (id, key) => {
             const el = document.getElementById(id);
             if(el) {
-                el.addEventListener('touchstart', (e)=>{e.preventDefault(); keys[key]=true;});
+                el.addEventListener('touchstart', (e)=>{
+                    e.preventDefault(); 
+                    keys[key]=true; 
+                    registerInput(key); // Register input for cheat
+                });
                 el.addEventListener('touchend', (e)=>{e.preventDefault(); keys[key]=false;});
-                el.addEventListener('mousedown', ()=>{keys[key]=true;});
+                el.addEventListener('mousedown', ()=>{
+                    keys[key]=true;
+                    registerInput(key); // Register input for cheat
+                });
                 el.addEventListener('mouseup', ()=>{keys[key]=false;});
             }
         };
@@ -440,6 +478,7 @@
             
             const isSavage = Date.now() < savageEndTime;
             const isSpiked = Date.now() < spikeEndTime;
+            const isCheat = Date.now() < cheatEndTime; // CHECK CHEAT STATUS
             
             let rawDiff = (1 + (score/50));
             if(isSavage) rawDiff = 4.0; 
@@ -448,7 +487,6 @@
             difficulty = Math.max(1, rawDiff);
             let currentSpeed = baseSpeed * difficulty; 
             roadOffset += currentSpeed;
-            // INCREASED SENSITIVITY HERE: 1.2 -> 1.6 and 0.6 -> 0.8
             const moveSpd = (baseSpeed * 1.6) + (difficulty * 0.8);
 
             if(keys.u) car.y -= moveSpd; if(keys.d) car.y += moveSpd;
@@ -472,14 +510,12 @@
             let spawnRate = (0.02 * spawnMultiplier) + (difficulty * 0.004);
             
             // INCREASE SPAWN RATE LOGIC
-            // 1. Savage Mode (Rocks to smash)
             if (isSavage && (savageEndTime - Date.now() > 500)) spawnRate = 0.2; 
-            // 2. ULTRA MODE (Spikes) - Decreased from 0.25 to 0.20 (20% reduction)
             if (isSpiked && (spikeEndTime - Date.now() > 1000)) spawnRate = 0.20;
 
             if(Math.random() < spawnRate) spawnOther();
             
-            if(!isSpiked && !isSavage) AudioSys.stopUltra();
+            if(!isSpiked && !isSavage && !isCheat) AudioSys.stopUltra(); // Keep music if cheat active
 
             entities.forEach(e => {
                 e.y += currentSpeed;
@@ -487,7 +523,8 @@
                     e.active = false;
                     if(e.type==='obs') {
                         consecutiveFlasks = 0;
-                        if(!isSpiked && !isSavage) { 
+                        // INVINCIBILITY CHECK (Spiked, Savage, OR Cheat)
+                        if(!isSpiked && !isSavage && !isCheat) { 
                             car.health -= damageDealt; 
                             AudioSys.playTone(100,'sawtooth',0.2); 
                             spawnParticles(e.x+e.w/2, e.y+e.h/2, e.color, 10); 
@@ -503,8 +540,7 @@
                     else if(e.type==='flask') { 
                         car.health = Math.min(100, car.health+20); consecutiveFlasks++;
                         if(consecutiveFlasks >= 2) {
-                            // ENTER SAVAGE MODE
-                            currentSavageDuration += 2000; // Increase duration by 2s each time
+                            currentSavageDuration += 2000; 
                             savageEndTime = Date.now() + currentSavageDuration; 
                             consecutiveFlasks = 0; AudioSys.playUltra(); 
                             triggerPopup('savage-popup');
@@ -514,7 +550,6 @@
                     else if(e.type==='slow') { speedOffset = (score/50); triggerPopup('slow-popup'); }
                     else if(e.type==='boost') { speedOffset = -2.0; triggerPopup('boost-popup'); triggerHaptics(100); }
                     else if(e.type==='ultra') { 
-                        // ENTER ULTRA MODE
                         spikeEndTime = Date.now()+10000; 
                         AudioSys.playUltra(); 
                         triggerPopup('jbrla-popup'); 
@@ -542,9 +577,18 @@
             document.getElementById('hpBar').style.width = Math.max(0, car.health) + '%';
             document.getElementById('scoreVal').innerText = score + " / " + totalLetters;
             const savageEl = document.getElementById('savageBarContainer');
-            if(isSavage) {
+            
+            // Show savage bar if Savage OR Cheat is active
+            if(isSavage || isCheat) {
                 savageEl.style.opacity = '1';
-                document.getElementById('savageBarFill').style.width = ((Math.max(0, savageEndTime - Date.now()) / currentSavageDuration) * 100) + '%';
+                // If cheat is active, bar is full or based on cheat timer? Let's use cheat timer if cheat is active
+                let timeLeft = isCheat ? (cheatEndTime - Date.now()) : (savageEndTime - Date.now());
+                let duration = isCheat ? 120000 : currentSavageDuration;
+                
+                document.getElementById('savageBarFill').style.width = ((Math.max(0, timeLeft) / duration) * 100) + '%';
+                // Cheat color: Gold, Savage color: Purple
+                document.getElementById('savageBarFill').style.backgroundColor = isCheat ? '#FFD700' : '#9400D3';
+                document.getElementById('savageBarFill').style.boxShadow = isCheat ? '0 0 10px #FFD700' : '0 0 10px #9400D3';
             } else { savageEl.style.opacity = '0'; }
         }
 
@@ -593,6 +637,7 @@
             if(gameState !== 'PLAYING' && gameState !== 'CRASHING') return;
             const isSavage = Date.now() < savageEndTime;
             const isSpiked = Date.now() < spikeEndTime; // This determines the SPIKES on car
+            const isCheat = Date.now() < cheatEndTime;
             
             ctx.clearRect(0,0,canvas.width,canvas.height);
             // SKY
@@ -617,8 +662,8 @@
             ctx.fillStyle = '#1e1a15'; ctx.fillRect(0, roadY, 15, roadH); ctx.fillRect(canvas.width-15, roadY, 15, roadH);
             ctx.fillStyle = '#111'; ctx.fillRect(0, roadY-2, canvas.width, 4);
 
-            if(isSavage) {
-                ctx.fillStyle = '#00FFFF'; // NEON CYAN for Savage
+            if(isSavage || isCheat) { // CHEAT ALSO TRIGGERS NEON ROAD
+                ctx.fillStyle = isCheat ? '#FFD700' : '#00FFFF'; // Gold for cheat, Cyan for Savage
                 const laneCount = 4; const laneW = canvas.width / laneCount;
                 for(let l=1; l<laneCount; l++) ctx.fillRect((l * laneW) - 2, roadY, 4, roadH);
             } else {
@@ -715,9 +760,10 @@
             const {x, y, w, h} = car;
             const isSavage = Date.now() < savageEndTime;
             const isSpiked = Date.now() < spikeEndTime; // This determines the SPIKES on car
+            const isCheat = Date.now() < cheatEndTime;
             
             // Ghost effect if Spiked (Invincible) but not Savage
-            if(isSpiked && !isSavage) {
+            if(isSpiked && !isSavage && !isCheat) {
                 ctx.globalAlpha = 0.8;
             }
             
@@ -726,7 +772,12 @@
 
             // NEW: CAR CHASSIS SHAPE (Curved Sport Car)
             let cGrad = ctx.createLinearGradient(x,y,x+w,y);
-            if(isSavage) { cGrad.addColorStop(0,'#9400D3'); cGrad.addColorStop(0.5,'#DDA0DD'); cGrad.addColorStop(1,'#9400D3'); }
+            
+            if(isCheat) {
+                // GOLDEN CAR FOR CHEAT MODE
+                cGrad.addColorStop(0, '#FFD700'); cGrad.addColorStop(0.5, '#FFFFAA'); cGrad.addColorStop(1, '#FFD700');
+            }
+            else if(isSavage) { cGrad.addColorStop(0,'#9400D3'); cGrad.addColorStop(0.5,'#DDA0DD'); cGrad.addColorStop(1,'#9400D3'); }
             else { cGrad.addColorStop(0,'#0055AA'); cGrad.addColorStop(0.5,'#44AAFF'); cGrad.addColorStop(1,'#0055AA'); }
             
             ctx.fillStyle = cGrad;
@@ -753,8 +804,8 @@
             ctx.fillStyle = '#222';
             ctx.fillRect(x+10, y+h*0.66, w-20, 4);
 
-            // SPIKES (If Ultra Mode)
-            if(isSpiked) {
+            // SPIKES (If Ultra Mode OR CHEAT)
+            if(isSpiked || isCheat) {
                 // Metal Bar
                 ctx.fillStyle = '#444';
                 ctx.fillRect(x-4, y-5, w+8, 8);
@@ -775,7 +826,7 @@
             
             // Text
             ctx.save(); ctx.translate(x+w/2, y+h/2); ctx.rotate(-Math.PI/2); ctx.scale(1, 1.8); 
-            ctx.fillStyle = '#FFFFFF'; ctx.font='bold 9px Arial'; ctx.textAlign='center'; ctx.fillText("DAIYNBALL", 0, 4); ctx.restore();
+            ctx.fillStyle = isCheat ? '#000' : '#FFFFFF'; ctx.font='bold 9px Arial'; ctx.textAlign='center'; ctx.fillText("DAIYNBALL", 0, 4); ctx.restore();
             
             // Rear Lights
             ctx.shadowBlur = 10; ctx.shadowColor = '#F00'; ctx.fillStyle = '#D32F2F'; ctx.fillRect(x+4, y+h-4, 8, 4); ctx.fillRect(x+w-12, y+h-4, 8, 4);
@@ -806,6 +857,7 @@
             document.getElementById('screen-end').style.display = 'none';
             lyricIndex = 0; spawnIndex = 0; score = 0; speedOffset = 0; car.health = 100;
             entities = []; spikeEndTime = 0; savageEndTime = 0; particles = []; consecutiveFlasks = 0;
+            userCheatBuffer = []; cheatEndTime = 0; // Reset cheat on new game
             // Reset Savage duration base
             currentSavageDuration = 5000; 
             gameState = 'PLAYING'; gameStartTime = Date.now(); nextLetterTime = Date.now() + 1000;
